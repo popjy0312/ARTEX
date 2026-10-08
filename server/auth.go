@@ -53,34 +53,83 @@ func validatePassword(pw string) string {
 // the old file removed so it disappears from the workspace. On first run a random
 // key is generated and persisted.
 func loadOrCreateJWTKey(keyDir, dataDir string) ([]byte, error) {
-	path := filepath.Join(keyDir, jwtKeyFilename)
-	// one-time migration out of the old in-workspace location.
-	if legacy := filepath.Join(dataDir, jwtKeyFilename); legacy != path {
-		if _, err := os.Stat(path); os.IsNotExist(err) {
-			if data, rerr := os.ReadFile(legacy); rerr == nil {
-				if werr := os.WriteFile(path, data, 0o600); werr == nil {
-					_ = os.Remove(legacy)
-					log.Printf("[auth] JWT key 已从 %s 迁移到 %s（移出可浏览工作区）", legacy, path)
-				}
-			}
-		}
+	if err := os.MkdirAll(keyDir, 0o700); err != nil {
+		return nil, fmt.Errorf("create jwt key directory: %w", err)
 	}
-	if data, err := os.ReadFile(path); err == nil && len(strings.TrimSpace(string(data))) >= 32 {
-		return []byte(strings.TrimSpace(string(data))), nil
+	keyReal, err := filepath.EvalSymlinks(keyDir)
+	if err != nil {
+		return nil, fmt.Errorf("resolve jwt key directory: %w", err)
 	}
-	buf := make([]byte, 32)
-	for i := range buf {
-		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(keyChars))))
+	dataReal, err := filepath.EvalSymlinks(dataDir)
+	if err != nil {
+		return nil, fmt.Errorf("resolve workspace directory: %w", err)
+	}
+	if rel, err := filepath.Rel(dataReal, keyReal); err != nil || rel == "." || (rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator))) {
+		return nil, fmt.Errorf("jwt key directory must be outside workspace: key=%s workspace=%s", keyReal, dataReal)
+	}
+
+	path := filepath.Join(keyReal, jwtKeyFilename)
+	legacy := filepath.Join(dataReal, jwtKeyFilename)
+	readKey := func(p string) ([]byte, error) {
+		info, err := os.Lstat(p)
 		if err != nil {
-			return nil, fmt.Errorf("generate jwt key: %w", err)
+			return nil, err
 		}
-		buf[i] = keyChars[n.Int64()]
+		if info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() {
+			return nil, fmt.Errorf("jwt key is not a regular file: %s", p)
+		}
+		data, err := os.ReadFile(p)
+		if err != nil {
+			return nil, err
+		}
+		data = []byte(strings.TrimSpace(string(data)))
+		if len(data) < 32 {
+			return nil, fmt.Errorf("jwt key is shorter than 32 bytes: %s", p)
+		}
+		return data, nil
 	}
-	if err := os.WriteFile(path, buf, 0600); err != nil {
-		return nil, fmt.Errorf("write jwt key: %w", err)
+
+	key, err := readKey(path)
+	if os.IsNotExist(err) {
+		if legacyKey, legacyErr := readKey(legacy); legacyErr == nil {
+			if err := os.WriteFile(path, legacyKey, 0o600); err != nil {
+				return nil, fmt.Errorf("migrate jwt key: %w", err)
+			}
+			key = legacyKey
+			log.Printf("[auth] JWT key 已从 %s 迁移到 %s（移出可浏览工作区）", legacy, path)
+		} else if !os.IsNotExist(legacyErr) {
+			return nil, fmt.Errorf("read legacy jwt key: %w", legacyErr)
+		} else {
+			key = make([]byte, 32)
+			for i := range key {
+				n, randErr := rand.Int(rand.Reader, big.NewInt(int64(len(keyChars))))
+				if randErr != nil {
+					return nil, fmt.Errorf("generate jwt key: %w", randErr)
+				}
+				key[i] = keyChars[n.Int64()]
+			}
+			if err := os.WriteFile(path, key, 0o600); err != nil {
+				return nil, fmt.Errorf("write jwt key: %w", err)
+			}
+			log.Printf("[auth] 新 JWT key 已写入 %s", path)
+		}
+	} else if err != nil {
+		return nil, fmt.Errorf("read jwt key: %w", err)
 	}
-	log.Printf("[auth] 新 JWT key 已写入 %s", path)
-	return buf, nil
+	if err := os.Chmod(path, 0o600); err != nil {
+		return nil, fmt.Errorf("secure jwt key permissions: %w", err)
+	}
+	// The legacy location is browsable through the workspace API. Remove it even
+	// when the active key already existed, and fail startup if cleanup cannot be
+	// confirmed; leaving a signing key there would permit token forgery.
+	if _, err := os.Lstat(legacy); err == nil {
+		if err := os.Remove(legacy); err != nil {
+			return nil, fmt.Errorf("remove legacy jwt key: %w", err)
+		}
+	} else if !os.IsNotExist(err) {
+		return nil, fmt.Errorf("inspect legacy jwt key: %w", err)
+	}
+	return key, nil
 }
 
 // signJWT issues a 7-day HS256 token for user ARTEX.
@@ -103,8 +152,11 @@ func verifyJWT(tokenStr string, key []byte) bool {
 	return err == nil && t.Valid
 }
 
-// extractToken reads the JWT from Authorization: Bearer header,
-// artex_token cookie, or ?token= query param (for SSE connections).
+// extractToken reads the JWT from Authorization: Bearer or the artex_token
+// cookie. Native EventSource cannot attach an Authorization header, so the
+// query-string fallback is limited to the four GET endpoints that actually
+// stream SSE. Accepting it on ordinary API routes would put a seven-day bearer
+// credential into URLs, access logs and browser history for no functional gain.
 func extractToken(r *http.Request) string {
 	if h := r.Header.Get("Authorization"); strings.HasPrefix(h, "Bearer ") {
 		return strings.TrimPrefix(h, "Bearer ")
@@ -112,7 +164,22 @@ func extractToken(r *http.Request) string {
 	if c, err := r.Cookie("artex_token"); err == nil && c.Value != "" {
 		return c.Value
 	}
-	return r.URL.Query().Get("token")
+	if queryTokenAllowed(r) {
+		return r.URL.Query().Get("token")
+	}
+	return ""
+}
+
+func queryTokenAllowed(r *http.Request) bool {
+	if r.Method != http.MethodGet {
+		return false
+	}
+	switch r.URL.Path {
+	case "/api/logs/stream", "/api/update/stream", "/api/exploration/activity/stream":
+		return true
+	}
+	return strings.HasPrefix(r.URL.Path, "/api/side-questions/") &&
+		strings.HasSuffix(r.URL.Path, "/events")
 }
 
 // requireAuth wraps h with JWT validation.

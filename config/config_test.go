@@ -40,3 +40,33 @@ func TestPostgresDSNPrecedence(t *testing.T) {
 		t.Fatalf("file dsn verbatim, got %q err %v", got, err)
 	}
 }
+
+func TestPostgresDSNComponentEnvironmentEscapesCredentials(t *testing.T) {
+	t.Setenv("ARTEX_PG_DSN", "")
+	t.Setenv("ARTEX_CONFIG", filepath.Join(t.TempDir(), "missing.json"))
+	t.Setenv("ARTEX_PG_HOST", "postgres")
+	t.Setenv("ARTEX_PG_PORT", "5433")
+	t.Setenv("ARTEX_PG_USER", "user@example")
+	t.Setenv("ARTEX_PG_PASSWORD", "p@ss:/%#word")
+	t.Setenv("ARTEX_PG_DBNAME", "artex")
+	t.Setenv("ARTEX_PG_SSLMODE", "disable")
+	got, source, err := PostgresDSN()
+	want := "postgres://user%40example:p%40ss%3A%2F%25%23word@postgres:5433/artex?sslmode=disable"
+	if err != nil || got != want || source != "环境变量 ARTEX_PG_*" {
+		t.Fatalf("component env: got %q source %q err %v want %q", got, source, err, want)
+	}
+
+	t.Setenv("ARTEX_PG_PORT", "not-a-port")
+	if _, _, err := PostgresDSN(); err == nil {
+		t.Fatal("invalid ARTEX_PG_PORT was accepted")
+	}
+}
+
+func TestPostgresDSNRejectsIncompleteComponentEnvironment(t *testing.T) {
+	t.Setenv("ARTEX_PG_DSN", "")
+	t.Setenv("ARTEX_CONFIG", filepath.Join(t.TempDir(), "missing.json"))
+	t.Setenv("ARTEX_PG_PASSWORD", "password-only")
+	if got, _, err := PostgresDSN(); err == nil {
+		t.Fatalf("incomplete component environment was ignored or accepted: %q", got)
+	}
+}

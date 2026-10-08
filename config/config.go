@@ -128,7 +128,8 @@ func SkillDir() string {
 
 // PostgresDSN resolves the connection string with precedence:
 //
-//	env ARTEX_PG_DSN  >  config file (database.dsn, or assembled from fields)
+//	env ARTEX_PG_DSN > env ARTEX_PG_* component fields > config file
+//	(database.dsn, or assembled from fields)
 //
 // There is NO built-in fallback: when neither source supplies a database config,
 // it returns an error naming the config path it inspected, so startup fails loudly
@@ -137,6 +138,38 @@ func SkillDir() string {
 func PostgresDSN() (dsn, source string, err error) {
 	if v := strings.TrimSpace(os.Getenv("ARTEX_PG_DSN")); v != "" {
 		return v, "环境变量 ARTEX_PG_DSN", nil
+	}
+	componentEnvSet := false
+	for _, name := range []string{
+		"ARTEX_PG_HOST", "ARTEX_PG_PORT", "ARTEX_PG_USER",
+		"ARTEX_PG_PASSWORD", "ARTEX_PG_DBNAME", "ARTEX_PG_SSLMODE",
+	} {
+		if os.Getenv(name) != "" {
+			componentEnvSet = true
+			break
+		}
+	}
+	if componentEnvSet {
+		if os.Getenv("ARTEX_PG_HOST") == "" && os.Getenv("ARTEX_PG_USER") == "" && os.Getenv("ARTEX_PG_DBNAME") == "" {
+			return "", "", fmt.Errorf("ARTEX_PG_* 配置至少需要 ARTEX_PG_HOST、ARTEX_PG_USER 或 ARTEX_PG_DBNAME 之一")
+		}
+		port := 5432
+		if raw := strings.TrimSpace(os.Getenv("ARTEX_PG_PORT")); raw != "" {
+			parsed, parseErr := strconv.Atoi(raw)
+			if parseErr != nil || parsed < 1 || parsed > 65535 {
+				return "", "", fmt.Errorf("ARTEX_PG_PORT 必须是 1-65535 的整数")
+			}
+			port = parsed
+		}
+		db := Database{
+			Host:     os.Getenv("ARTEX_PG_HOST"),
+			Port:     port,
+			User:     os.Getenv("ARTEX_PG_USER"),
+			Password: os.Getenv("ARTEX_PG_PASSWORD"),
+			DBName:   os.Getenv("ARTEX_PG_DBNAME"),
+			SSLMode:  os.Getenv("ARTEX_PG_SSLMODE"),
+		}
+		return db.buildDSN(), "环境变量 ARTEX_PG_*", nil
 	}
 	db := Load().Database
 	if d := strings.TrimSpace(db.DSN); d != "" {

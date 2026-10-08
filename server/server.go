@@ -44,7 +44,14 @@ type Server struct {
 	ctx    context.Context
 
 	skillDir string // root directory for skill subdirectories
-	jwtKey   []byte // HS256 signing key loaded from / generated into dataDir/jwt.key
+	jwtKey   []byte // HS256 signing key loaded from / generated into keyDir/jwt.key
+
+	// workspaceRoot is opened once and retained for the server lifetime. All
+	// workspace API operations are descriptor-relative to this stable handle, so
+	// replacing or renaming the configured path cannot redirect later requests.
+	workspaceRootOnce sync.Once
+	workspaceRoot     *os.Root
+	workspaceRootErr  error
 
 	// concMu serializes concurrency-cap decisions (admission + reconcile) so a
 	// scheduler tick and an HTTP settings change / task creation can't both count
@@ -151,6 +158,9 @@ func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDi
 		profChatAgents: map[int64]*agent.ChatAgent{},
 		provByProfile:  map[int64]*provEntry{}, llmHealth: newLLMHealthRegistry(m.pg),
 		taskAgents: map[string]*taskAgentBundle{}, archiveWake: make(chan struct{}, 1)}
+	if _, err := s.workspaceRootHandle(); err != nil {
+		log.Fatalf("[workspace] open root: %v", err)
+	}
 	s.initSideQuestions()
 	// 熔断阈值/冷却是失败路径上的热参数，启动时把全局重试策略推给 Registry 一次；
 	// 之后每次保存策略再推一次（saveLLMRetryPolicy）。

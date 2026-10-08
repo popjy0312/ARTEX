@@ -37,6 +37,72 @@ func (s *Server) wsResolve(rel string) (string, bool) {
 	return abs, true
 }
 
+// wsResolveSecure performs the lexical workspace check used before opening an
+// os.Root. Descriptor-relative Root operations below provide the actual
+// traversal and symlink-race boundary.
+func (s *Server) wsResolveSecure(rel string) (string, bool) {
+	abs, ok := s.wsResolve(rel)
+	if !ok {
+		return "", false
+	}
+	return abs, true
+}
+
+func (s *Server) workspaceRootHandle() (*os.Root, error) {
+	s.workspaceRootOnce.Do(func() {
+		base := filepath.Clean(s.m.dir)
+		info, err := os.Lstat(base)
+		if err != nil {
+			s.workspaceRootErr = err
+			return
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			s.workspaceRootErr = os.ErrPermission
+			return
+		}
+		s.workspaceRoot, s.workspaceRootErr = os.OpenRoot(base)
+	})
+	return s.workspaceRoot, s.workspaceRootErr
+}
+
+// wsRootPath converts a user path to a name relative to the workspace's stable
+// directory handle. All subsequent operations must use Root methods: unlike an
+// absolute path, a Root cannot be redirected outside it by a concurrent rename
+// or symlink swap.
+func (s *Server) wsRootPath(rel string) (*os.Root, string, string, bool) {
+	abs, ok := s.wsResolveSecure(rel)
+	if !ok {
+		return nil, "", "", false
+	}
+	base := filepath.Clean(s.m.dir)
+	name, err := filepath.Rel(base, abs)
+	if err != nil {
+		return nil, "", "", false
+	}
+	root, err := s.workspaceRootHandle()
+	if err != nil {
+		return nil, "", "", false
+	}
+	return root, filepath.Clean(name), abs, true
+}
+
+// wsHasSymlink rejects links for compatibility with the workspace API's
+// existing behavior.  Root operations remain the security boundary: even if a
+// component changes after this check, the operation cannot escape the Root.
+func wsHasSymlink(root *os.Root, name string) bool {
+	if name == "." {
+		return false
+	}
+	part := "."
+	for _, component := range strings.Split(name, string(os.PathSeparator)) {
+		part = filepath.Join(part, component)
+		if info, err := root.Lstat(part); err == nil && info.Mode()&os.ModeSymlink != 0 {
+			return true
+		}
+	}
+	return false
+}
+
 // wsRel renders an absolute path back as a workspace-relative path (forward slashes).
 func (s *Server) wsRel(abs string) string {
 	base := filepath.Clean(s.m.dir)
@@ -57,12 +123,16 @@ type wsEntry struct {
 
 // GET /api/workspace/list?path=<rel>
 func (s *Server) wsList(w http.ResponseWriter, r *http.Request) {
-	abs, ok := s.wsResolve(r.URL.Query().Get("path"))
+	root, name, abs, ok := s.wsRootPath(r.URL.Query().Get("path"))
 	if !ok {
 		writeErr(w, 400, "非法路径")
 		return
 	}
-	fi, err := os.Stat(abs)
+	if wsHasSymlink(root, name) {
+		writeErr(w, 400, "非法路径")
+		return
+	}
+	fi, err := root.Stat(name)
 	if err != nil {
 		writeErr(w, 404, "路径不存在")
 		return
@@ -71,7 +141,13 @@ func (s *Server) wsList(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, "不是目录")
 		return
 	}
-	ents, err := os.ReadDir(abs)
+	dir, err := root.Open(name)
+	if err != nil {
+		writeErr(w, 500, err.Error())
+		return
+	}
+	defer dir.Close()
+	ents, err := dir.ReadDir(-1)
 	if err != nil {
 		writeErr(w, 500, err.Error())
 		return
@@ -103,12 +179,22 @@ func (s *Server) wsList(w http.ResponseWriter, r *http.Request) {
 // GET /api/workspace/read?path=<rel> — inline text for view/edit. Binary or oversize
 // files return {binary:true}/{too_large:true} with no content (use download instead).
 func (s *Server) wsRead(w http.ResponseWriter, r *http.Request) {
-	abs, ok := s.wsResolve(r.URL.Query().Get("path"))
+	root, name, abs, ok := s.wsRootPath(r.URL.Query().Get("path"))
 	if !ok {
 		writeErr(w, 400, "非法路径")
 		return
 	}
-	fi, err := os.Stat(abs)
+	if wsHasSymlink(root, name) {
+		writeErr(w, 400, "非法路径")
+		return
+	}
+	f, err := root.Open(name)
+	if err != nil {
+		writeErr(w, 404, "文件不存在")
+		return
+	}
+	defer f.Close()
+	fi, err := f.Stat()
 	if err != nil {
 		writeErr(w, 404, "文件不存在")
 		return
@@ -121,7 +207,7 @@ func (s *Server) wsRead(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, map[string]any{"path": s.wsRel(abs), "size": fi.Size(), "too_large": true, "binary": true})
 		return
 	}
-	data, err := os.ReadFile(abs)
+	data, err := io.ReadAll(f)
 	if err != nil {
 		writeErr(w, 500, err.Error())
 		return
@@ -143,20 +229,24 @@ func (s *Server) wsWrite(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, err.Error())
 		return
 	}
-	abs, ok := s.wsResolve(req.Path)
-	if !ok || abs == filepath.Clean(s.m.dir) {
+	root, name, abs, ok := s.wsRootPath(req.Path)
+	if !ok || name == "." {
 		writeErr(w, 400, "非法路径")
 		return
 	}
-	if fi, err := os.Stat(abs); err == nil && fi.IsDir() {
+	if wsHasSymlink(root, name) {
+		writeErr(w, 400, "非法路径")
+		return
+	}
+	if fi, err := root.Stat(name); err == nil && fi.IsDir() {
 		writeErr(w, 400, "目标是目录")
 		return
 	}
-	if err := os.MkdirAll(filepath.Dir(abs), 0o755); err != nil {
+	if err := root.MkdirAll(filepath.Dir(name), 0o755); err != nil {
 		writeErr(w, 500, err.Error())
 		return
 	}
-	if err := os.WriteFile(abs, []byte(req.Content), 0o644); err != nil {
+	if err := root.WriteFile(name, []byte(req.Content), 0o644); err != nil {
 		writeErr(w, 500, err.Error())
 		return
 	}
@@ -172,12 +262,16 @@ func (s *Server) wsMkdir(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, err.Error())
 		return
 	}
-	abs, ok := s.wsResolve(req.Path)
-	if !ok || abs == filepath.Clean(s.m.dir) {
+	root, name, abs, ok := s.wsRootPath(req.Path)
+	if !ok || name == "." {
 		writeErr(w, 400, "非法路径")
 		return
 	}
-	if err := os.MkdirAll(abs, 0o755); err != nil {
+	if wsHasSymlink(root, name) {
+		writeErr(w, 400, "非法路径")
+		return
+	}
+	if err := root.MkdirAll(name, 0o755); err != nil {
 		writeErr(w, 500, err.Error())
 		return
 	}
@@ -187,20 +281,24 @@ func (s *Server) wsMkdir(w http.ResponseWriter, r *http.Request) {
 // DELETE /api/workspace/delete?path=<rel> — removes a file or a directory tree
 // (confined to the work dir; the root itself can't be deleted).
 func (s *Server) wsDelete(w http.ResponseWriter, r *http.Request) {
-	abs, ok := s.wsResolve(r.URL.Query().Get("path"))
+	root, name, _, ok := s.wsRootPath(r.URL.Query().Get("path"))
 	if !ok {
 		writeErr(w, 400, "非法路径")
 		return
 	}
-	if abs == filepath.Clean(s.m.dir) {
+	if name == "." {
 		writeErr(w, 400, "不能删除工作区根目录")
 		return
 	}
-	if _, err := os.Stat(abs); err != nil {
+	if wsHasSymlink(root, name) {
+		writeErr(w, 400, "非法路径")
+		return
+	}
+	if _, err := root.Stat(name); err != nil {
 		writeErr(w, 404, "路径不存在")
 		return
 	}
-	if err := os.RemoveAll(abs); err != nil {
+	if err := root.RemoveAll(name); err != nil {
 		writeErr(w, 500, err.Error())
 		return
 	}
@@ -209,30 +307,44 @@ func (s *Server) wsDelete(w http.ResponseWriter, r *http.Request) {
 
 // GET /api/workspace/download?path=<rel> — stream a file as an attachment.
 func (s *Server) wsDownload(w http.ResponseWriter, r *http.Request) {
-	abs, ok := s.wsResolve(r.URL.Query().Get("path"))
+	root, name, abs, ok := s.wsRootPath(r.URL.Query().Get("path"))
 	if !ok {
 		writeErr(w, 400, "非法路径")
 		return
 	}
-	fi, err := os.Stat(abs)
+	if wsHasSymlink(root, name) {
+		writeErr(w, 400, "非法路径")
+		return
+	}
+	f, err := root.Open(name)
+	if err != nil {
+		writeErr(w, 404, "文件不存在")
+		return
+	}
+	defer f.Close()
+	fi, err := f.Stat()
 	if err != nil || fi.IsDir() {
 		writeErr(w, 404, "文件不存在")
 		return
 	}
-	name := filepath.Base(abs)
+	fileName := filepath.Base(abs)
 	// RFC 5987 filename* keeps non-ASCII names intact; plain filename is the fallback.
-	w.Header().Set("Content-Disposition", "attachment; filename=\""+sanitizeFilename(name)+"\"; filename*=UTF-8''"+url.PathEscape(name))
-	http.ServeFile(w, r, abs)
+	w.Header().Set("Content-Disposition", "attachment; filename=\""+sanitizeFilename(fileName)+"\"; filename*=UTF-8''"+url.PathEscape(fileName))
+	http.ServeContent(w, r, fileName, fi.ModTime(), f)
 }
 
 // POST /api/workspace/upload?path=<dir> — multipart form field "file" (one or more).
 func (s *Server) wsUpload(w http.ResponseWriter, r *http.Request) {
-	dirAbs, ok := s.wsResolve(r.URL.Query().Get("path"))
+	root, dirName, _, ok := s.wsRootPath(r.URL.Query().Get("path"))
 	if !ok {
 		writeErr(w, 400, "非法路径")
 		return
 	}
-	if fi, err := os.Stat(dirAbs); err != nil || !fi.IsDir() {
+	if wsHasSymlink(root, dirName) {
+		writeErr(w, 400, "非法路径")
+		return
+	}
+	if fi, err := root.Stat(dirName); err != nil || !fi.IsDir() {
 		writeErr(w, 400, "目标目录不存在")
 		return
 	}
@@ -252,11 +364,11 @@ func (s *Server) wsUpload(w http.ResponseWriter, r *http.Request) {
 		if name == "" || name == "." || name == ".." {
 			continue
 		}
-		destAbs, okd := s.wsResolve(filepath.Join(s.wsRel(dirAbs), name))
-		if !okd {
+		destName := filepath.Join(dirName, name)
+		if wsHasSymlink(root, destName) {
 			continue
 		}
-		if err := saveUpload(hdr, destAbs); err != nil {
+		if err := saveWorkspaceUpload(root, destName, hdr); err != nil {
 			writeErr(w, 500, err.Error())
 			return
 		}
@@ -265,6 +377,23 @@ func (s *Server) wsUpload(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, map[string]any{"uploaded": saved})
 }
 
+func saveWorkspaceUpload(root *os.Root, dest string, hdr *multipart.FileHeader) error {
+	src, err := hdr.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+	out, err := root.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, src)
+	return err
+}
+
+// saveUpload is retained for the chat upload handler, whose destination is
+// already selected by that handler and is outside the workspace API.
 func saveUpload(hdr *multipart.FileHeader, dest string) error {
 	src, err := hdr.Open()
 	if err != nil {

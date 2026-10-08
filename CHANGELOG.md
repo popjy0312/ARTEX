@@ -1,5 +1,7 @@
 # 更新日志
 
+[中文](CHANGELOG.md) | [English](CHANGELOG.en.md) | [한국어](CHANGELOG.ko.md)
+
 本项目的重要变更记录在此文件中，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 ## [Unreleased]

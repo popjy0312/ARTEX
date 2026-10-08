@@ -2,10 +2,119 @@ package server
 
 import (
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func TestJWTKeyDirectoryMustStayOutsideWorkspace(t *testing.T) {
+	workspace := t.TempDir()
+	for _, keyDir := range []string{workspace, filepath.Join(workspace, "state")} {
+		if _, err := loadOrCreateJWTKey(keyDir, workspace); err == nil {
+			t.Fatalf("keyDir %q inside workspace was accepted", keyDir)
+		}
+	}
+}
+
+func TestJWTKeyMigrationAlwaysRemovesBrowsableLegacy(t *testing.T) {
+	base := t.TempDir()
+	workspace := filepath.Join(base, "data")
+	keyDir := filepath.Join(base, "state")
+	if err := os.MkdirAll(workspace, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(keyDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	active := strings.Repeat("a", 32)
+	legacy := strings.Repeat("b", 32)
+	if err := os.WriteFile(filepath.Join(keyDir, jwtKeyFilename), []byte(active), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	legacyPath := filepath.Join(workspace, jwtKeyFilename)
+	if err := os.WriteFile(legacyPath, []byte(legacy), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	got, err := loadOrCreateJWTKey(keyDir, workspace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != active {
+		t.Fatalf("active key changed: got %q", got)
+	}
+	if _, err := os.Lstat(legacyPath); !os.IsNotExist(err) {
+		t.Fatalf("legacy workspace key still exists: %v", err)
+	}
+	info, err := os.Stat(filepath.Join(keyDir, jwtKeyFilename))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode().Perm() != 0o600 {
+		t.Fatalf("active key mode=%#o, want 0600", info.Mode().Perm())
+	}
+}
+
+func TestJWTKeyRejectsSymlink(t *testing.T) {
+	base := t.TempDir()
+	workspace := filepath.Join(base, "data")
+	keyDir := filepath.Join(base, "state")
+	if err := os.MkdirAll(workspace, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(keyDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	target := filepath.Join(base, "target")
+	if err := os.WriteFile(target, []byte(strings.Repeat("x", 32)), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, filepath.Join(keyDir, jwtKeyFilename)); err != nil {
+		t.Skipf("symlinks unsupported: %v", err)
+	}
+	if _, err := loadOrCreateJWTKey(keyDir, workspace); err == nil {
+		t.Fatal("symlinked jwt key was accepted")
+	}
+}
+
+func TestExtractTokenLimitsQueryCredentialsToSSE(t *testing.T) {
+	const token = "query-secret"
+	for _, tc := range []struct {
+		name, method, path string
+		want               string
+	}{
+		{"logs stream", http.MethodGet, "/api/logs/stream?token=" + token, token},
+		{"update stream", http.MethodGet, "/api/update/stream?token=" + token, token},
+		{"activity stream", http.MethodGet, "/api/exploration/activity/stream?task=1&token=" + token, token},
+		{"side-question stream", http.MethodGet, "/api/side-questions/run-1/events?token=" + token, token},
+		{"ordinary GET rejects query token", http.MethodGet, "/api/settings?token=" + token, ""},
+		{"ordinary write rejects query token", http.MethodPost, "/api/settings?token=" + token, ""},
+		{"SSE path rejects non-GET query token", http.MethodPost, "/api/update/stream?token=" + token, ""},
+		{"side-question prefix alone is insufficient", http.MethodGet, "/api/side-questions/run-1?token=" + token, ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := httptest.NewRequest(tc.method, tc.path, nil)
+			if got := extractToken(r); got != tc.want {
+				t.Fatalf("extractToken(%s %s)=%q, want %q", tc.method, tc.path, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestExtractTokenPrefersHeaderAndCookie(t *testing.T) {
+	r := httptest.NewRequest(http.MethodGet, "/api/settings?token=query", nil)
+	r.AddCookie(&http.Cookie{Name: "artex_token", Value: "cookie"})
+	r.Header.Set("Authorization", "Bearer header")
+	if got := extractToken(r); got != "header" {
+		t.Fatalf("Authorization token=%q, want header", got)
+	}
+	r.Header.Del("Authorization")
+	if got := extractToken(r); got != "cookie" {
+		t.Fatalf("cookie token=%q, want cookie", got)
+	}
+}
 
 // GetSetting 对"键不存在"和"读取出错"的返回值只差一个 error：两种情况 value 都是
 // 空串。密码相关的 handler 一旦把 error 当成"还没设置密码"，就会在数据库抖动期间

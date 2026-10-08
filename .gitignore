@@ -1,5 +1,6 @@
 # backend
 /data/
+/state/
 *.db
 *.db-wal
 *.db-shm
@@ -24,8 +25,10 @@ web/next-env.d.ts
 *.swp
 *.swo
 
-# docs
-/docs/
+# Generated documentation artifacts are ignored, while authored Markdown is
+# versioned (including the English/Korean sidecar translations).
+/docs/*
+!/docs/*.md
 
 # os
 .DS_Store
