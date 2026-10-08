@@ -52,11 +52,13 @@ export function mentionToken(item: ChatMention) {
 }
 
 export function selectedMentions(value: string) {
-  return [...value.matchAll(/@\[(취약점|자산|기업|엔드포인트|IP|애플리케이션|루트 도메인|서브도메인|서비스)#([0-9]+)(?: ([^\]\r\n]*))?\]/g)].map(
-    (match) => ({
-      token: match[0],
-      label: `${match[1]} #${match[2]}${match[3] ? ` · ${match[3]}` : ""}`,
-      start: match.index,
-    }),
-  );
+  return [
+    ...value.matchAll(
+      /@\[(취약점|자산|기업|엔드포인트|IP|애플리케이션|루트 도메인|서브도메인|서비스)#([0-9]+)(?: ([^\]\r\n]*))?\]/g,
+    ),
+  ].map((match) => ({
+    token: match[0],
+    label: `${match[1]} #${match[2]}${match[3] ? ` · ${match[3]}` : ""}`,
+    start: match.index,
+  }));
 }

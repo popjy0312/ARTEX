@@ -13,9 +13,12 @@ package notify
 // 渠道类型标识。取值同时是 notification_channels.kind 的合法集合，由 server 侧
 // 白名单校验（与 findings.status 同理，不用 DB CHECK，方便后续加渠道）。
 const (
-	KindDingTalk = "dingtalk" // 钉钉自定义机器人
-	KindFeishu   = "feishu"   // 飞书(含 Lark)自定义机器人
-	KindWeCom    = "wecom"    // 企业微信群机器人
+	// Legacy China-operated channel kinds remain as migration identifiers so old
+	// rows and tests can be read safely. They are deliberately absent from the
+	// active registry, so no new configuration or delivery can use them.
+	KindDingTalk = "dingtalk"
+	KindFeishu   = "feishu"
+	KindWeCom    = "wecom"
 	KindWebhook  = "webhook"  // 通用 Webhook：自定义方法/头/JSON 模板
 	KindTelegram = "telegram" // Telegram Bot API
 	KindEmail    = "email"    // SMTP 邮件
@@ -28,7 +31,7 @@ const (
 )
 
 // InitKind 是 config 里为空的 kind 的兜底值。
-const InitKind = KindDingTalk
+const InitKind = KindWebhook
 
 // severityRank 把漏洞级别映射成可比较的序数。未知级别返回 0，因此任何
 // min_severity 设置都会把未知级别挡在外面——存疑时不推，避免误报刷屏。

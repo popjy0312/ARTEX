@@ -103,13 +103,15 @@ export function FindingTrafficPanel({
             {!readOnly ? (
               <Button variant="outline" size="sm" disabled={!data || busy} onClick={() => setAdding(true)}>
                 <PlusIcon data-icon="inline-start" />
-트래픽 바인딩
+                트래픽 바인딩
               </Button>
             ) : (
               <Badge variant="outline">상속 증거 · 읽기 전용</Badge>
             )}
           </div>
-          <CardDescription>반복되는 순서대로 요청과 응답을 구성합니다. 원래 트래픽을 정리한 후에도 바인딩된 증거가 남아 있습니다.</CardDescription>
+          <CardDescription>
+            반복되는 순서대로 요청과 응답을 구성합니다. 원래 트래픽을 정리한 후에도 바인딩된 증거가 남아 있습니다.
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {error ? (
@@ -117,7 +119,7 @@ export function FindingTrafficPanel({
               <AlertDescription>
                 {error}
                 <Button variant="link" onClick={() => setReload((n) => n + 1)}>
-다시 시도하세요
+                  다시 시도하세요
                 </Button>
               </AlertDescription>
             </Alert>
@@ -157,7 +159,7 @@ export function FindingTrafficPanel({
                   </span>
                   <div className="flex flex-wrap gap-1">
                     <Button variant="outline" size="sm" onClick={() => setPreview(b.id)}>
-메시지 보기
+                      메시지 보기
                     </Button>
                     {!readOnly ? (
                       <>
@@ -171,7 +173,7 @@ export function FindingTrafficPanel({
                             setNote(b.note);
                           }}
                         >
-편집 메모
+                          편집 메모
                         </Button>
                         <Button
                           variant="ghost"
@@ -199,7 +201,7 @@ export function FindingTrafficPanel({
                             void mutate(() => api.removeFindingTraffic(findingId, b.id, data.version, contextTask))
                           }
                         >
-바인딩 해제
+                          바인딩 해제
                         </Button>
                       </>
                     ) : null}
@@ -264,7 +266,7 @@ export function FindingTrafficPanel({
           </FieldGroup>
           <DialogFooter>
             <Button variant="outline" disabled={busy} onClick={() => setEditing(null)}>
-취소
+              취소
             </Button>
             <Button
               disabled={busy || !editing || !data}
@@ -275,7 +277,7 @@ export function FindingTrafficPanel({
                   );
               }}
             >
-지침 저장
+              지침 저장
             </Button>
           </DialogFooter>
         </DialogContent>

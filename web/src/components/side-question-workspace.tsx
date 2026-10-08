@@ -42,7 +42,7 @@ export function SideQuestionButton({ side }: { side: SideQuestions }) {
   return (
     <Button variant="outline" size="sm" onClick={() => side.setOpen(true)} title="/btw 우회 질문">
       <MessageCircleQuestionIcon data-icon="inline-start" />
-질문 우회
+      질문 우회
     </Button>
   );
 }
@@ -65,13 +65,19 @@ function SidePanel({
   useEffect(() => {
     if (pinned.current && viewport.current) viewport.current.scrollTop = viewport.current.scrollHeight;
   }, [tail?.answer, tail?.id]);
-  const status = { running: "응답", completed: "완료됨", failed: "실패했다", cancelled: "중지됨", interrupted: "중단됨" };
+  const status = {
+    running: "응답",
+    completed: "완료됨",
+    failed: "실패했다",
+    cancelled: "중지됨",
+    interrupted: "중단됨",
+  };
   return (
     <section className="flex h-full min-h-0 flex-col bg-background" aria-label="질문 패널 우회">
       <div className="flex items-center gap-2 border-b p-3">
         <div className="min-w-0 flex-1">
           <p className="font-medium">
-질문 우회<span className="text-muted-foreground">/btw</span>
+            질문 우회<span className="text-muted-foreground">/btw</span>
           </p>
           <p className="truncate text-muted-foreground text-xs">{label}</p>
         </div>
@@ -108,7 +114,7 @@ function SidePanel({
       >
         {side.nextCursor > 0 && (
           <Button variant="ghost" size="sm" onClick={() => void side.load(side.nextCursor)}>
-이전 우회 Q&A 로드
+            이전 우회 Q&A 로드
           </Button>
         )}
         {side.loading && <Skeleton className="h-16 w-full" />}
@@ -116,7 +122,9 @@ function SidePanel({
           <Empty>
             <EmptyHeader>
               <EmptyTitle>언제든지 질문해주세요</EmptyTitle>
-              <EmptyDescription>기본 작업은 현재 상담원의 상황에 맞는 답변을 기반으로 계속 실행됩니다.</EmptyDescription>
+              <EmptyDescription>
+                기본 작업은 현재 상담원의 상황에 맞는 답변을 기반으로 계속 실행됩니다.
+              </EmptyDescription>
             </EmptyHeader>
           </Empty>
         )}
@@ -128,12 +136,12 @@ function SidePanel({
                 <Badge variant="secondary">{status[item.status]}</Badge>
                 <span className="truncate">{item.model.model}</span>
                 <time dateTime={item.snapshot_at} title={new Date(item.snapshot_at).toLocaleString()}>
-컨텍스트 {new Date(item.snapshot_at).toLocaleTimeString()}
+                  컨텍스트 {new Date(item.snapshot_at).toLocaleTimeString()}
                 </time>
               </div>
               {item.context?.estimated_input_tokens != null && (
                 <p className="text-muted-foreground text-xs">
-최근 {item.context.recent_exchanges} 그룹 Q&A 원문
+                  최근 {item.context.recent_exchanges} 그룹 Q&A 원문
                   {item.context.history_summarized && "· 초기 Q&A 요약 포함"}
                   {item.context.snapshot_summarized && "· 주요 컨텍스트 요약을 사용하세요."}
                 </p>
@@ -204,14 +212,17 @@ function SidePanel({
         </InputGroup>
       </div>
       {inlineComposer && (
-        <div className="shrink-0 truncate px-3 pt-0.5 pb-1 text-muted-foreground text-xs">독립적인 Q&A · 도구 없이 실행</div>
+        <div className="shrink-0 truncate px-3 pt-0.5 pb-1 text-muted-foreground text-xs">
+          독립적인 Q&A · 도구 없이 실행
+        </div>
       )}
       <AlertDialog open={confirm} onOpenChange={setConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>우회 기록을 삭제하시겠습니까?</AlertDialogTitle>
             <AlertDialogDescription>
-현재 상담원의 우회 질문과 답변을 삭제하고 우회 답변 생성을 중지합니다. 기본 세션 및 컨텍스트 스냅샷은 보존됩니다.
+              현재 상담원의 우회 질문과 답변을 삭제하고 우회 답변 생성을 중지합니다. 기본 세션 및 컨텍스트 스냅샷은
+              보존됩니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

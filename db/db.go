@@ -208,7 +208,7 @@ var builtinAgents = []builtinAgent{
 		{"WorkerName", "Worker 식별자(선택)", "worker-1", "runtime"},
 	}, false, nil},
 	// Auto:内置「平台操作」agent。不参与渗透编排循环,经对话页驱动,用工具操作平台。
-	{"auto", "오토", "assistant", "플랫폼 운영 보조: 도구로 작업과 자산을 관리하고 skill, custom tool, MCP를 생성하거나 수정합니다.", nil, false, nil},
+	{"auto", "오토", "assistant", "플랫폼 운영 보조: 승인된 도구로 작업과 자산을 관리합니다. 실행 가능한 Skill, custom tool, MCP 구성은 관리자 전용입니다.", nil, false, nil},
 	// 渗透测试:内置「独立渗透」agent。经对话页驱动,一人从侦察到收尾走完整条渗透链,自己规划自己执行自己验证。默认开启交互式 shell。
 	{"pentest", "침투 테스트", "assistant", "독립 침투 테스트 Agent: 정찰부터 공격면 탐색, 악용, 검증, 마무리까지 스스로 계획·실행·대항 검증합니다.", nil, true, intp(0)},
 }
@@ -317,6 +317,26 @@ ON CONFLICT (name) DO NOTHING`,
 	if err := d.seedBuiltinSkillVisibility(); err != nil {
 		return fmt.Errorf("seed skill visibility: %w", err)
 	}
+	// Network-capable shipped skills are opt-in after the egress hardening
+	// migration. This also disables visibility rows created by older releases.
+	if v, _, _ := d.GetSetting("network_skill_opt_in_v1"); v != "done" {
+		if _, err := d.Exec(`UPDATE agent_skill_visibility SET enabled=false WHERE skill_name IN ('api-recon','playwright-cli','scopesentry')`); err != nil {
+			return fmt.Errorf("disable network-capable skill defaults: %w", err)
+		}
+		_ = d.SetSetting("network_skill_opt_in_v1", "done")
+	}
+	if v, _, _ := d.GetSetting("auto_shell_disable_v1"); v != "done" {
+		if _, err := d.Exec(`UPDATE agents SET interactive_shell=false WHERE key='auto'`); err != nil {
+			return fmt.Errorf("disable Auto agent shell: %w", err)
+		}
+		_ = d.SetSetting("auto_shell_disable_v1", "done")
+	}
+	if v, _, _ := d.GetSetting("china_notification_disable_v1"); v != "done" {
+		if _, err := d.Exec(`UPDATE notification_channels SET enabled=false WHERE kind IN ('dingtalk','feishu','wecom')`); err != nil {
+			return fmt.Errorf("disable China-operated notification channels: %w", err)
+		}
+		_ = d.SetSetting("china_notification_disable_v1", "done")
+	}
 	if err := d.seedDefaultInterceptRules(); err != nil {
 		return fmt.Errorf("seed intercept rules: %w", err)
 	}
@@ -386,9 +406,7 @@ WHERE NOT EXISTS (
 // default — the user turns them on per-agent when needed. scopesentry additionally
 // declares `mcps: ScopeSentry`, which only takes effect once it's made visible and
 // that MCP is enabled/configured.
-var builtinSkillVisibility = map[string][]string{
-	"api-recon": {"auto", "pentest", "worker"},
-}
+var builtinSkillVisibility = map[string][]string{}
 
 // seedBuiltinSkillVisibility binds the shipped built-in skills to their default
 // agents. Insert-if-absent (ON CONFLICT DO NOTHING) so a user's later toggle-off is

@@ -29,21 +29,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import type { LLMRecordItem, LLMRecordDetail, LLMTask } from "@/lib/types";
@@ -76,11 +63,16 @@ function tryFormatJSON(s: string): string {
   }
 }
 
-// 复制当前框内文本的小按钮。复制成功后短暂显示对勾。text 为空/仅占位符时禁用。
+// text /
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = React.useState(false);
   const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  React.useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  React.useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [],
+  );
 
   const disabled = !text;
   const copy = async () => {
@@ -88,14 +80,18 @@ function CopyButton({ text }: { text: string }) {
     try {
       await navigator.clipboard.writeText(text);
     } catch {
-      // navigator.clipboard 在非安全上下文(如 http 局域网)不可用，回退到 execCommand。
+      // navigator.clipboard ( http )， execCommand
       const ta = document.createElement("textarea");
       ta.value = text;
       ta.style.position = "fixed";
       ta.style.opacity = "0";
       document.body.appendChild(ta);
       ta.select();
-try { document.execCommand("복사"); } catch { /* 무시: 지원되지 않으면 자동으로 표시됨 */ }
+      try {
+        document.execCommand("복사");
+      } catch {
+        /* 무시: 지원되지 않으면 자동으로 표시됨 */
+      }
       document.body.removeChild(ta);
     }
     setCopied(true);
@@ -139,21 +135,19 @@ export default function LLMRecordsPage() {
   const [selected, setSelected] = React.useState<LLMRecordItem | null>(null);
   const [detail, setDetail] = React.useState<LLMRecordDetail | null>(null);
   const [detailLoading, setDetailLoading] = React.useState(false);
-  // 归一化视图 / HTTP 原文视图。原文是排查 provider 侧问题的唯一依据：归一化视图
-  // 不含工具 schema，响应里也没有 tool_use 块。
+  //  / HTTP  provider ：
+  //  schema， tool_use
   const [rawView, setRawView] = React.useState(false);
 
   const hasRaw = !!(detail?.raw_request || detail?.raw_response);
-  // 开关保持用户选择，但切到一条无原文的旧记录时自动落回解析视图，而不是显示空白。
+  // ，，
   const showRaw = rawView && hasRaw;
-  // 原文请求体是 JSON，pretty-print 只改排版不改语义，便于阅读；原文响应是 SSE
-  // 帧，tryFormatJSON 解析失败会原样返回，故两边共用一个函数即可。
+  //  JSON，pretty-print ，； SSE
+  // ，tryFormatJSON ，
   const reqText = showRaw
     ? detail?.raw_request && tryFormatJSON(detail.raw_request)
     : detail?.request_body && tryFormatJSON(detail.request_body);
-  const respText = showRaw
-    ? detail?.raw_response
-    : detail?.response_body && tryFormatJSON(detail.response_body);
+  const respText = showRaw ? detail?.raw_response : detail?.response_body && tryFormatJSON(detail.response_body);
 
   // Per-task delete (task picker + confirm dialog)
   const [tasks, setTasks] = React.useState<LLMTask[]>([]);
@@ -167,9 +161,13 @@ export default function LLMRecordsPage() {
     let alive = true;
     api
       .settings()
-      .then((s) => { if (alive) setRecEnabled(!!s.llm_record); })
+      .then((s) => {
+        if (alive) setRecEnabled(!!s.llm_record);
+      })
       .catch(() => {});
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const toggleRecording = async (on: boolean) => {
@@ -201,7 +199,13 @@ export default function LLMRecordsPage() {
     let alive = true;
     setLoading(true);
     api
-      .llmRecords({ model: model || undefined, session: sessionQ || undefined, task: pickedTask || undefined, page, size })
+      .llmRecords({
+        model: model || undefined,
+        session: sessionQ || undefined,
+        task: pickedTask || undefined,
+        page,
+        size,
+      })
       .then((r) => {
         if (!alive) return;
         setRecords(r.records ?? []);
@@ -211,9 +215,13 @@ export default function LLMRecordsPage() {
       .finally(() => alive && setLoading(false));
     api
       .llmTasks()
-      .then((r) => { if (alive) setTasks(r.tasks ?? []); })
+      .then((r) => {
+        if (alive) setTasks(r.tasks ?? []);
+      })
       .catch(() => {});
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [page, size, sessionQ, model, pickedTask, reloadTick]);
 
   // Delete every LLM record for the picked task, then refetch.
@@ -244,10 +252,16 @@ export default function LLMRecordsPage() {
     setDetail(null);
     api
       .llmRecordDetail(selected.id)
-      .then((d) => { if (alive) setDetail(d); })
+      .then((d) => {
+        if (alive) setDetail(d);
+      })
       .catch(() => {})
-      .finally(() => { if (alive) setDetailLoading(false); });
-    return () => { alive = false; };
+      .finally(() => {
+        if (alive) setDetailLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
   }, [selected]);
 
   const totalPages = Math.max(1, Math.ceil(total / size));
@@ -276,12 +290,7 @@ export default function LLMRecordsPage() {
             className="h-8 pl-8"
           />
         </div>
-        <Input
-          placeholder="Model"
-          className="h-8 w-48"
-          value={model}
-          onChange={(e) => setModel(e.target.value)}
-        />
+        <Input placeholder="Model" className="h-8 w-48" value={model} onChange={(e) => setModel(e.target.value)} />
         <Select value={pickedTask} onValueChange={setPickedTask}>
           <SelectTrigger size="sm" className="w-56">
             <SelectValue placeholder="작업 선택…" />
@@ -289,7 +298,7 @@ export default function LLMRecordsPage() {
           <SelectContent>
             {tasks.length === 0 ? (
               <SelectItem value="__none__" disabled>
-아직 작업 기록이 없습니다.
+                아직 작업 기록이 없습니다.
               </SelectItem>
             ) : (
               tasks.map((t) => (
@@ -310,7 +319,7 @@ export default function LLMRecordsPage() {
           onClick={() => setDeleteOpen(true)}
         >
           <Trash2Icon className="size-3.5" />
-작업 대화상자 삭제
+          작업 대화상자 삭제
         </Button>
         <Select value={String(size)} onValueChange={(v) => setSize(Number(v))}>
           <SelectTrigger size="sm" className="w-28">
@@ -319,7 +328,7 @@ export default function LLMRecordsPage() {
           <SelectContent>
             {PAGE_SIZES.map((n) => (
               <SelectItem key={n} value={String(n)}>
-{n}/페이지
+                {n}/페이지
               </SelectItem>
             ))}
           </SelectContent>
@@ -400,22 +409,17 @@ export default function LLMRecordsPage() {
                 ) : records.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">
-아직 LLM 통화 기록이 없습니다.
+                      아직 LLM 통화 기록이 없습니다.
                     </TableCell>
                   </TableRow>
                 ) : (
                   records.map((rec) => (
                     <TableRow
                       key={rec.id}
-                      className={cn(
-                        "cursor-pointer",
-                        selected?.id === rec.id && "bg-accent hover:bg-accent",
-                      )}
+                      className={cn("cursor-pointer", selected?.id === rec.id && "bg-accent hover:bg-accent")}
                       onClick={() => setSelected(rec)}
                     >
-                      <TableCell className="text-xs text-muted-foreground tabular-nums">
-                        {fmtTime(rec.ts)}
-                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground tabular-nums">{fmtTime(rec.ts)}</TableCell>
                       <TableCell className="text-xs font-mono text-muted-foreground">
                         {rec.task_id ? `#${rec.task_id}` : "-"}
                       </TableCell>
@@ -442,9 +446,13 @@ export default function LLMRecordsPage() {
                       </TableCell>
                       <TableCell>
                         {rec.status === "ok" ? (
-                          <Badge variant="secondary" className="text-xs text-emerald-600">OK</Badge>
+                          <Badge variant="secondary" className="text-xs text-emerald-600">
+                            OK
+                          </Badge>
                         ) : (
-                          <Badge variant="destructive" className="text-xs">오류</Badge>
+                          <Badge variant="destructive" className="text-xs">
+                            오류
+                          </Badge>
                         )}
                       </TableCell>
                     </TableRow>
@@ -471,38 +479,39 @@ export default function LLMRecordsPage() {
               </Badge>
               {selected.task_id && (
                 <Badge variant="outline" className="text-xs font-mono">
-작업 #{selected.task_id}
+                  작업 #{selected.task_id}
                 </Badge>
               )}
-              <span className="text-xs text-muted-foreground">
-                {fmtTime(selected.ts)}
-              </span>
+              <span className="text-xs text-muted-foreground">{fmtTime(selected.ts)}</span>
               <span className={cn("text-xs", selected.latency_ms > 30000 && "text-amber-500")}>
                 {fmtLatency(selected.latency_ms)}
               </span>
               {selected.status === "ok" ? (
-                <Badge variant="secondary" className="text-xs text-emerald-600">OK</Badge>
+                <Badge variant="secondary" className="text-xs text-emerald-600">
+                  OK
+                </Badge>
               ) : (
-                <Badge variant="destructive" className="text-xs">오류</Badge>
+                <Badge variant="destructive" className="text-xs">
+                  오류
+                </Badge>
               )}
-{/* 원본 텍스트 보기 전환. 이전 기록에는 원본 텍스트가 없습니다. 이때는 처럼 보이지 않도록 자동으로 롤백하는 것이 아니라 비활성화되어 있습니다.
+              {/* 원본 텍스트 보기 전환. 이전 기록에는 원본 텍스트가 없습니다. 이때는 처럼 보이지 않도록 자동으로 롤백하는 것이 아니라 비활성화되어 있습니다.
 "원문은 분석 내용과 일치합니다." */}
               <Button
                 variant={showRaw ? "secondary" : "ghost"}
                 size="sm"
                 className="ml-auto h-7 shrink-0 text-xs"
                 disabled={!hasRaw}
-                title={hasRaw ? "공급자가 실제로 보내고 받은 원본 HTTP 텍스트를 봅니다." : "이 기록은 이 기능이 출시되기 전에 녹음된 것으로 원본 텍스트가 없습니다."}
+                title={
+                  hasRaw
+                    ? "공급자가 실제로 보내고 받은 원본 HTTP 텍스트를 봅니다."
+                    : "이 기록은 이 기능이 출시되기 전에 녹음된 것으로 원본 텍스트가 없습니다."
+                }
                 onClick={() => setRawView((v) => !v)}
               >
-원래의
+                원래의
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7 shrink-0"
-                onClick={() => setSelected(null)}
-              >
+              <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={() => setSelected(null)}>
                 <XIcon />
               </Button>
             </div>
@@ -517,12 +526,10 @@ export default function LLMRecordsPage() {
                   {detailLoading ? (
                     <div className="flex items-center gap-2 p-3 text-xs text-muted-foreground">
                       <Loader2Icon className="size-3.5 animate-spin" />
-짐…
+                      짐…
                     </div>
                   ) : (
-                    <pre className="p-3 font-mono text-xs break-all whitespace-pre-wrap">
-                      {reqText || "(널)"}
-                    </pre>
+                    <pre className="p-3 font-mono text-xs break-all whitespace-pre-wrap">{reqText || "(널)"}</pre>
                   )}
                 </div>
               </div>
@@ -535,13 +542,15 @@ export default function LLMRecordsPage() {
                   {detailLoading ? (
                     <div className="flex items-center gap-2 p-3 text-xs text-muted-foreground">
                       <Loader2Icon className="size-3.5 animate-spin" />
-짐…
+                      짐…
                     </div>
                   ) : (
-                    <pre className={cn(
-                      "p-3 font-mono text-xs break-all whitespace-pre-wrap",
-                      selected.status !== "ok" && "text-red-600 dark:text-red-400",
-                    )}>
+                    <pre
+                      className={cn(
+                        "p-3 font-mono text-xs break-all whitespace-pre-wrap",
+                        selected.status !== "ok" && "text-red-600 dark:text-red-400",
+                      )}
+                    >
                       {respText || "(널)"}
                     </pre>
                   )}
@@ -557,7 +566,8 @@ export default function LLMRecordsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>"{pickedTask}" 작업에 대한 모든 LLM 대화를 삭제하시겠습니까?</AlertDialogTitle>
             <AlertDialogDescription>
-이 작업의 모든 LLM 통화 기록(원본 요청/응답 텍스트 포함)이 영구적으로 삭제되며 이 작업은 되돌릴 수 없습니다.
+              이 작업의 모든 LLM 통화 기록(원본 요청/응답 텍스트 포함)이 영구적으로 삭제되며 이 작업은 되돌릴 수
+              없습니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

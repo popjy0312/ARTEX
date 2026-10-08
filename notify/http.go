@@ -14,6 +14,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/Autumn-27/artex/egress"
 )
 
 // allowLocalTargets 决定是否允许把消息投递到环回 / 链路本地地址。
@@ -130,6 +132,9 @@ const respBodyLimit = 8 << 10
 // 错误分类是这个函数的核心职责：网络层失败与 5xx/408/429 归为「可重试」，
 // 其余 4xx 归为「永久失败」——重试一个 403 只是把同一个错误刷 3 遍日志。
 func doJSON(ctx context.Context, method, url string, headers map[string]string, payload any) ([]byte, error) {
+	if err := egress.CheckURL(url); err != nil {
+		return nil, Permanent(err)
+	}
 	var body io.Reader
 	if payload != nil {
 		raw, err := json.Marshal(payload)

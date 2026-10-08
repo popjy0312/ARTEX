@@ -12,6 +12,45 @@ import (
 	"strings"
 )
 
+// ScrubSensitiveEnv removes credentials and credential-bearing proxy settings
+// from the process environment after ARTEX has loaded its own configuration.
+// Agent shell commands, Python tools, and stdio MCP servers inherit the parent
+// environment, so leaving service credentials here would expose them to every
+// subprocess spawned by an autonomous agent.
+func ScrubSensitiveEnv() []string {
+	exact := map[string]bool{
+		"ANTHROPIC_API_KEY": true, "OPENAI_API_KEY": true,
+		"ARTEX_PG_DSN": true, "ARTEX_PG_PASSWORD": true,
+		"ARTEX_LLM_BASE_URL": true, "ARTEX_LLM_PROXY": true,
+		"AWS_ACCESS_KEY_ID": true, "AWS_SECRET_ACCESS_KEY": true, "AWS_SESSION_TOKEN": true,
+		"GOOGLE_APPLICATION_CREDENTIALS": true,
+		"AZURE_CLIENT_SECRET":            true, "AZURE_CLIENT_CERTIFICATE_PATH": true,
+		"GITHUB_TOKEN": true, "GH_TOKEN": true, "NPM_TOKEN": true,
+		"SSH_AUTH_SOCK": true, "GIT_ASKPASS": true, "SSH_ASKPASS": true,
+		"HTTP_PROXY": true, "HTTPS_PROXY": true, "ALL_PROXY": true,
+		"http_proxy": true, "https_proxy": true, "all_proxy": true,
+	}
+	var removed []string
+	for _, entry := range os.Environ() {
+		name, _, ok := strings.Cut(entry, "=")
+		upper := strings.ToUpper(name)
+		sensitivePattern := strings.HasSuffix(upper, "_API_KEY") ||
+			strings.HasSuffix(upper, "_TOKEN") ||
+			strings.HasSuffix(upper, "_SECRET") ||
+			strings.HasSuffix(upper, "_PASSWORD") ||
+			upper == "DATABASE_URL" || upper == "PGPASSWORD" ||
+			strings.HasPrefix(upper, "KUBECONFIG") ||
+			strings.HasPrefix(upper, "DOCKER_AUTH_CONFIG")
+		if !ok || (!exact[name] && !sensitivePattern) {
+			continue
+		}
+		if err := os.Unsetenv(name); err == nil {
+			removed = append(removed, name)
+		}
+	}
+	return removed
+}
+
 // Database is the PostgreSQL connection config. Either set DSN directly, or set
 // the component fields and a DSN is assembled from them.
 type Database struct {

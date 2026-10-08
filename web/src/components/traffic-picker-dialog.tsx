@@ -114,7 +114,8 @@ export function TrafficPickerDialog({
           <DialogHeader>
             <DialogTitle>트래픽 바인딩</DialogTitle>
             <DialogDescription>
-요청/응답을 필터링하고 다중 선택하면 선택한 기록이 여러 페이지에 걸쳐 유지됩니다. 바인딩 후 목적, 설명, 순서를 설정할 수 있습니다.
+              요청/응답을 필터링하고 다중 선택하면 선택한 기록이 여러 페이지에 걸쳐 유지됩니다. 바인딩 후 목적, 설명,
+              순서를 설정할 수 있습니다.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup className="flex flex-col gap-3 sm:flex-row">
@@ -222,7 +223,7 @@ export function TrafficPickerDialog({
                     <TableCell>{e.status}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm" onClick={() => setPreview(e.id)}>
-시사
+                        시사
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -239,7 +240,7 @@ export function TrafficPickerDialog({
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-sm">
-{selected.size} 항목 선택됨 · 총 {data?.total ?? 0}개 항목
+              {selected.size} 항목 선택됨 · 총 {data?.total ?? 0}개 항목
             </span>
             <div className="flex items-center gap-2">
               <Button
@@ -248,7 +249,7 @@ export function TrafficPickerDialog({
                 disabled={loading || page === 0}
                 onClick={() => setPage((p) => p - 1)}
               >
-이전 페이지
+                이전 페이지
               </Button>
               <span className="text-xs">페이지 {page + 1}</span>
               <Button
@@ -257,13 +258,13 @@ export function TrafficPickerDialog({
                 disabled={loading || (page + 1) * 25 >= (data?.total ?? 0)}
                 onClick={() => setPage((p) => p + 1)}
               >
-다음 페이지
+                다음 페이지
               </Button>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" disabled={busy} onClick={onClose}>
-취소
+              취소
             </Button>
             <Button disabled={busy || selected.size === 0} onClick={() => void save()}>
               {busy ? "저장 중…" : `${selected.size}개 트래픽 연결`}

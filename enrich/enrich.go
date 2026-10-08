@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/Autumn-27/artex/db"
+	"github.com/Autumn-27/artex/egress"
 
 	"github.com/miekg/dns"
 	"github.com/projectdiscovery/dnsx/libs/dnsx"
@@ -181,6 +182,9 @@ func (e *Engine) doDNS(id int64, host string) {
 	if e.resolv == nil {
 		return
 	}
+	if err := egress.CheckHost(host); err != nil {
+		return
+	}
 	data, err := e.resolv.QueryMultiple(host)
 	if err != nil || data == nil {
 		return
@@ -188,6 +192,9 @@ func (e *Engine) doDNS(id int64, host string) {
 	ips := uniq(append(append([]string{}, data.A...), data.AAAA...))
 	// Upsert resolved IPs into the asset store.
 	for _, ip := range ips {
+		if err := egress.CheckHost(ip); err != nil {
+			continue
+		}
 		_, _ = e.as.UpsertIP(db.UpsertIPReq{
 			IP:           ip,
 			BoundDomains: []string{host},
@@ -224,6 +231,9 @@ var reTitle = regexp.MustCompile(`(?is)<title[^>]*>(.*?)</title>`)
 func (e *Engine) doHTTP(id int64, rawURL string) {
 	host := hostOf(rawURL)
 	if host == "" {
+		return
+	}
+	if err := egress.CheckURL(rawURL); err != nil {
 		return
 	}
 	req, err := http.NewRequest("GET", rawURL, nil)

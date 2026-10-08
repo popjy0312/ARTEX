@@ -160,7 +160,7 @@ function appendUploads(desc: string, atts: ChatAttachment[]): string {
 }
 
 // POLL_MS is the task-list refresh interval. Task state moves on the server (planner /
-// worker), so the list has to be pulled; 10s is plenty for status / 进度 / token 变化.
+// worker), so the list has to be pulled; 10s is plenty for status /  / token .
 const POLL_MS = 10_000;
 const MAX_SOURCE_TASKS = 8;
 
@@ -238,13 +238,13 @@ const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
   { value: "timeout", label: "시간 초과" },
 ];
 
-// Select 不接受空字符串 value,所以「无分类」在筛选器、新建表单和批量移动里
-// 统一用这个哨兵值,提交时再翻译成后端的 null。
+// Select  value,
+// , null
 const UNCATEGORIZED_VALUE = "uncategorized";
 
-// 可暂停 = 非终态且未暂停,与后端 applyTaskControlWithCause 的门控一致
-// (done/failed/timeout 为终态);paused 才可继续。行内按钮与批量控制共用此判断,
-// 两边不会出现一个可点、另一个不可点的分歧。
+//  = , applyTaskControlWithCause
+// (done/failed/timeout );paused ,
+//
 const PAUSABLE_STATUSES = new Set<TaskStatus>(["created", "queued", "running"]);
 const ARCHIVABLE_STATUSES = new Set<TaskStatus>(["paused", "done", "failed", "timeout"]);
 
@@ -401,7 +401,7 @@ export default function TasksPage() {
     [ordered, page, pageSize],
   );
 
-  // 多选删除:选择跨翻页/筛选保留,只在任务真的消失(被删或后端不再返回)时收敛。
+  // :/,()
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(() => new Set());
 
   React.useEffect(() => {
@@ -513,11 +513,11 @@ export default function TasksPage() {
     if (!categories.some((category) => String(category.id) === categoryFilter)) setCategoryFilter("all");
   }, [categories, categoriesLoaded, categoryFilter]);
 
-  // 只在确有 running 任务时才每秒 tick——其余情况「运行时长」是静态值,空转的 tick 会白白
-  // 重渲染整张表。
+  //  running  tick——, tick
+  //
   const hasRunning = React.useMemo(() => tasks.some((t) => t.status === "running"), [tasks]);
 
-  // tick every second so running tasks' 运行时长 counts up live.
+  // tick every second so running tasks'  counts up live.
   React.useEffect(() => {
     if (!hasRunning) return;
     setNowSec(Math.floor(Date.now() / 1000));
@@ -530,7 +530,9 @@ export default function TasksPage() {
       try {
         const result = await api.deleteTask(id, options);
         if (result.cleanup_warning) {
-          toast.warning(`${deleteSummary(result)};일부 외부 데이터 정리가 완료되지 않았습니다.${result.cleanup_warning}`);
+          toast.warning(
+            `${deleteSummary(result)};일부 외부 데이터 정리가 완료되지 않았습니다.${result.cleanup_warning}`,
+          );
         } else {
           toast.success(deleteSummary(result));
         }
@@ -543,20 +545,22 @@ export default function TasksPage() {
     [load],
   );
 
-  // controlTask 是行内暂停/继续:批量走 controlTasksBatch,单行走单任务接口,省去
-  // 「先勾选再点批量」。清空 lastRef 让下一次轮询即使负载相同也照单接收,否则状态
-  // 回写会被去重挡掉、按钮看起来没反应。
+  // controlTask /: controlTasksBatch,,
+  //  lastRef ,
+  //
   const controlTask = React.useCallback(
     async (id: string, action: "pause" | "resume") => {
       try {
         const result = await api.controlTask(id, action);
         toast.success(
-          action === "pause" ? `작업 #${id}이(가) 일시 중지되었습니다.` : `작업 #${id}이(가) 계속 실행됩니다${result.queued ? ", 대기열에 추가되었습니다." : ""}`,
+          action === "pause"
+            ? `작업 #${id}이(가) 일시 중지되었습니다.`
+            : `작업 #${id}이(가) 계속 실행됩니다${result.queued ? ", 대기열에 추가되었습니다." : ""}`,
         );
       } catch (e) {
         toast.error(`${action === "pause" ? "일시 중지" : "계속"} 실패: ${(e as Error).message}`);
       } finally {
-        // 无论成败都刷新:失败多半是状态已变化,重新拉取才能让按钮回到正确形态。
+        // :,
         lastRef.current = "";
         load();
       }
@@ -611,8 +615,8 @@ export default function TasksPage() {
     [load],
   );
 
-  // deleteTasks 逐个删除所选任务:后端没有批量接口,且单次删除会连带清理资产/流量/文件,
-  // 串行执行以免一次性打爆后端;成功的从选中集移除,失败的保留以便重试。
+  // deleteTasks :,//,
+  // ;,
   const deleteTasks = React.useCallback(
     async (ids: string[], options: DeleteTaskOptions, onProgress: (done: number) => void) => {
       const total: DeleteCounts = {
@@ -651,7 +655,8 @@ export default function TasksPage() {
           return next;
         });
         const details = deleteDetails(total);
-        const summary = `${deleted.length}개 작업을 삭제했습니다.` + (details.length > 0 ? ` (${details.join(", ")})` : "");
+        const summary =
+          `${deleted.length}개 작업을 삭제했습니다.` + (details.length > 0 ? ` (${details.join(", ")})` : "");
         if (warnings.length > 0) {
           toast.warning(`${summary} 일부 외부 데이터 정리가 완료되지 않았습니다. ${warnings.join("; ")}`);
         } else {
@@ -692,7 +697,7 @@ export default function TasksPage() {
     if (succeeded.length > 0) toast.success(`${succeeded.length}개 작업을 보관 대기열에 추가했습니다.`);
     if (failed.length > 0) {
       toast.error(
-`${failed.length} 작업을 보관할 수 없습니다: ${failed
+        `${failed.length} 작업을 보관할 수 없습니다: ${failed
           .slice(0, 3)
           .map((item) => `#${item.id}(${item.error || "상태가 변경되었습니다."})`)
           .join("; ")}`,
@@ -741,7 +746,7 @@ export default function TasksPage() {
     [batchControlling, load],
   );
 
-  // 后端把整批分类写入放在一个事务里，所以失败项只可能是勾选后又被删掉的任务。
+  // ，
   const moveSelectedTasksCategory = React.useCallback(
     async (categoryID?: number) => {
       const ids = [...selectedIds];
@@ -838,13 +843,13 @@ export default function TasksPage() {
                 </SelectContent>
               </Select>
               <span className="text-muted-foreground text-xs tabular-nums">
-{filtered.length}/{tasks.length} 항목
+                {filtered.length}/{tasks.length} 항목
               </span>
               {selectedIds.size > 0 && (
                 <>
                   <span className="text-xs tabular-nums">{selectedIds.size} 선택됨</span>
                   <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
-선택 취소
+                    선택 취소
                   </Button>
                   {pausableTaskIDs.length > 0 && (
                     <Button
@@ -858,7 +863,7 @@ export default function TasksPage() {
                       ) : (
                         <PauseIcon data-icon="inline-start" />
                       )}
-{pausableTaskIDs.length} 일시 중지
+                      {pausableTaskIDs.length} 일시 중지
                     </Button>
                   )}
                   {resumableTaskIDs.length > 0 && (
@@ -873,7 +878,7 @@ export default function TasksPage() {
                       ) : (
                         <PlayIcon data-icon="inline-start" />
                       )}
-계속 {resumableTaskIDs.length}
+                      계속 {resumableTaskIDs.length}
                     </Button>
                   )}
                   {archivableTaskIDs.length > 0 && (
@@ -883,7 +888,7 @@ export default function TasksPage() {
                       trigger={
                         <Button size="sm" variant="outline">
                           <ArchiveIcon data-icon="inline-start" />
-{archivableTaskIDs.length} 보관
+                          {archivableTaskIDs.length} 보관
                         </Button>
                       }
                     />
@@ -914,11 +919,11 @@ export default function TasksPage() {
 
             {tasks.length === 0 ? (
               <div className="text-muted-foreground mx-4 flex items-center justify-center rounded-lg border border-dashed py-20 text-sm lg:mx-6">
-아직 작업이 없습니다. 시작하려면 오른쪽 상단에 있는 "새 작업"을 클릭하세요.
+                아직 작업이 없습니다. 시작하려면 오른쪽 상단에 있는 "새 작업"을 클릭하세요.
               </div>
             ) : filtered.length === 0 ? (
               <div className="text-muted-foreground mx-4 flex items-center justify-center rounded-lg border border-dashed py-20 text-sm lg:mx-6">
-일치하는 작업이 없습니다.
+                일치하는 작업이 없습니다.
               </div>
             ) : (
               <Table className="**:data-[slot='table-cell']:px-4 **:data-[slot='table-head']:px-4">
@@ -951,7 +956,7 @@ export default function TasksPage() {
                     />
                     <TableHead className="text-center">목표 진행</TableHead>
                     <TableHead className="text-center" title="심함/높음/중간/낮음">
-허점<span className="text-muted-foreground font-normal">엄격함/높음/보통/낮음</span>
+                      허점<span className="text-muted-foreground font-normal">엄격함/높음/보통/낮음</span>
                     </TableHead>
                     <TableHead className="text-center">달리는 일꾼</TableHead>
                     <SortableTaskHead
@@ -972,7 +977,7 @@ export default function TasksPage() {
                     />
                     <TableHead className="text-right">토큰</TableHead>
                     <TableHead className="sticky right-0 z-10 bg-card text-right shadow-[-1px_0_0_0_hsl(var(--border))]">
-작업
+                      작업
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -981,8 +986,8 @@ export default function TasksPage() {
                     <TaskRow
                       key={task.id}
                       task={task}
-                      // running 任务才吃 nowSec;其余行传 0 —— props 不变,memo 就能拦下每秒 tick
-                      // 带来的整表重渲染,只让在跑的那几行走时长。
+                      // running  nowSec; 0 —— props ,memo  tick
+                      // ,
                       nowSec={task.status === "running" ? nowSec : 0}
                       onDelete={deleteTask}
                       onControl={controlTask}
@@ -1046,7 +1051,8 @@ function SortableTaskHead({
   if (active) ariaSort = direction === "asc" ? "ascending" : "descending";
 
   let actionLabel = `~에 따르면${label}역순으로 정렬`;
-  if (active) actionLabel = `${label}현재의${direction === "asc" ? "정방향 순서" : "역순"}, 방향을 전환하려면 선택하세요.`;
+  if (active)
+    actionLabel = `${label}현재의${direction === "asc" ? "정방향 순서" : "역순"}, 방향을 전환하려면 선택하세요.`;
 
   return (
     <TableHead className={className} aria-sort={ariaSort}>
@@ -1093,7 +1099,11 @@ function ConcurrencySettingsDialog() {
     setSaving(true);
     try {
       await api.setSettings({ task_concurrency_enabled: enabled, task_concurrency_limit: nextLimit });
-      toast.success(enabled ? `동시성 제한이 설정되었습니다. 최대 동시에 실행됩니다.${nextLimit}작업` : "작업 동시성 제한이 꺼졌습니다.");
+      toast.success(
+        enabled
+          ? `동시성 제한이 설정되었습니다. 최대 동시에 실행됩니다.${nextLimit}작업`
+          : "작업 동시성 제한이 꺼졌습니다.",
+      );
       setOpen(false);
     } catch (error) {
       toast.error(`저장 실패:${(error as Error).message}`);
@@ -1106,14 +1116,16 @@ function ConcurrencySettingsDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline" className="ml-auto" aria-label="작업 동시성 설정">
-          <SlidersHorizontalIcon />동시성 설정
+          <SlidersHorizontalIcon />
+          동시성 설정
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>작업 동시성 제한</DialogTitle>
           <DialogDescription>
-동시에 실행되는 작업 수를 제한합니다. 한도에 도달하면 새 작업이 생성된 순서대로 대기열에 추가되고 슬롯을 사용할 수 있게 되면 자동으로 시작됩니다.
+            동시에 실행되는 작업 수를 제한합니다. 한도에 도달하면 새 작업이 생성된 순서대로 대기열에 추가되고 슬롯을
+            사용할 수 있게 되면 자동으로 시작됩니다.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-5 py-2">
@@ -1152,7 +1164,7 @@ function ConcurrencySettingsDialog() {
   );
 }
 
-// TaskRow renders one row of the task table. Memoized so the per-second 运行时长 tick and
+// TaskRow renders one row of the task table. Memoized so the per-second  tick and
 // the POLL_MS list refresh only re-render the rows whose data actually moved — a table page
 // is 20 rows × (StatusBadge + Link + a Radix AlertDialog tree), far too heavy to rebuild
 // wholesale on every parent render.
@@ -1223,9 +1235,7 @@ const TaskRow = React.memo(function TaskRow({
           const f = task.findings;
           const total = f ? f.critical + f.high + f.medium + f.low : 0;
           if (!f || total === 0) return <span className="text-muted-foreground">0</span>;
-          const seg = (n: number, cls: string) => (
-            <span className={n > 0 ? cls : "text-muted-foreground"}>{n}</span>
-          );
+          const seg = (n: number, cls: string) => <span className={n > 0 ? cls : "text-muted-foreground"}>{n}</span>;
           return (
             <span className="font-medium whitespace-nowrap" title="심함/높음/중간/낮음">
               {seg(f.critical, "text-rose-600 dark:text-rose-400")}
@@ -1270,7 +1280,7 @@ const TaskRow = React.memo(function TaskRow({
       >
         {task.tokens ? (
           <span className="text-muted-foreground">
-입력하다<span className="text-foreground">{fmtTokens(task.tokens.input_tokens)}</span>
+            입력하다<span className="text-foreground">{fmtTokens(task.tokens.input_tokens)}</span>
             {"· 느린"}
             <span className="text-foreground">{fmtTokens(task.tokens.cache_read_tokens)}</span>
             {"· 밖으로"}
@@ -1423,15 +1433,15 @@ function TaskPinAction({ task, onTogglePinned }: { task: Task; onTogglePinned: (
   );
 }
 
-// 三态图标分开写而非嵌套三元:仓库 Biome 基线禁 noNestedTernary。
+// : Biome  noNestedTernary
 function taskControlIcon(pending: boolean, action: "pause" | "resume" | null) {
   if (pending) return <Loader2Icon className="animate-spin" />;
   if (action === "resume") return <PlayIcon />;
   return <PauseIcon />;
 }
 
-// TaskControlButton 是行内的暂停/继续开关。终态任务渲染为 disabled 而不是隐藏,
-// 这样各行操作列宽度一致,按钮位置不会随状态跳动。
+// TaskControlButton / disabled ,
+// ,
 function TaskControlButton({
   task,
   onControl,
@@ -1466,7 +1476,8 @@ function TaskControlButton({
 
 function archiveBlockReason(task: Task): string {
   if (task.queued) return "대기 중인 작업을 먼저 일시중지해야 합니다.";
-  if (!ARCHIVABLE_STATUSES.has(task.status)) return "실행 중이거나 아직 완료되지 않은 작업을 먼저 일시 중지해야 합니다.";
+  if (!ARCHIVABLE_STATUSES.has(task.status))
+    return "실행 중이거나 아직 완료되지 않은 작업을 먼저 일시 중지해야 합니다.";
   if (task.archive_blocked_by_task_id) {
     return `작업이 보관되지 않은 작업입니다 #${task.archive_blocked_by_task_id}직접 상속, 종속 작업을 먼저 보관하세요.`;
   }
@@ -1491,7 +1502,8 @@ function ArchiveConfirmDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>{count === 1 ? "작업 보관" : `보관소${count}작업`}</AlertDialogTitle>
           <AlertDialogDescription className="[overflow-wrap:anywhere]">
-보관하면 작업 예약이 중지되고 그래프, LLM 기록, 파일, 독점 자산 및 트래픽이 로컬 콜드 스토리지로 압축됩니다. 보관이 완료된 후 "보관됨"에서 복원할 수 있습니다.
+            보관하면 작업 예약이 중지되고 그래프, LLM 기록, 파일, 독점 자산 및 트래픽이 로컬 콜드 스토리지로 압축됩니다.
+            보관이 완료된 후 "보관됨"에서 복원할 수 있습니다.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -1510,7 +1522,7 @@ function ArchiveConfirmDialog({
             }}
           >
             {pending && <Spinner data-icon="inline-start" />}
-보관 확인
+            보관 확인
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -1618,7 +1630,8 @@ function ArchiveDeleteDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>{archives.length} 작업 아카이브를 영구적으로 삭제하시겠습니까?</AlertDialogTitle>
           <AlertDialogDescription className="[overflow-wrap:anywhere]">
-대략 {formatArchiveBytes(bytes)}의 아카이브 패키지 및 {rows.toLocaleString()} 관련 데이터 스냅샷이 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+            대략 {formatArchiveBytes(bytes)}의 아카이브 패키지 및 {rows.toLocaleString()} 관련 데이터 스냅샷이
+            영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -1638,7 +1651,7 @@ function ArchiveDeleteDialog({
             }}
           >
             {pending && <Spinner data-icon="inline-start" />}
-영구 삭제
+            영구 삭제
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -1835,7 +1848,7 @@ function TaskArchivesPanel({ onChanged }: { onChanged: () => void }) {
               {restorable.length > 0 && (
                 <Button size="sm" variant="outline" onClick={() => void restoreMany(restorable)}>
                   <Undo2Icon data-icon="inline-start" />
-{restorable.length} 복원
+                  {restorable.length} 복원
                 </Button>
               )}
               {deletable.length > 0 && (
@@ -1845,7 +1858,7 @@ function TaskArchivesPanel({ onChanged }: { onChanged: () => void }) {
                   trigger={
                     <Button size="sm" variant="destructive">
                       <Trash2Icon data-icon="inline-start" />
-{deletable.length}을(를) 영구적으로 삭제합니다.
+                      {deletable.length}을(를) 영구적으로 삭제합니다.
                     </Button>
                   }
                 />
@@ -1861,7 +1874,9 @@ function TaskArchivesPanel({ onChanged }: { onChanged: () => void }) {
           <Empty className="mx-4 border border-dashed lg:mx-6">
             <EmptyHeader>
               <EmptyTitle>아직 보관된 작업이 없습니다.</EmptyTitle>
-              <EmptyDescription>일시 중지된 작업이나 최종 작업은 현재 작업 목록에서 보관할 수 있습니다.</EmptyDescription>
+              <EmptyDescription>
+                일시 중지된 작업이나 최종 작업은 현재 작업 목록에서 보관할 수 있습니다.
+              </EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : (
@@ -1982,7 +1997,12 @@ function TaskArchivesPanel({ onChanged }: { onChanged: () => void }) {
                             archives={[archive]}
                             onConfirm={() => deleteMany([archive])}
                             trigger={
-                              <Button size="icon" variant="ghost" aria-label="아카이브를 영구적으로 삭제" title="영구 삭제">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                aria-label="아카이브를 영구적으로 삭제"
+                                title="영구 삭제"
+                              >
                                 <Trash2Icon />
                               </Button>
                             }
@@ -2027,7 +2047,7 @@ const deleteOptionKeys: (keyof DeleteTaskOptions)[] = [
   "delete_llm_records",
 ];
 
-// DeleteOptionFields renders the「同时清理关联数据」checkbox block shared by the
+// DeleteOptionFields renders thecheckbox block shared by the
 // single-task and bulk delete dialogs. idPrefix keeps the label/input ids unique when
 // several dialogs live in the same table.
 function DeleteOptionFields({
@@ -2075,7 +2095,9 @@ function DeleteOptionFields({
           />
           <FieldContent>
             <FieldLabel htmlFor={`delete-all-${idPrefix}`}>모두 삭제</FieldLabel>
-            <FieldDescription>자산, 트래픽, 파일, 취약점, LLM 요청/응답 기록을 포함한 모든 관련 데이터를 아래에서 확인하세요.</FieldDescription>
+            <FieldDescription>
+              자산, 트래픽, 파일, 취약점, LLM 요청/응답 기록을 포함한 모든 관련 데이터를 아래에서 확인하세요.
+            </FieldDescription>
           </FieldContent>
         </Field>
         <Field orientation="horizontal">
@@ -2086,7 +2108,9 @@ function DeleteOptionFields({
           />
           <FieldContent>
             <FieldLabel htmlFor={`delete-assets-${idPrefix}`}>관련 자산</FieldLabel>
-            <FieldDescription>이 작업에만 속하는 자산을 삭제하십시오. 공유 자산은 현재 작업에서만 연결이 해제됩니다.</FieldDescription>
+            <FieldDescription>
+              이 작업에만 속하는 자산을 삭제하십시오. 공유 자산은 현재 작업에서만 연결이 해제됩니다.
+            </FieldDescription>
           </FieldContent>
         </Field>
         <Field orientation="horizontal">
@@ -2097,7 +2121,10 @@ function DeleteOptionFields({
           />
           <FieldContent>
             <FieldLabel htmlFor={`delete-traffic-${idPrefix}`}>관련 트래픽</FieldLabel>
-            <FieldDescription>관련 자산의 정확한 호스트 이름으로 제거됩니다. 다른 작업에서 참조하는 공유 호스팅 트래픽은 여전히 ​​남아 있습니다.</FieldDescription>
+            <FieldDescription>
+              관련 자산의 정확한 호스트 이름으로 제거됩니다. 다른 작업에서 참조하는 공유 호스팅 트래픽은 여전히 ​​남아
+              있습니다.
+            </FieldDescription>
           </FieldContent>
         </Field>
         <Field orientation="horizontal">
@@ -2108,7 +2135,9 @@ function DeleteOptionFields({
           />
           <FieldContent>
             <FieldLabel htmlFor={`delete-files-${idPrefix}`}>작업 파일</FieldLabel>
-            <FieldDescription>작업의 작업 디렉터리에서 업로드된 파일, 명령 출력 및 기타 아티팩트를 삭제합니다.</FieldDescription>
+            <FieldDescription>
+              작업의 작업 디렉터리에서 업로드된 파일, 명령 출력 및 기타 아티팩트를 삭제합니다.
+            </FieldDescription>
           </FieldContent>
         </Field>
         <Field orientation="horizontal">
@@ -2119,7 +2148,9 @@ function DeleteOptionFields({
           />
           <FieldContent>
             <FieldLabel htmlFor={`delete-findings-${idPrefix}`}>상관관계 취약점</FieldLabel>
-            <FieldDescription>이 작업으로 생성된 독립적인 취약성 기록 및 취약성 보고서를 영구적으로 삭제합니다.</FieldDescription>
+            <FieldDescription>
+              이 작업으로 생성된 독립적인 취약성 기록 및 취약성 보고서를 영구적으로 삭제합니다.
+            </FieldDescription>
           </FieldContent>
         </Field>
         <Field orientation="horizontal">
@@ -2130,7 +2161,9 @@ function DeleteOptionFields({
           />
           <FieldContent>
             <FieldLabel htmlFor={`delete-llm-records-${idPrefix}`}>LLM 요청/응답 기록</FieldLabel>
-            <FieldDescription>이 작업에서 기록된 LLM 요청, 응답, 토큰 및 오류 세부 정보를 영구적으로 삭제합니다.</FieldDescription>
+            <FieldDescription>
+              이 작업에서 기록된 LLM 요청, 응답, 토큰 및 오류 세부 정보를 영구적으로 삭제합니다.
+            </FieldDescription>
           </FieldContent>
         </Field>
       </FieldGroup>
@@ -2187,7 +2220,7 @@ function DeleteTaskDialog({
             ) : (
               "과제"
             )}
-실행 기록 및 탐색 링크가 영구적으로 삭제됩니다.
+            실행 기록 및 탐색 링크가 영구적으로 삭제됩니다.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <DeleteOptionFields idPrefix={task.id} options={options} onOptionsChange={setOptions} disabled={deleting} />
@@ -2240,13 +2273,16 @@ function MoveTasksCategoryDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
-          <FolderInputIcon data-icon="inline-start" />분류 수정
+          <FolderInputIcon data-icon="inline-start" />
+          분류 수정
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>선택한 {count}개 작업의 분류 수정</DialogTitle>
-          <DialogDescription>선택한 모든 작업에 같은 분류를 적용합니다. "분류되지 않음"을 선택하면 현재 분류에서 제거됩니다.</DialogDescription>
+          <DialogDescription>
+            선택한 모든 작업에 같은 분류를 적용합니다. "분류되지 않음"을 선택하면 현재 분류에서 제거됩니다.
+          </DialogDescription>
         </DialogHeader>
         <Field>
           <FieldLabel htmlFor="bulk-category">대상 분류</FieldLabel>
@@ -2265,12 +2301,16 @@ function MoveTasksCategoryDialog({
               </SelectGroup>
             </SelectContent>
           </Select>
-          {categories.length === 0 && <FieldDescription>아직 카테고리가 없습니다. 먼저 "카테고리 관리"를 사용하여 카테고리를 만드세요.</FieldDescription>}
+          {categories.length === 0 && (
+            <FieldDescription>
+              아직 카테고리가 없습니다. 먼저 "카테고리 관리"를 사용하여 카테고리를 만드세요.
+            </FieldDescription>
+          )}
         </Field>
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline" disabled={moving}>
-취소
+              취소
             </Button>
           </DialogClose>
           <Button
@@ -2280,7 +2320,7 @@ function MoveTasksCategoryDialog({
             }}
           >
             {moving && <Spinner data-icon="inline-start" />}
-이동하다
+            이동하다
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -2324,14 +2364,15 @@ function BulkDeleteTasksDialog({
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger asChild>
         <Button size="sm" variant="outline">
-          <Trash2Icon className="text-destructive" />선택한 {ids.length} 삭제
+          <Trash2Icon className="text-destructive" />
+          선택한 {ids.length} 삭제
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="max-h-[85vh] overflow-y-auto">
         <AlertDialogHeader>
           <AlertDialogTitle>선택한 {ids.length} 작업을 삭제하시겠습니까?</AlertDialogTitle>
           <AlertDialogDescription>
-해당 작업의 실행 기록과 탐색 링크는 영구적으로 삭제되며, 아래 정리 옵션은 선택한 작업에 동일하게 적용됩니다.
+            해당 작업의 실행 기록과 탐색 링크는 영구적으로 삭제되며, 아래 정리 옵션은 선택한 작업에 동일하게 적용됩니다.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="text-muted-foreground flex flex-wrap gap-1 text-xs">
@@ -2362,8 +2403,8 @@ function BulkDeleteTasksDialog({
   );
 }
 
-// CreateTaskSheet is the 新建任务 drawer. Its form state lives HERE, not in TasksPage: with
-// 描述/目标 held by the page component every keystroke re-rendered the whole task table
+// CreateTaskSheet is the  drawer. Its form state lives HERE, not in TasksPage: with
+// / held by the page component every keystroke re-rendered the whole task table
 // behind the drawer (plus its sticky column and 20 AlertDialog trees), which showed up as
 // input lag. Now typing only re-renders the drawer.
 function SourceTaskPicker({
@@ -2433,9 +2474,9 @@ function SourceTaskPicker({
   );
 }
 
-// CategoryPicker 是新建任务里的单选分类选择器：可搜索已有分类；输入库里没有的名称后
-// 回车（或点下拉里的「创建」）即时新建分类并选中，选中项以可移除的 tag 展示。分类是
-// 全局资源，这里即时创建与「分类管理」里手动新建等价。只允许一个分类。
+// CategoryPicker ：；
+// （）， tag
+// ，
 function CategoryPicker({
   categories,
   value,
@@ -2451,8 +2492,8 @@ function CategoryPicker({
 }) {
   const [inputValue, setInputValue] = React.useState("");
   const [creating, setCreating] = React.useState(false);
-  // 新建的分类要等父层重新拉取才回流到 categories，先本地留一份，避免选中的 chip 和
-  // 下拉在这段窗口里显示成「未知分类」。
+  //  categories，， chip
+  //
   const [localExtra, setLocalExtra] = React.useState<TaskCategory[]>([]);
 
   const allCategories = React.useMemo(() => {
@@ -2468,14 +2509,14 @@ function CategoryPicker({
 
   const trimmed = inputValue.trim();
   const lower = trimmed.toLowerCase();
-  // 与 base-ui 默认子串过滤保持一致，用来判断「有没有相关分类」。
+  //  base-ui ，
   const matchCount = trimmed
     ? allCategories.filter((c) => c.name.toLowerCase().includes(lower)).length
     : allCategories.length;
 
   const createAndSelect = async () => {
     if (!trimmed || creating) return;
-    // 精确同名已存在则直接选中，不重复创建。
+    // ，
     const existing = allCategories.find((c) => c.name.toLowerCase() === lower);
     if (existing) {
       onValueChange(existing.id);
@@ -2504,7 +2545,7 @@ function CategoryPicker({
       multiple
       value={selectedIDs}
       onValueChange={(next: string[]) => {
-        // 单选：取最新选中的一个；移除 chip（清空）则回到未分类。
+        // ：； chip（）
         const last = next[next.length - 1];
         onValueChange(last ? Number(last) : undefined);
         setInputValue("");
@@ -2522,7 +2563,7 @@ function CategoryPicker({
           id="task-category"
           placeholder={selectedIDs.length ? "" : "카테고리를 검색하거나, 새 이름을 입력하고 Enter를 눌러 생성하세요."}
           onKeyDown={(e) => {
-            // 完全无匹配时回车 = 创建；有匹配项时保留 base-ui 的「回车选中高亮项」。
+            //  = ； base-ui
             if (e.key === "Enter" && matchCount === 0 && trimmed) {
               e.preventDefault();
               void createAndSelect();
@@ -2546,11 +2587,12 @@ function CategoryPicker({
               onClick={() => void createAndSelect()}
               className="flex w-full items-center gap-2 px-2 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
             >
-              {creating ? <Spinner className="size-4" /> : <PlusIcon className="size-4" />}
-"{trimmed}" 카테고리 생성
+              {creating ? <Spinner className="size-4" /> : <PlusIcon className="size-4" />}"{trimmed}" 카테고리 생성
             </button>
           ) : (
-            <div className="px-2 py-2 text-sm text-muted-foreground">카테고리를 검색하거나 생성하려면 이름을 입력하세요.</div>
+            <div className="px-2 py-2 text-sm text-muted-foreground">
+              카테고리를 검색하거나 생성하려면 이름을 입력하세요.
+            </div>
           ))}
       </ComboboxContent>
     </Combobox>
@@ -2621,9 +2663,11 @@ function CompanyPicker({
               <ComboboxItem key={companyID} value={companyID}>
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <div className="flex min-w-0 items-center gap-2">
-                    <span className="min-w-0 flex-1 truncate font-medium">{company?.name ?? `기업번호${companyID}`}</span>
+                    <span className="min-w-0 flex-1 truncate font-medium">
+                      {company?.name ?? `기업번호${companyID}`}
+                    </span>
                     <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
-{company?.asset_count ?? 0} 자산
+                      {company?.asset_count ?? 0} 자산
                     </span>
                   </div>
                   {company && (
@@ -2672,7 +2716,9 @@ function CategoryDropTarget({
       onClick={onSelect}
     >
       <span className="block truncate font-medium text-sm">{name}</span>
-      <span className="block truncate text-muted-foreground text-xs">{isOver ? "이동하려면 손을 떼세요" : `${count}작업`}</span>
+      <span className="block truncate text-muted-foreground text-xs">
+        {isOver ? "이동하려면 손을 떼세요" : `${count}작업`}
+      </span>
     </button>
   );
 }
@@ -2899,13 +2945,16 @@ function CategoryManagementSheet({
         <SheetTrigger asChild>
           <Button size="sm" variant="outline">
             <TagsIcon data-icon="inline-start" />
-분류관리
+            분류관리
           </Button>
         </SheetTrigger>
         <SheetContent className="grid h-full w-full! max-w-none! grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:w-[48rem]! sm:max-w-[48rem]!">
           <SheetHeader className="border-b px-6 py-5">
             <SheetTitle>업무 분류 관리</SheetTitle>
-            <SheetDescription>카테고리는 작업 필터링 및 보관에 사용됩니다. 수정 사항은 작업 실행에 영향을 미치지 않으며 작업은 삭제 후 분류되지 않은 상태로 이동됩니다.</SheetDescription>
+            <SheetDescription>
+              카테고리는 작업 필터링 및 보관에 사용됩니다. 수정 사항은 작업 실행에 영향을 미치지 않으며 작업은 삭제 후
+              분류되지 않은 상태로 이동됩니다.
+            </SheetDescription>
           </SheetHeader>
           <DndContext
             sensors={sensors}
@@ -2917,7 +2966,7 @@ function CategoryManagementSheet({
               <div className="flex min-h-0 flex-col border-b p-3 lg:border-r lg:border-b-0">
                 <Button type="button" variant="outline" className="w-full" onClick={startNew}>
                   <PlusIcon data-icon="inline-start" />
-새로운 카테고리
+                  새로운 카테고리
                 </Button>
                 <ScrollArea className="mt-2 max-h-44 lg:max-h-none lg:flex-1">
                   <div className="flex flex-col gap-1 pr-2">
@@ -2980,7 +3029,11 @@ function CategoryManagementSheet({
                       {visibleTasks.length === 0 ? (
                         <Empty className="min-h-36 border">
                           <EmptyHeader>
-                            <EmptyTitle>{selectedCategory ? "현재 이 카테고리에는 작업이 없습니다." : "아직 분류되지 않은 작업이 없습니다."}</EmptyTitle>
+                            <EmptyTitle>
+                              {selectedCategory
+                                ? "현재 이 카테고리에는 작업이 없습니다."
+                                : "아직 분류되지 않은 작업이 없습니다."}
+                            </EmptyTitle>
                             <EmptyDescription>작업이 그룹화되면 여기에 내용이 표시됩니다.</EmptyDescription>
                           </EmptyHeader>
                         </Empty>
@@ -3013,11 +3066,11 @@ function CategoryManagementSheet({
                 onClick={() => setDeleteOpen(true)}
               >
                 <Trash2Icon data-icon="inline-start" />
-카테고리 삭제
+                카테고리 삭제
               </Button>
             )}
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-폐쇄
+              폐쇄
             </Button>
             {selectedView !== "uncategorized" && (
               <Button
@@ -3035,9 +3088,12 @@ function CategoryManagementSheet({
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>"{selectedCategory?.name || "이름이 없는 카테고리"}" 카테고리를 삭제하시겠습니까?</AlertDialogTitle>
+            <AlertDialogTitle>
+              "{selectedCategory?.name || "이름이 없는 카테고리"}" 카테고리를 삭제하시겠습니까?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-카테고리가 삭제된 후, {selectedCategory?.task_count ?? 0} 작업은 자동으로 '분류 없음'으로 이동되며, 작업 데이터는 삭제되지 않습니다.
+              카테고리가 삭제된 후, {selectedCategory?.task_count ?? 0} 작업은 자동으로 '분류 없음'으로 이동되며, 작업
+              데이터는 삭제되지 않습니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -3083,12 +3139,12 @@ function CreateTaskSheet({
   const [companyIDs, setCompanyIDs] = React.useState<number[]>([]);
   const [llmProfileIDs, setLLMProfileIDs] = React.useState<string[]>([]);
   const [creating, setCreating] = React.useState(false);
-const [timeoutMin, setTimeoutMin] = React.useState(""); // 작업 수준 제한 시간(분); 비어 있음/0 = 시간 제한 없음
-const [heartbeatMin, setHeartbeatMin] = React.useState("10"); // 플래너 하트비트(분); 기본값 10, 하한 10(백엔드와 일치)
-const [seedFirstIntent, setSeedFirstIntent] = React.useState(false); // 생성 시 시드 인텐션이 발행되며 작업자는 플래너의 첫 번째 라운드를 기다리지 않고 직접 실행을 시작할 수 있습니다. 기본적으로 닫혀 있으며, 기준과 계획을 먼저 따르고 실행합니다.
-const [coverageEnabled, setCoverageEnabled] = React.useState(true); // 자산 커버리지 기능; 기본적으로 활성화되어 있습니다. 닫기 = 적용 범위를 계산/표시하지 않음, 범위를 누적하지 않음, 범위 도구 숨기기(회사 연결은 영향을 받지 않음)
+  const [timeoutMin, setTimeoutMin] = React.useState(""); // 작업 수준 제한 시간(분); 비어 있음/0 = 시간 제한 없음
+  const [heartbeatMin, setHeartbeatMin] = React.useState("10"); // 플래너 하트비트(분); 기본값 10, 하한 10(백엔드와 일치)
+  const [seedFirstIntent, setSeedFirstIntent] = React.useState(false); // 생성 시 시드 인텐션이 발행되며 작업자는 플래너의 첫 번째 라운드를 기다리지 않고 직접 실행을 시작할 수 있습니다. 기본적으로 닫혀 있으며, 기준과 계획을 먼저 따르고 실행합니다.
+  const [coverageEnabled, setCoverageEnabled] = React.useState(true); // 자산 커버리지 기능; 기본적으로 활성화되어 있습니다. 닫기 = 적용 범위를 계산/표시하지 않음, 범위를 누적하지 않음, 범위 도구 숨기기(회사 연결은 영향을 받지 않음)
   const [interceptRules, setInterceptRules] = React.useState<AssetInterceptRuleInput[]>([]); // 작업 수준 자산 차단 규칙(이 작업에만 유효하며 글로벌 테이블에 입력되지 않음)
-  // 方式1 文件上传:建任务前把文件暂存到 drafts/<draftId>/uploads/,拿回绝对路径追加进描述。
+  // 1 : drafts/<draftId>/uploads/,
   const [uploading, setUploading] = React.useState(false);
   const [uploadCount, setUploadCount] = React.useState(0);
   const draftIdRef = React.useRef<string>("");
@@ -3111,7 +3167,7 @@ const [coverageEnabled, setCoverageEnabled] = React.useState(true); // 자산 �
   // absolute paths to the description; the task's agents open them by path via Read/Bash.
   async function pickFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
-    // crypto.randomUUID 仅在安全上下文可用(https/localhost);经 IP+http 访问时降级。
+    // crypto.randomUUID (https/localhost); IP+http
     if (!draftIdRef.current) {
       draftIdRef.current =
         globalThis.crypto?.randomUUID?.() ?? `d${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
@@ -3141,7 +3197,7 @@ const [coverageEnabled, setCoverageEnabled] = React.useState(true); // 자산 �
     setCreating(true);
     try {
       const timeoutSec = Math.max(0, Math.floor(Number(timeoutMin) || 0)) * 60;
-const heartbeatSec = Math.max(10, Math.floor(Number(heartbeatMin) || 10)) * 60; // 하한은 백엔드와 일치하는 10분입니다.
+      const heartbeatSec = Math.max(10, Math.floor(Number(heartbeatMin) || 10)) * 60; // 하한은 백엔드와 일치하는 10분입니다.
       await api.createTask({
         name: name.trim(),
         categoryId: categoryID,
@@ -3190,7 +3246,7 @@ const heartbeatSec = Math.max(10, Math.floor(Number(heartbeatMin) || 10)) * 60; 
           <PlusIcon />새 작업 만들기
         </Button>
       </SheetTrigger>
-{/* 45vw 너비 오른쪽 서랍: 전체 화면 높이를 스크롤할 수 있으며 긴 형식은 더 이상 팝업 창 높이로 제한되지 않습니다. 좁은 화면은 전체 너비로 저하됩니다.
+      {/* 45vw 너비 오른쪽 서랍: 전체 화면 높이를 스크롤할 수 있으며 긴 형식은 더 이상 팝업 창 높이로 제한되지 않습니다. 좁은 화면은 전체 너비로 저하됩니다.
 콘텐츠는 플렉스 열입니다. 머리/발은 고정되어 있고 중간 필드 영역 flex-1은 독립적으로 스크롤됩니다. */}
       <SheetContent
         ref={sheetContentRef}
@@ -3199,7 +3255,9 @@ const heartbeatSec = Math.max(10, Math.floor(Number(heartbeatMin) || 10)) * 60; 
       >
         <SheetHeader className="border-b p-6">
           <SheetTitle>새 작업 만들기</SheetTitle>
-          <SheetDescription>테스트 개체와 대상을 입력하면 필요에 따라 고급 매개변수를 확장할 수 있습니다.</SheetDescription>
+          <SheetDescription>
+            테스트 개체와 대상을 입력하면 필요에 따라 고급 매개변수를 확장할 수 있습니다.
+          </SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto p-6">
@@ -3238,7 +3296,9 @@ const heartbeatSec = Math.max(10, Math.floor(Number(heartbeatMin) || 10)) * 60; 
                 onCategoryCreated={onCategoriesChanged}
                 portalContainer={sheetContentRef}
               />
-              <FieldDescription>선택사항, 단일 카테고리. 에이전트 실행에 영향을 주지 않고 작업 목록 필터링 및 보관에 사용됩니다.</FieldDescription>
+              <FieldDescription>
+                선택사항, 단일 카테고리. 에이전트 실행에 영향을 주지 않고 작업 목록 필터링 및 보관에 사용됩니다.
+              </FieldDescription>
             </Field>
             <div className="grid gap-2">
               <Label htmlFor="description">설명하다</Label>
@@ -3249,7 +3309,7 @@ const heartbeatSec = Math.max(10, Math.floor(Number(heartbeatMin) || 10)) * 60; 
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
-{/* 파일 업로드(다중 선택 가능): 임시로drafts/에 저장하고 위 설명에 절대 경로를 추가하면 작업자가 이에 따라 읽기/Bash를 사용하여 파일을 엽니다. */}
+              {/* 파일 업로드(다중 선택 가능): 임시로drafts/에 저장하고 위 설명에 절대 경로를 추가하면 작업자가 이에 따라 읽기/Bash를 사용하여 파일을 엽니다. */}
               <div className="flex flex-wrap items-center gap-2">
                 <input
                   ref={fileInputRef}
@@ -3266,7 +3326,7 @@ const heartbeatSec = Math.max(10, Math.floor(Number(heartbeatMin) || 10)) * 60; 
                   disabled={uploading}
                 >
                   {uploading ? <Loader2Icon className="animate-spin" /> : <PaperclipIcon />}
-파일 업로드
+                  파일 업로드
                 </Button>
                 <span className="text-muted-foreground text-xs">
                   {uploadCount > 0
@@ -3294,8 +3354,8 @@ const heartbeatSec = Math.max(10, Math.floor(Number(heartbeatMin) || 10)) * 60; 
                 portalContainer={sheetContentRef}
               />
               <FieldDescription>
-최대 {MAX_SOURCE_TASKS}{" "}
-일. 선택된 작업의 영구 칠판, 자산 범위 및 관련 트래픽의 실시간 읽기 전용 상속입니다. 새로운 작업은 독립 칠판에 기록됩니다.
+                최대 {MAX_SOURCE_TASKS} 일. 선택된 작업의 영구 칠판, 자산 범위 및 관련 트래픽의 실시간 읽기 전용
+                상속입니다. 새로운 작업은 독립 칠판에 기록됩니다.
               </FieldDescription>
             </Field>
             <Field>
@@ -3307,15 +3367,19 @@ const heartbeatSec = Math.max(10, Math.floor(Number(heartbeatMin) || 10)) * 60; 
                 portalContainer={sheetContentRef}
               />
               <FieldDescription>
-작업 생성 시 선택한 기업의 현재 기존 자산이 "테스트 자산"에 추가되고 도메인 이름, IP, CIDR, ICP 및 기업 키워드가 에이전트에 제공됩니다.
-범위 컨텍스트로 작동합니다. 자동으로 인텐트를 생성하거나 실행 대상을 강제로 변경하지 않습니다.
+                작업 생성 시 선택한 기업의 현재 기존 자산이 "테스트 자산"에 추가되고 도메인 이름, IP, CIDR, ICP 및 기업
+                키워드가 에이전트에 제공됩니다. 범위 컨텍스트로 작동합니다. 자동으로 인텐트를 생성하거나 실행 대상을
+                강제로 변경하지 않습니다.
               </FieldDescription>
             </Field>
             <Field>
               <FieldLabel htmlFor="task-intercept-rules">작업 수준 자산 차단/허용 규칙(선택 사항)</FieldLabel>
               <AssetInterceptRulesEditor value={interceptRules} onChange={setInterceptRules} />
               <FieldDescription>
-이 작업에만 적용되며 전역 규칙을 작성하지 않습니다. 결정 순서: "가로채기" 규칙(전역 포함)에 따른 첫 번째 일치, 작업이 적중되면 테스트가 금지됩니다. 일치하지 않고 이 작업에 대해 "허용" 규칙이 구성된 경우 통과가 허용되기 전에 허용 규칙에 도달해야 합니다. 그렇지 않으면 테스트가 허용되지 않습니다. 허용 규칙이 구성되지 않으면 화이트리스트가 활성화되지 않습니다.
+                이 작업에만 적용되며 전역 규칙을 작성하지 않습니다. 결정 순서: "가로채기" 규칙(전역 포함)에 따른 첫 번째
+                일치, 작업이 적중되면 테스트가 금지됩니다. 일치하지 않고 이 작업에 대해 "허용" 규칙이 구성된 경우 통과가
+                허용되기 전에 허용 규칙에 도달해야 합니다. 그렇지 않으면 테스트가 허용되지 않습니다. 허용 규칙이
+                구성되지 않으면 화이트리스트가 활성화되지 않습니다.
               </FieldDescription>
             </Field>
             <Field>
@@ -3327,15 +3391,20 @@ const heartbeatSec = Math.max(10, Math.floor(Number(heartbeatMin) || 10)) * 60; 
                 inputId="llm-profiles"
                 portalContainer={sheetContentRef}
               />
-              <FieldDescription>목록 순서대로 장애 조치; 첫 번째 항목은 현재 구성이고, 다음 항목은 할당량이 부족하다는 것이 분명한 경우에만 전환됩니다.</FieldDescription>
+              <FieldDescription>
+                목록 순서대로 장애 조치; 첫 번째 항목은 현재 구성이고, 다음 항목은 할당량이 부족하다는 것이 분명한
+                경우에만 전환됩니다.
+              </FieldDescription>
             </Field>
 
-{/* 고급 매개변수는 기본적으로 시간 초과/하트비트/첫 번째 의도로 축소됩니다. 확장은 공간만 차지하며 일반적으로 사용되는 경로는 깔끔하게 유지됩니다. */}
+            {/* 고급 매개변수는 기본적으로 시간 초과/하트비트/첫 번째 의도로 축소됩니다. 확장은 공간만 차지하며 일반적으로 사용되는 경로는 깔끔하게 유지됩니다. */}
             <Collapsible>
               <CollapsibleTrigger className="group flex w-full items-center gap-2 border-t pt-4 text-sm font-medium">
                 <ChevronRightIcon className="text-muted-foreground size-4 transition-transform group-data-[state=open]:rotate-90" />
-고급 설정
-                <span className="text-muted-foreground ml-auto text-xs font-normal">시간 초과 · 하트비트 · 첫 번째 의도</span>
+                고급 설정
+                <span className="text-muted-foreground ml-auto text-xs font-normal">
+                  시간 초과 · 하트비트 · 첫 번째 의도
+                </span>
               </CollapsibleTrigger>
               <CollapsibleContent className="grid gap-5 pt-5">
                 <div className="grid gap-2">
@@ -3350,7 +3419,8 @@ const heartbeatSec = Math.max(10, Math.floor(Number(heartbeatMin) || 10)) * 60; 
                     onChange={(e) => setTimeoutMin(e.target.value)}
                   />
                   <p className="text-muted-foreground text-xs">
-해당 지점에 도달한 후 우아한 종료가 트리거되고(각 에이전트가 답장하고 플래너가 결정을 확정함) 작업이 시간 제한 최종 상태로 들어갑니다.
+                    해당 지점에 도달한 후 우아한 종료가 트리거되고(각 에이전트가 답장하고 플래너가 결정을 확정함) 작업이
+                    시간 제한 최종 상태로 들어갑니다.
                   </p>
                 </div>
                 <div className="grid gap-2">
@@ -3365,8 +3435,8 @@ const heartbeatSec = Math.max(10, Math.floor(Number(heartbeatMin) || 10)) * 60; 
                     onChange={(e) => setHeartbeatMin(e.target.value)}
                   />
                   <p className="text-muted-foreground text-xs">
-마지막 계획 라운드 종료/작업 시작 후 해당 기간 동안 트리거가 없으면 계획 라운드가 자동으로 트리거됩니다(하단에 고정 + 실행을 감독하기 위해 깨어남).
-노동자). 하한은 10분입니다.
+                    마지막 계획 라운드 종료/작업 시작 후 해당 기간 동안 트리거가 없으면 계획 라운드가 자동으로
+                    트리거됩니다(하단에 고정 + 실행을 감독하기 위해 깨어남). 노동자). 하한은 10분입니다.
                   </p>
                 </div>
                 <div className="grid gap-2">
@@ -3376,11 +3446,12 @@ const heartbeatSec = Math.max(10, Math.floor(Number(heartbeatMin) || 10)) * 60; 
                       checked={seedFirstIntent}
                       onCheckedChange={(v) => setSeedFirstIntent(!!v)}
                     />
-첫 번째 인텐트를 직접 발행(설명 + 대상)
+                    첫 번째 인텐트를 직접 발행(설명 + 대상)
                   </label>
                   <p className="text-muted-foreground text-xs">
-생성 후 "설명 + 목표"가 의도로 발행됩니다. 작업자는 첫 번째 계획 단계를 기다리지 않고 직접 실행을 시작합니다. 실행이 완료된 후 기획자는 다음을 수행합니다.
-판단/보충을 인수합니다. 작업이 직접적으로 문제를 해결하는 경우에는 CTF를 켜는 것이 좋습니다. 꺼진 경우 표준 계획을 먼저 따르고 실행하십시오.
+                    생성 후 "설명 + 목표"가 의도로 발행됩니다. 작업자는 첫 번째 계획 단계를 기다리지 않고 직접 실행을
+                    시작합니다. 실행이 완료된 후 기획자는 다음을 수행합니다. 판단/보충을 인수합니다. 작업이 직접적으로
+                    문제를 해결하는 경우에는 CTF를 켜는 것이 좋습니다. 꺼진 경우 표준 계획을 먼저 따르고 실행하십시오.
                   </p>
                 </div>
                 <div className="grid gap-2">
@@ -3390,11 +3461,13 @@ const heartbeatSec = Math.max(10, Math.floor(Number(heartbeatMin) || 10)) * 60; 
                       checked={coverageEnabled}
                       onCheckedChange={(v) => setCoverageEnabled(!!v)}
                     />
-자산보상 기능
+                    자산보상 기능
                   </label>
                   <p className="text-muted-foreground text-xs">
-기본적으로 활성화: 테스트 범위 계산 및 표시, 상황 차트는 테스트 진행 상황을 표시하고 테스트 범위를 자동으로 누적합니다. 종료 후에는 보장 범위가 더 이상 계산/표시되지 않습니다.
-상황 다이어그램은 자산만 표시하고 진행 상황은 표시하지 않으며 상담원은 더 이상 범위 도구를 받지 않습니다. 폐쇄는 "관련 기업의 자산 범위"에 영향을 미치지 않습니다.
+                    기본적으로 활성화: 테스트 범위 계산 및 표시, 상황 차트는 테스트 진행 상황을 표시하고 테스트 범위를
+                    자동으로 누적합니다. 종료 후에는 보장 범위가 더 이상 계산/표시되지 않습니다. 상황 다이어그램은
+                    자산만 표시하고 진행 상황은 표시하지 않으며 상담원은 더 이상 범위 도구를 받지 않습니다. 폐쇄는 "관련
+                    기업의 자산 범위"에 영향을 미치지 않습니다.
                   </p>
                 </div>
               </CollapsibleContent>

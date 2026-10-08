@@ -9,31 +9,31 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { NotificationFilter } from "@/lib/types";
 
-// asText / inputType 은本파일内의取值辅助（와控件渲染强相关），않음放에서 channel-fields。
+// asText / inputType 은파일의（와），않음에서 channel-fields
 import { type FieldDef, type FieldKind, SEVERITY_OPTIONS } from "./channel-fields";
 
-// asText 把任意구성值渲染成입력框可用의문자열。
-// config 来自 JSON，值可能은 string / number / boolean / array / null，
-// 这里只关心「能할 수 없음塞进文本框」，具体序列化由 buildConfig 负责。
+// asText 구성입력의문자열
+// config  JSON，은 string / number / boolean / array / null，
+// 할 수 없음， buildConfig
 function asText(v: unknown): string {
   if (typeof v === "string") return v;
   if (v === null || v === undefined) return "";
   return String(v);
 }
 
-// inputType 把字段유형映射到 input 의 type 属性。
+// inputType 유형 input 의 type
 function inputType(kind: FieldKind): "text" | "password" | "number" {
   if (kind === "password") return "password";
   if (kind === "number") return "number";
   return "text";
 }
 
-// ConfigField 按字段定义渲染对应의控件。
+// ConfigField 의
 //
-// 掩码字段의处理은这里唯一의讲究：입력框**않음显示**掩码值本身，只显示一줄
-// 「已저장」提示。这样界面上就只있음한 개규칙——框里있음字就은사용자填의，
-// 空框就은空值。若把 "__masked__:…abc123" 塞进입력框，사용자会以을 위해那은要自己
-// 删掉의占位文本，反而更容易误清凭据。
+// 의은의：입력**않음**，줄
+// 저장있음한 개규칙——있음은사용자의，
+// 은 "__masked__:…abc123" 입력，사용자을 위해은
+// 의，
 export function ConfigField({
   def,
   value,
@@ -47,7 +47,7 @@ export function ConfigField({
 }) {
   const id = `n-cfg-${def.key}`;
   const raw = asText(value);
-  // 后端回显의掩码值：形如 "__masked__:…abc123"，尾部은原值의可辨识片段。
+  // 의： "__masked__:…abc123"，은의
   const masked = isSecret && raw.startsWith("__masked__");
   const maskedTail = masked ? (raw.split("…")[1] ?? "") : "";
 
@@ -81,8 +81,8 @@ export function ConfigField({
     );
   }
 
-  // 控件按字段유형分派。用 if 链而않음은嵌套三元，은因을 위해这里要区分四种控件，
-  // 三层三元读起来已经要停下来数括号了。
+  // 유형 if 않음은，은을 위해，
+  //
   function control() {
     if (def.kind === "textarea" || def.kind === "kv") {
       return (
@@ -135,7 +135,7 @@ export function ConfigField({
   );
 }
 
-// FilterSummary 把过滤개件摘要成一줄，让卡片않음用펼치기就能看출력这개渠道推什么。
+// FilterSummary 개줄，않음펼치기출력개
 export function FilterSummary({ filter }: { filter: NotificationFilter }) {
   const parts: string[] = [];
   if (filter.min_severity) {

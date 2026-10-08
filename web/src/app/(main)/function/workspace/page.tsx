@@ -18,28 +18,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import type { WorkspaceEntry, WorkspaceFile } from "@/lib/types";
@@ -76,20 +57,17 @@ export default function WorkspacePage() {
   const [mkdirName, setMkdirName] = React.useState("");
   const uploadRef = React.useRef<HTMLInputElement>(null);
 
-  const load = React.useCallback(
-    (p: string) => {
-      setLoading(true);
-      api
-        .workspaceList(p)
-        .then((r) => {
-          setEntries(r.entries);
-          setPath(r.path);
-        })
-        .catch((e) => toast.error(`디렉터리를 읽지 못했습니다:${(e as Error).message}`))
-        .finally(() => setLoading(false));
-    },
-    [],
-  );
+  const load = React.useCallback((p: string) => {
+    setLoading(true);
+    api
+      .workspaceList(p)
+      .then((r) => {
+        setEntries(r.entries);
+        setPath(r.path);
+      })
+      .catch((e) => toast.error(`디렉터리를 읽지 못했습니다:${(e as Error).message}`))
+      .finally(() => setLoading(false));
+  }, []);
 
   React.useEffect(() => {
     load("");
@@ -130,7 +108,8 @@ export default function WorkspacePage() {
   };
 
   const del = (e: WorkspaceEntry) => {
-    if (!window.confirm(`삭제 확인${e.dir ? "디렉토리" : "파일"} "${e.name}"? ${e.dir ? "(아래 모든 내용 포함)" : ""}`)) return;
+    if (!window.confirm(`삭제 확인${e.dir ? "디렉토리" : "파일"} "${e.name}"? ${e.dir ? "(아래 모든 내용 포함)" : ""}`))
+      return;
     api
       .workspaceDelete(e.path)
       .then(() => {
@@ -171,7 +150,7 @@ export default function WorkspacePage() {
 
   return (
     <div className="flex flex-col gap-4">
-{/* 헤더: 탐색경로 + 작업 */}
+      {/* 헤더: 탐색경로 + 작업 */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-1 text-sm">
           <HardDriveIcon className="text-muted-foreground mr-1 size-4 shrink-0" />
@@ -196,18 +175,13 @@ export default function WorkspacePage() {
             <FolderPlusIcon />새 폴더 만들기
           </Button>
           <Button variant="outline" size="sm" onClick={() => uploadRef.current?.click()}>
-            <UploadIcon />업로드
+            <UploadIcon />
+            업로드
           </Button>
           <Button variant="ghost" size="icon" className="size-8" onClick={() => load(path)} title="새로 고치다">
             <RefreshCwIcon className={cn("size-4", loading && "animate-spin")} />
           </Button>
-          <input
-            ref={uploadRef}
-            type="file"
-            multiple
-            className="hidden"
-            onChange={(e) => doUpload(e.target.files)}
-          />
+          <input ref={uploadRef} type="file" multiple className="hidden" onChange={(e) => doUpload(e.target.files)} />
         </div>
       </div>
 
@@ -258,7 +232,11 @@ export default function WorkspacePage() {
                           size="icon"
                           className="size-7"
                           title="다운로드"
-                          onClick={() => api.workspaceDownload(e.path).catch((err) => toast.error(`다운로드 실패:${(err as Error).message}`))}
+                          onClick={() =>
+                            api
+                              .workspaceDownload(e.path)
+                              .catch((err) => toast.error(`다운로드 실패:${(err as Error).message}`))
+                          }
                         >
                           <DownloadIcon className="size-3.5" />
                         </Button>
@@ -281,7 +259,7 @@ export default function WorkspacePage() {
         </CardContent>
       </Card>
 
-{/* 파일 보기/편집 */}
+      {/* 파일 보기/편집 */}
       <Sheet open={edit !== null} onOpenChange={(o) => !o && setEdit(null)}>
         <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-2xl">
           {edit && (
@@ -299,10 +277,13 @@ export default function WorkspacePage() {
               {edit.file.binary || edit.file.too_large ? (
                 <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
                   <p className="text-muted-foreground text-sm">
-                    {edit.file.too_large ? "파일이 너무 커서 온라인 미리보기/편집을 지원하지 않습니다." : "바이너리 파일, 온라인 미리보기/편집은 지원되지 않습니다."}
+                    {edit.file.too_large
+                      ? "파일이 너무 커서 온라인 미리보기/편집을 지원하지 않습니다."
+                      : "바이너리 파일, 온라인 미리보기/편집은 지원되지 않습니다."}
                   </p>
                   <Button variant="outline" onClick={() => api.workspaceDownload(edit.file.path)}>
-                    <DownloadIcon />파일 다운로드
+                    <DownloadIcon />
+                    파일 다운로드
                   </Button>
                 </div>
               ) : (
@@ -316,13 +297,13 @@ export default function WorkspacePage() {
                     />
                   </div>
                   <SheetFooter className="flex-row items-center justify-between border-t p-3">
-                    <span className="text-muted-foreground text-xs">{edit.dirty ? "저장되지 않은 변경사항" : "동기화됨"}</span>
+                    <span className="text-muted-foreground text-xs">
+                      {edit.dirty ? "저장되지 않은 변경사항" : "동기화됨"}
+                    </span>
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => api.workspaceDownload(edit.file.path)}
-                      >
-                        <DownloadIcon />다운로드
+                      <Button variant="outline" onClick={() => api.workspaceDownload(edit.file.path)}>
+                        <DownloadIcon />
+                        다운로드
                       </Button>
                       <Button onClick={saveFile} disabled={!edit.dirty || edit.saving}>
                         <SaveIcon /> {edit.saving ? "저장 중…" : "저장"}
@@ -336,7 +317,7 @@ export default function WorkspacePage() {
         </SheetContent>
       </Sheet>
 
-{/* 새 폴더 만들기 */}
+      {/* 새 폴더 만들기 */}
       <Dialog open={mkdirOpen} onOpenChange={setMkdirOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
@@ -351,10 +332,10 @@ export default function WorkspacePage() {
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setMkdirOpen(false)}>
-취소
+              취소
             </Button>
             <Button onClick={doMkdir} disabled={!mkdirName.trim()}>
-만들다
+              만들다
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -60,7 +60,7 @@ export default function CommandsPage() {
   const [total, setTotal] = React.useState(0);
   const [loading, setLoading] = React.useState(false);
 
-  // 各工具调用次数。弹窗打开时才拉取（多一次聚合查询，不必每次翻页都付）。
+  // （，）
   const [statsOpen, setStatsOpen] = React.useState(false);
   const [stats, setStats] = React.useState<ToolStat[]>([]);
   const [statsLoading, setStatsLoading] = React.useState(false);
@@ -102,7 +102,7 @@ export default function CommandsPage() {
     };
   }, [page, size, queryQ, taskFilter]);
 
-  // 统计跟随筛选条件走，和表格描述的是同一批记录（但不分页）。
+  // ，（）
   React.useEffect(() => {
     if (!statsOpen) return;
     let alive = true;
@@ -159,7 +159,7 @@ export default function CommandsPage() {
           <SelectContent>
             {PAGE_SIZES.map((n) => (
               <SelectItem key={n} value={String(n)}>
-{n}/페이지
+                {n}/페이지
               </SelectItem>
             ))}
           </SelectContent>
@@ -167,7 +167,7 @@ export default function CommandsPage() {
 
         <Button variant="outline" size="sm" className="h-8" onClick={() => setStatsOpen(true)}>
           <BarChart3Icon className="size-4" />
-통계
+          통계
         </Button>
 
         <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
@@ -223,7 +223,7 @@ export default function CommandsPage() {
                 ) : commands.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="py-12 text-center text-sm text-muted-foreground">
-아직 도구 실행 기록이 없습니다.
+                      아직 도구 실행 기록이 없습니다.
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -255,11 +255,11 @@ export default function CommandsPage() {
                       <TableCell>
                         {cmd.is_error ? (
                           <Badge variant="destructive" className="text-xs">
-실패
+                            실패
                           </Badge>
                         ) : (
                           <Badge variant="secondary" className="text-xs text-emerald-600">
-성공
+                            성공
                           </Badge>
                         )}
                       </TableCell>
@@ -272,7 +272,7 @@ export default function CommandsPage() {
         </Card>
       </div>
 
-{/* 도구 호출 통계: 테이블과 동일한 레코드 배치(동일한 필터링, 페이징 없음) */}
+      {/* 도구 호출 통계: 테이블과 동일한 레코드 배치(동일한 필터링, 페이징 없음) */}
       <Dialog open={statsOpen} onOpenChange={setStatsOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -351,11 +351,11 @@ export default function CommandsPage() {
                   </Badge>
                   {selected.is_error ? (
                     <Badge variant="destructive" className="text-xs">
-실패
+                      실패
                     </Badge>
                   ) : (
                     <Badge variant="secondary" className="text-xs text-emerald-600">
-성공
+                      성공
                     </Badge>
                   )}
                 </div>

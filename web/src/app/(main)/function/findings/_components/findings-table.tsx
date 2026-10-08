@@ -56,7 +56,7 @@ export const FINDING_STATUSES: FindingStatus[] = [
 
 export const UNASSIGNED_TASK = "__unassigned__";
 
-// 行内编辑缓冲:当前展开行的名称/类别/严重等级。
+// ://
 export interface FindingEdit {
   name: string;
   vulnclass: string;
@@ -93,7 +93,7 @@ interface FindingsTableProps {
   selectedIds: Set<string>;
   onToggleSelected: (id: string, checked: boolean) => void;
   onToggleSelectedPage: (ids: string[], checked: boolean) => void;
-  /** 当前展开行的 findingRowKey;null = 全部收起。 */
+  /**  findingRowKey;null =  */
   expandedKey: string | null;
   onToggleRow: (finding: Finding) => void;
   reports: Record<string, FindingReport>;
@@ -106,12 +106,12 @@ interface FindingsTableProps {
   activeRetests: Record<string, ActiveFindingRetest>;
   onDeepen: (finding: Finding) => void;
   onDelete: (finding: Finding) => void;
-  /** 全选框的无障碍标签,平铺视图与分组视图措辞不同。 */
+  /** , */
   selectAllLabel?: string;
 }
 
-// FindingsTable 是发现列表的表格主体,平铺视图与按任务分组视图共用同一份行渲染
-// (勾选 / 行内展开 / 行内改名与改状态 / 复测 / 深入 / 删除),差异只在外层容器与分页。
+// FindingsTable ,
+// ( /  /  /  /  / ),
 export function FindingsTable({
   items,
   selectedIds,
@@ -141,7 +141,7 @@ export function FindingsTable({
   }
 
   return (
-    /* 固定列宽保证展开内容不撑开表格；窄屏只在表格内部横向滚动。 */
+    /* ； */
     <Table className="min-w-[60rem] table-fixed">
       <TableHeader>
         <TableRow>
@@ -276,20 +276,25 @@ export function FindingsTable({
                       <Button asChild size="sm" variant="ghost">
                         <Link href={`/chat?c=${retest.conversation_id}`} title="진행 중인 재테스트 세션 보기">
                           <Spinner data-icon="inline-start" />
-재테스트 중
+                          재테스트 중
                         </Link>
                       </Button>
                     ) : null}
                     {!retest && f.finding_id && !f.inherited ? (
-                      <Button size="sm" variant="ghost" onClick={() => onRetest(f)} title="별도의 세션에서 취약점을 다시 테스트하세요.">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onRetest(f)}
+                        title="별도의 세션에서 취약점을 다시 테스트하세요."
+                      >
                         <RotateCcwIcon data-icon="inline-start" />
-재테스트
+                        재테스트
                       </Button>
                     ) : null}
                     {f.finding_id && f.task_id && (
                       <Button size="sm" variant="ghost" onClick={() => onDeepen(f)}>
                         <FlaskConicalIcon data-icon="inline-start" />
-깊이 들어가다
+                        깊이 들어가다
                       </Button>
                     )}
                     {f.finding_id && (
@@ -312,7 +317,8 @@ export function FindingsTable({
                               <span className="break-all">
                                 {f.name || f.vulnclass || f.summary || `#${f.finding_id}`}
                               </span>
-"가 영구적으로 삭제되어 검색 목록, 작업 검색 탭 및 탐색 지도에서 제거됩니다. 이 작업은 취소할 수 없습니다.
+                              "가 영구적으로 삭제되어 검색 목록, 작업 검색 탭 및 탐색 지도에서 제거됩니다. 이 작업은
+                              취소할 수 없습니다.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -327,11 +333,11 @@ export function FindingsTable({
               </TableRow>
               {open && (
                 <TableRow className="hover:bg-transparent">
-{/* 공백 일반은 TableCell의 기본 현재 랩을 재정의합니다. 그렇지 않으면 확장된 영역의 텍스트가
+                  {/* 공백 일반은 TableCell의 기본 현재 랩을 재정의합니다. 그렇지 않으면 확장된 영역의 텍스트가
 한 줄로 강제 표시되며 셀이 직접 오버플로됩니다. */}
                   <TableCell colSpan={COLUMN_COUNT} className="bg-muted/30 whitespace-normal">
                     <div className="flex flex-col gap-2 px-2 py-1">
-{/* 인라인 편집: 이름/범주/심각도 수준을 변경하고 저장할 수 있습니다(독립적인 검색 라인만). */}
+                      {/* 인라인 편집: 이름/범주/심각도 수준을 변경하고 저장할 수 있습니다(독립적인 검색 라인만). */}
                       {f.finding_id && edit && (
                         <div className="flex flex-wrap items-end gap-3 rounded-md border bg-background px-3 py-2.5">
                           <div className="flex min-w-[12rem] flex-1 flex-col gap-1">
@@ -375,17 +381,17 @@ export function FindingsTable({
                       )}
                       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <ShieldAlertIcon className="size-3.5" />
-증거
+                        증거
                         {f.vulnclass && (
                           <span>
-· 유형:
+                            · 유형:
                             <code className="rounded bg-muted px-1.5 py-0.5 font-mono">{f.vulnclass}</code>
                           </span>
                         )}
                         {f.param_id && <code className="rounded bg-muted px-1.5 py-0.5 font-mono">{f.param_id}</code>}
                         {f.assets && f.assets.length > 0 && (
                           <span className="flex flex-wrap items-center gap-1">
-· 자산:
+                            · 자산:
                             {f.assets.map((a) => (
                               <code key={a.id} className="rounded bg-muted px-1.5 py-0.5 font-mono" title={a.type}>
                                 {a.label}
@@ -398,13 +404,13 @@ export function FindingsTable({
                         {f.evidence}
                       </pre>
 
-{/* 상세 보고서(마크다운):finding_id별 지연 로딩을 펼치면 상세 페이지에 들어가지 않고도 볼 수 있습니다. */}
+                      {/* 상세 보고서(마크다운):finding_id별 지연 로딩을 펼치면 상세 페이지에 들어가지 않고도 볼 수 있습니다. */}
                       {f.finding_id && (
                         <div className="flex flex-col gap-1.5">
                           <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
                             <span className="flex items-center gap-2">
                               <FileTextIcon className="size-3.5" />
-상세 보고서
+                              상세 보고서
                             </span>
                             {reports[rowKey]?.status === "done" && reports[rowKey]?.text.trim() && (
                               <CopyButton
@@ -424,9 +430,9 @@ export function FindingsTable({
                             if (!rep.text.trim())
                               return <p className="text-xs text-muted-foreground">아직 자세한 보고는 없습니다.</p>;
                             return (
-                              // break-words 会继承到段落/列表,pre 另加
-                              // whitespace-pre-wrap 让代码块也换行——否则长代码行/长 URL
-                              // 会撑宽 colSpan 单元格,把整张表挤出横向滚动条。
+                              // break-words /,pre
+                              // whitespace-pre-wrap ——/ URL
+                              //  colSpan ,
                               <div className="min-w-0 break-words rounded-md border bg-background px-3 py-2 [&_pre]:whitespace-pre-wrap">
                                 <Markdown text={rep.text} />
                               </div>
@@ -444,7 +450,7 @@ export function FindingsTable({
         {items.length === 0 && (
           <TableRow>
             <TableCell colSpan={COLUMN_COUNT} className="py-12 text-center text-sm text-muted-foreground">
-일치하는 항목이 없습니다.
+              일치하는 항목이 없습니다.
             </TableCell>
           </TableRow>
         )}

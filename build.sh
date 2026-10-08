@@ -173,8 +173,9 @@ package_binary() {
   rm -rf "$package_root" "$archive"
   mkdir -p "$package_root"
   cp "$binary" "$package_root/"
-  # 守护启动脚本是正式入口：页面上的一键更新要靠它在进程退出后重新拉起，
-  # 直接跑 artex 本体的话更新完就再也起不来了。按目标系统只带对应的那一份。
+  # The supervisor startup script is the official entry point: the in-page one-click
+  # update relies on it to restart the process after exit. Running artex directly
+  # would leave it stopped after an update. Include only the script for the target OS.
   if [ "$goos" = "windows" ]; then
     cp start.bat "$package_root/"
   else

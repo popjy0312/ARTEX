@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import type { AssetInterceptKind, AssetInterceptRule } from "@/lib/types";
 
-// ---- kind 元信息 ----
+// ---- kind  ----
 
 const KIND_OPTIONS: { value: AssetInterceptKind; label: string; group: string; placeholder: string }[] = [
   { value: "exact_domain", label: "도메인(정확히)", group: "정확히 일치", placeholder: "example.gov.cn" },
@@ -77,7 +77,7 @@ type RuleForm = {
 
 const defaultForm = (): RuleForm => ({ enabled: true, kind: "fuzzy_domain", pattern: "", note: "" });
 
-//  전端轻校验（와后端一致：仅 exact_ip / cidr 做格式校验，其余交后端）。
+//  전（와： exact_ip / cidr ，）
 function frontValidate(form: RuleForm): string | null {
   const p = form.pattern.trim();
   if (!p) return "일치 값을 입력해 주세요";
@@ -189,12 +189,11 @@ export default function AssetInterceptPage() {
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground">
-          도메인 / IP / URL의 정확히 일치 또는 부분 일치와 CIDR을 지원합니다. 기본 제공 규칙은
-          (.gov / .gov.cn) 및 (.edu / .edu.cn)을 내부적으로 차단합니다.
+          도메인 / IP / URL의 정확히 일치 또는 부분 일치와 CIDR을 지원합니다. 기본 제공 규칙은 (.gov / .gov.cn) 및 (.edu
+          / .edu.cn)을 내부적으로 차단합니다.
         </p>
         <Button onClick={openNew} size="sm" className="shrink-0">
-          <PlusIcon className="h-4 w-4" />
-          새 규칙
+          <PlusIcon className="h-4 w-4" />새 규칙
         </Button>
       </div>
 
@@ -207,8 +206,7 @@ export default function AssetInterceptPage() {
               <BanIcon className="h-8 w-8 text-muted-foreground/40" />
               <p className="text-sm text-muted-foreground">자산 차단 규칙 없음</p>
               <Button size="sm" variant="outline" onClick={openNew}>
-                <PlusIcon className="h-4 w-4" />
-                첫 규칙 만들기
+                <PlusIcon className="h-4 w-4" />첫 규칙 만들기
               </Button>
             </div>
           ) : (
@@ -237,7 +235,7 @@ export default function AssetInterceptPage() {
                       <div className="flex items-center gap-1.5">
                         {rule.builtin && (
                           <Badge variant="secondary" className="shrink-0 px-1 py-0 text-[10px]">
-                             내
+                            내
                           </Badge>
                         )}
                         <span className="truncate">{rule.note}</span>
@@ -273,8 +271,10 @@ export default function AssetInterceptPage() {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className="flex flex-col gap-0 p-0 sm:max-w-md">
           <SheetHeader className="border-b px-6 py-4">
-          <SheetTitle>{editing ? "자산 차단 규칙 편집" : "자산 차단 규칙 만들기"}</SheetTitle>
-          <SheetDescription className="text-xs">이 규칙과 일치하는 대상 자산은 전체적으로 차단됩니다</SheetDescription>
+            <SheetTitle>{editing ? "자산 차단 규칙 편집" : "자산 차단 규칙 만들기"}</SheetTitle>
+            <SheetDescription className="text-xs">
+              이 규칙과 일치하는 대상 자산은 전체적으로 차단됩니다
+            </SheetDescription>
           </SheetHeader>
 
           <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5">

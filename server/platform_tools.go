@@ -12,26 +12,17 @@ import (
 	actool "github.com/Autumn-27/norma/tool"
 )
 
-// 平台操作工具(给内置 Auto agent 用):建/改 skill、自定义工具、MCP。都是 host 工具,
-// seed 进 tools 表、默认绑定 auto,经 hostTools 注入。复用现有 db/文件系统逻辑。
-
+// Security policy: executable/network-capable resources are managed only by an
+// authenticated administrator. The Auto agent cannot create or mutate skills,
+// custom tools, or MCP servers.
 func (s *Server) platformTools() []actool.CoreTool {
 	return []actool.CoreTool{
-		s.toolCreateSkill(),
-		s.toolUpdateSkillFile(),
-		s.toolCreateCustomTool(),
-		s.toolUpdateCustomTool(),
-		s.toolCreateMCP(),
-		s.toolUpdateMCP(),
 		s.toolDeleteAssetsByHost(),
 	}
 }
 
 // platformToolKeys are the tool keys the Auto agent gets bound by default.
 var platformToolKeys = []string{
-	"create_skill", "update_skill_file",
-	"create_custom_tool", "update_custom_tool",
-	"create_mcp", "update_mcp",
 	"delete_assets_by_host",
 }
 

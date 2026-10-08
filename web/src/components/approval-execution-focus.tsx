@@ -39,7 +39,8 @@ export function useApprovalFocus({ taskId, conversationId }: { taskId?: string; 
         setState({ id, source, loading: false });
       })
       .catch((e) => {
-        if (!cancelled) setState({ id, error: (e as Error).message || "원래 실행을 찾을 수 없습니다.", loading: false });
+        if (!cancelled)
+          setState({ id, error: (e as Error).message || "원래 실행을 찾을 수 없습니다.", loading: false });
       });
     return () => {
       cancelled = true;
@@ -126,11 +127,11 @@ export function ApprovalExecutionFocus({
       <div className="flex gap-2">
         {error ? (
           <Button size="sm" variant="outline" onClick={focus.retry}>
-포지셔닝 재시도
+            포지셔닝 재시도
           </Button>
         ) : null}
         <Button size="sm" variant="ghost" onClick={focus.close}>
-타겟 해제
+          타겟 해제
         </Button>
       </div>
     </div>

@@ -8,14 +8,44 @@ import { MOCK } from "@/lib/mock/enabled";
 import type { LogLine } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-// Mock demo：없음后端 SSE，塞几줄示例로그。
+// Mock demo：없음 SSE，줄로그
 const MOCK_LOGS: LogLine[] = [
-  { seq: 1, ts: "2026-07-26T03:55:00Z", level: "info", tag: "engine", text: "ARTEX v0.1.0 backend listening on :8787 (workers=3)" },
-  { seq: 2, ts: "2026-07-26T03:55:01Z", level: "info", tag: "config", text: "LLM configured from DB: anthropic / claude-opus-4-8" },
+  {
+    seq: 1,
+    ts: "2026-07-26T03:55:00Z",
+    level: "info",
+    tag: "engine",
+    text: "ARTEX v0.1.0 backend listening on :8787 (workers=3)",
+  },
+  {
+    seq: 2,
+    ts: "2026-07-26T03:55:01Z",
+    level: "info",
+    tag: "config",
+    text: "LLM configured from DB: anthropic / claude-opus-4-8",
+  },
   { seq: 3, ts: "2026-07-26T03:56:10Z", level: "info", tag: "planner", text: "task t-acme-web: round 3, i-4" },
-  { seq: 4, ts: "2026-07-26T03:57:00Z", level: "warn", tag: "guard", text: "block bash: target out.evil.example is outside scope" },
-  { seq: 5, ts: "2026-07-26T03:57:30Z", level: "info", tag: "work#1", text: "report_finding: Default Credentials (high) 완료" },
-  { seq: 6, ts: "2026-07-26T03:58:20Z", level: "error", tag: "work#3", text: "intercept: mysqldump matched a rule; awaiting approval" },
+  {
+    seq: 4,
+    ts: "2026-07-26T03:57:00Z",
+    level: "warn",
+    tag: "guard",
+    text: "block bash: target out.evil.example is outside scope",
+  },
+  {
+    seq: 5,
+    ts: "2026-07-26T03:57:30Z",
+    level: "info",
+    tag: "work#1",
+    text: "report_finding: Default Credentials (high) 완료",
+  },
+  {
+    seq: 6,
+    ts: "2026-07-26T03:58:20Z",
+    level: "error",
+    tag: "work#3",
+    text: "intercept: mysqldump matched a rule; awaiting approval",
+  },
 ];
 
 const levelTone: Record<LogLine["level"], string> = {
@@ -89,7 +119,7 @@ export default function LogsPage() {
       const params = minDbId > 0 ? `?before=${minDbId}&limit=200` : `?limit=200`;
       const res = await fetch(`/api/logs/history${params}`);
       if (!res.ok) return;
-      const data = await res.json() as { items: LogLine[]; has_more: boolean };
+      const data = (await res.json()) as { items: LogLine[]; has_more: boolean };
       if (data.items?.length) {
         // Assign synthetic seq numbers below current minimum to keep dedup working.
         setLines((prev) => {
@@ -143,7 +173,9 @@ export default function LogsPage() {
     <div className="flex flex-1 flex-col gap-3">
       <div>
         <h1 className="text-xl font-semibold tracking-tight">시스템로그</h1>
-        <p className="text-muted-foreground text-sm">백엔드 실시간 로그 스트림(planner / worker / 데이터베이스 / 트래픽 …)</p>
+        <p className="text-muted-foreground text-sm">
+          백엔드 실시간 로그 스트림(planner / worker / 데이터베이스 / 트래픽 …)
+        </p>
       </div>
       <div className="flex flex-1 flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -178,8 +210,7 @@ export default function LogsPage() {
             지우기
           </Button>
           <span className="ml-auto text-xs text-muted-foreground">
-            {counts.total} 줄 ·{" "}
-            <span className="text-amber-600 dark:text-amber-400">{counts.warn} 경고</span> ·{" "}
+            {counts.total} 줄 · <span className="text-amber-600 dark:text-amber-400">{counts.warn} 경고</span> ·{" "}
             <span className="text-red-600 dark:text-red-400">{counts.error} 오류</span>
           </span>
         </div>
@@ -209,9 +240,7 @@ export default function LogsPage() {
           ) : (
             filtered.map((l) => {
               const body =
-                l.tag && l.text.startsWith("[" + l.tag + "]")
-                  ? l.text.slice(l.tag.length + 2).trimStart()
-                  : l.text;
+                l.tag && l.text.startsWith("[" + l.tag + "]") ? l.text.slice(l.tag.length + 2).trimStart() : l.text;
               return (
                 <div key={l.seq} className="flex items-start gap-2 px-1 py-0.5 hover:bg-muted/40">
                   <span className={cn("mt-1.5 size-1.5 shrink-0 rounded-full", levelDot[l.level])} />

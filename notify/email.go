@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Autumn-27/artex/egress"
 )
 
 // emailDialTimeout / emailSessionTimeout 分别约束建连与整段 SMTP 会话。
@@ -39,8 +41,12 @@ func (emailChannel) SecretKeys() []string { return []string{"password"} }
 func (emailChannel) DestinationKeys() []string { return []string{"host", "port", "tls"} }
 
 func (emailChannel) Validate(cfg map[string]any) error {
-	if cfgString(cfg, "host") == "" {
+	host := cfgString(cfg, "host")
+	if host == "" {
 		return errors.New("SMTP server address is required")
+	}
+	if err := egress.CheckHost(host); err != nil {
+		return err
 	}
 	port := cfgInt(cfg, "port")
 	if port <= 0 || port > 65535 {

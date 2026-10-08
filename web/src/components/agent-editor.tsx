@@ -2,7 +2,16 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import { EyeIcon, GitCompareIcon, InfoIcon, PencilIcon, RotateCcwIcon, SaveIcon, Trash2Icon, XIcon } from "lucide-react";
+import {
+  EyeIcon,
+  GitCompareIcon,
+  InfoIcon,
+  PencilIcon,
+  RotateCcwIcon,
+  SaveIcon,
+  Trash2Icon,
+  XIcon,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,14 +35,24 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Markdown } from "@/components/markdown";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import type { Agent, AgentDetail, AgentTrigger, MCPServer, PromptVar, PromptVersion, Settings, SkillItem, Tool } from "@/lib/types";
+import type {
+  Agent,
+  AgentDetail,
+  AgentTrigger,
+  MCPServer,
+  PromptVar,
+  PromptVersion,
+  Settings,
+  SkillItem,
+  Tool,
+} from "@/lib/types";
 
-// Traffic tools are host tools gated by the global 流量捕获 switch: bindable, but
+// Traffic tools are host tools gated by the global  switch: bindable, but
 // only usable when capture is on. Keep this list in sync with traffic.SeedToolMetas.
 const TRAFFIC_TOOL_KEYS = new Set(["traffic_search", "traffic_get"]);
 
 // AgentEditor is the tabbed editor for one agent, used inside the agents-page
-// drawer (and reused full-page for deep links). Tabs: 配置与提示词 / MCP / Skill /
+// drawer (and reused full-page for deep links). Tabs:  / MCP / Skill /
 // Tools. Config + prompt save as before; visibility + tool bindings toggle live.
 export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?: () => void }) {
   const [detail, setDetail] = React.useState<AgentDetail | null>(null);
@@ -52,7 +71,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
   const [preview, setPreview] = React.useState("");
   const [maxTurns, setMaxTurns] = React.useState("0");
   const [runSecs, setRunSecs] = React.useState("600");
-  // "" = 跟随(未绑定)；否则为 profile id 字符串
+  // "" = ()； profile id
   const [llmProfileId, setLlmProfileId] = React.useState("");
   const [llmProfiles, setLlmProfiles] = React.useState<NonNullable<AgentDetail["llm_profiles"]>>([]);
   const [webSearch, setWebSearch] = React.useState(false);
@@ -61,7 +80,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
   const [wrapupDefault, setWrapupDefault] = React.useState("");
   const [wrapupTurns, setWrapupTurns] = React.useState("0");
   const [wrapupTurnsDefault, setWrapupTurnsDefault] = React.useState(5);
-  // 任务级超时收尾词(仅 worker/planner)
+  // ( worker/planner)
   const [ttSupported, setTtSupported] = React.useState(false);
   const [ttWrapup, setTtWrapup] = React.useState("");
   const [ttWrapupDefault, setTtWrapupDefault] = React.useState("");
@@ -70,12 +89,24 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
   const [settings, setSettings] = React.useState<Settings | null>(null);
 
   React.useEffect(() => {
-    api.mcpServers().then(setMcp).catch(() => {});
-    api.skills().then(setSkills).catch(() => {});
-    api.tools().then(setTools).catch(() => {});
-    api.settings().then(setSettings).catch(() => {});
+    api
+      .mcpServers()
+      .then(setMcp)
+      .catch(() => {});
+    api
+      .skills()
+      .then(setSkills)
+      .catch(() => {});
+    api
+      .tools()
+      .then(setTools)
+      .catch(() => {});
+    api
+      .settings()
+      .then(setSettings)
+      .catch(() => {});
   }, []);
-  // global gates: traffic tools need 流量捕获, web search needs the master switch.
+  // global gates: traffic tools need , web search needs the master switch.
   const captureOn = !!settings?.traffic_capture;
   const webSearchGlobalOn = !!settings?.web_search_enabled;
 
@@ -143,7 +174,11 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
     try {
       const turns = Math.max(0, Math.floor(Number(wrapupTurns) || 0));
       await api.saveAgentWrapup(agentKey, wrapup, turns);
-      toast.success(wrapup.trim() || turns > 0 ? "마무리 구성이 저장되었습니다(다음부터 적용됩니다)." : "선택 취소하면 내장된 기본값이 사용됩니다.");
+      toast.success(
+        wrapup.trim() || turns > 0
+          ? "마무리 구성이 저장되었습니다(다음부터 적용됩니다)."
+          : "선택 취소하면 내장된 기본값이 사용됩니다.",
+      );
       reload();
     } catch (e) {
       toast.error("저장 실패:" + (e as Error).message);
@@ -179,7 +214,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
   }
   async function saveConfig() {
     try {
-      // 只提交本 agent 实际展示的字段，避免把未显示项(如 goals 的 max_turns)覆盖成默认。
+      //  agent ，( goals  max_turns)
       const patch: Parameters<typeof api.saveAgentConfig>[1] = {
         llm_profile_id: llmProfileId === "" ? null : Number(llmProfileId),
       };
@@ -247,7 +282,10 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
     } catch (e) {
       toast.error("도구 바인딩 저장 실패:" + (e as Error).message);
       reload();
-      api.tools().then(setTools).catch(() => {});
+      api
+        .tools()
+        .then(setTools)
+        .catch(() => {});
     }
   }
 
@@ -260,9 +298,9 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
   // web search applies to every conversational/executing agent except the one-shot
   // goals decomposer; it's gated by the global master switch.
   const showWebSearch = agentKey !== "goals";
-  // interactive shell (持久 PTY 会话工具族) 同样对除 goals 外的 agent 开放;无全局门控。
+  // interactive shell ( PTY )  goals  agent ;
   const showInteractiveShell = agentKey !== "goals";
-  // 每个 agent(含 goals/mainagent)都跑在某个 LLM 上,故「默认模型」绑定对所有 agent 开放。
+  //  agent( goals/mainagent) LLM , agent
   const showLLM = true;
   // triggers (P3) only attach to custom agents.
   const isCustom = !!detail && !detail.agent?.builtin;
@@ -278,16 +316,21 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
         {isCustom && <TabsTrigger value="triggers">방아쇠</TabsTrigger>}
       </TabsList>
 
-{/* 구성 + 프롬프트 단어 */}
+      {/* 구성 + 프롬프트 단어 */}
       <TabsContent value="prompt" className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         <div className="grid gap-4">
           {(showLLM || showConfig || showWebSearch || showInteractiveShell) && (
             <div className="grid gap-3 rounded-md border p-3">
               {showLLM && (
                 <div className="grid gap-1.5">
-                  <Label htmlFor="llm-profile" className="text-xs">기본 모델(LLM 구성)</Label>
+                  <Label htmlFor="llm-profile" className="text-xs">
+                    기본 모델(LLM 구성)
+                  </Label>
                   <div className="flex flex-wrap items-center gap-3">
-                    <Select value={llmProfileId || "__follow__"} onValueChange={(v) => setLlmProfileId(v === "__follow__" ? "" : v)}>
+                    <Select
+                      value={llmProfileId || "__follow__"}
+                      onValueChange={(v) => setLlmProfileId(v === "__follow__" ? "" : v)}
+                    >
                       <SelectTrigger id="llm-profile" className="h-8 w-72">
                         <SelectValue />
                       </SelectTrigger>
@@ -301,7 +344,8 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
                       </SelectContent>
                     </Select>
                     <span className="text-muted-foreground max-w-md text-xs">
-                      고정된 LLM 구성을 에이전트에 바인딩합니다(적용하려면 "구성 저장" 클릭). 우선순위: 에이전트 바인딩 &gt; 작업/세션 사양 &gt; 전역 활성화.
+                      고정된 LLM 구성을 에이전트에 바인딩합니다(적용하려면 "구성 저장" 클릭). 우선순위: 에이전트 바인딩
+                      &gt; 작업/세션 사양 &gt; 전역 활성화.
                     </span>
                   </div>
                 </div>
@@ -310,19 +354,36 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
                 {showConfig && (
                   <>
                     <div className="grid gap-1.5">
-                      <Label htmlFor="max-turns" className="text-xs">최대 주기 수(0=무제한)</Label>
-                      <Input id="max-turns" type="number" min={0} className="h-8 w-32"
-                        value={maxTurns} onChange={(e) => setMaxTurns(e.target.value)} />
+                      <Label htmlFor="max-turns" className="text-xs">
+                        최대 주기 수(0=무제한)
+                      </Label>
+                      <Input
+                        id="max-turns"
+                        type="number"
+                        min={0}
+                        className="h-8 w-32"
+                        value={maxTurns}
+                        onChange={(e) => setMaxTurns(e.target.value)}
+                      />
                     </div>
                     <div className="grid gap-1.5">
-                      <Label htmlFor="run-seconds" className="text-xs">실행 시간(초, 0=제한 없음)</Label>
-                      <Input id="run-seconds" type="number" min={0} className="h-8 w-32"
-                        value={runSecs} onChange={(e) => setRunSecs(e.target.value)} />
+                      <Label htmlFor="run-seconds" className="text-xs">
+                        실행 시간(초, 0=제한 없음)
+                      </Label>
+                      <Input
+                        id="run-seconds"
+                        type="number"
+                        min={0}
+                        className="h-8 w-32"
+                        value={runSecs}
+                        onChange={(e) => setRunSecs(e.target.value)}
+                      />
                     </div>
                   </>
                 )}
                 <Button size="sm" variant="outline" onClick={saveConfig}>
-                  <SaveIcon />구성 저장
+                  <SaveIcon />
+                  구성 저장
                 </Button>
               </div>
               {showWebSearch && (
@@ -334,7 +395,9 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
                     onCheckedChange={setWebSearch}
                   />
                   <div className="grid gap-0.5">
-                    <Label htmlFor="web-search" className="text-sm">웹 검색</Label>
+                    <Label htmlFor="web-search" className="text-sm">
+                      웹 검색
+                    </Label>
                     <span className="text-muted-foreground text-xs">
                       {webSearchGlobalOn
                         ? "이 에이전트를 연 후(적용하려면 위를 클릭하여 저장) web_search를 사용하여 온라인으로 검색할 수 있습니다."
@@ -345,15 +408,14 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
               )}
               {showInteractiveShell && (
                 <div className="flex items-center gap-3 border-t pt-3">
-                  <Switch
-                    id="interactive-shell"
-                    checked={interactiveShell}
-                    onCheckedChange={setInteractiveShell}
-                  />
+                  <Switch id="interactive-shell" checked={interactiveShell} onCheckedChange={setInteractiveShell} />
                   <div className="grid gap-0.5">
-                    <Label htmlFor="interactive-shell" className="text-sm">대화형 쉘</Label>
+                    <Label htmlFor="interactive-shell" className="text-sm">
+                      대화형 쉘
+                    </Label>
                     <span className="text-muted-foreground text-xs">
-이 에이전트를 연 후(적용하려면 위를 클릭) 영구 PTY 세션 도구(shell_open/send/read/close/list)를 사용하여 msfconsole/ssh/REPL과 같은 대화형 프로그램을 구동할 수 있습니다.
+                      이 에이전트를 연 후(적용하려면 위를 클릭) 영구 PTY 세션 도구(shell_open/send/read/close/list)를
+                      사용하여 msfconsole/ssh/REPL과 같은 대화형 프로그램을 구동할 수 있습니다.
                     </span>
                   </div>
                 </div>
@@ -362,15 +424,22 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
           )}
 
           <div className="grid gap-2">
-            <Label className="text-muted-foreground text-xs">변수(클릭하여 자리 표시자를 삽입하고 렌더링 시 런타임 데이터로 대체됨)</Label>
+            <Label className="text-muted-foreground text-xs">
+              변수(클릭하여 자리 표시자를 삽입하고 렌더링 시 런타임 데이터로 대체됨)
+            </Label>
             <div className="flex flex-wrap gap-2">
               {variables.map((v) => (
                 <Tooltip key={v.name}>
                   <TooltipTrigger asChild>
-                    <button type="button" onClick={() => setPrompt((p) => `${p}{{.${v.name}}}`)}
-                      className="hover:bg-muted inline-flex items-center gap-1 rounded-md border bg-muted/40 px-2 py-1 font-mono text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setPrompt((p) => `${p}{{.${v.name}}}`)}
+                      className="hover:bg-muted inline-flex items-center gap-1 rounded-md border bg-muted/40 px-2 py-1 font-mono text-xs"
+                    >
                       {`{{.${v.name}}}`}
-                      <Badge variant="secondary" className="px-1 py-0 text-[10px]">{v.source}</Badge>
+                      <Badge variant="secondary" className="px-1 py-0 text-[10px]">
+                        {v.source}
+                      </Badge>
                     </button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs">
@@ -383,14 +452,20 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
             </div>
           </div>
 
-          <Textarea className="font-mono text-xs" rows={16} value={prompt}
-            placeholder="내장된 기본 프롬프트 단어를 사용하려면 비워 두세요." onChange={(e) => setPrompt(e.target.value)} />
+          <Textarea
+            className="font-mono text-xs"
+            rows={16}
+            value={prompt}
+            placeholder="내장된 기본 프롬프트 단어를 사용하려면 비워 두세요."
+            onChange={(e) => setPrompt(e.target.value)}
+          />
 
           <div className="flex flex-wrap gap-2">
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm" onClick={doPreview}>
-                  <EyeIcon />렌더링 미리보기
+                  <EyeIcon />
+                  렌더링 미리보기
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-2xl">
@@ -407,23 +482,35 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
               <SaveIcon />새 버전으로 저장
             </Button>
             <Button variant="outline" size="sm" onClick={resetPrompt}>
-              <RotateCcwIcon />기본값 복원
+              <RotateCcwIcon />
+              기본값 복원
             </Button>
           </div>
-
 
           <Separator />
           <div className="grid gap-2">
             <Label className="text-muted-foreground text-xs">버전 기록</Label>
             <ul className="grid gap-1">
               {versions.map((ver, i) => (
-                <li key={ver.version} className="flex items-center gap-2 rounded-md px-1 py-0.5 text-xs hover:bg-muted/50">
+                <li
+                  key={ver.version}
+                  className="flex items-center gap-2 rounded-md px-1 py-0.5 text-xs hover:bg-muted/50"
+                >
                   <span className="font-mono shrink-0">v{ver.version}</span>
-                  {i === 0 && <Badge variant="secondary" className="px-1.5 py-0 shrink-0">현재의</Badge>}
+                  {i === 0 && (
+                    <Badge variant="secondary" className="px-1.5 py-0 shrink-0">
+                      현재의
+                    </Badge>
+                  )}
                   <span className="text-muted-foreground truncate flex-1">{ver.note}</span>
                   {ver.ts && (
                     <span className="text-muted-foreground/60 shrink-0 tabular-nums">
-                      {new Date(ver.ts).toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                      {new Date(ver.ts).toLocaleDateString("ko-KR", {
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </span>
                   )}
                   <Button variant="ghost" size="icon-sm" className="size-6 shrink-0" onClick={() => setViewVer(ver)}>
@@ -437,19 +524,28 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
                 </li>
               ))}
               {versions.length === 0 && (
-                <li className="text-muted-foreground text-xs">(아직 저장된 버전이 없으므로 내장된 기본값을 사용하세요)</li>
+                <li className="text-muted-foreground text-xs">
+                  (아직 저장된 버전이 없으므로 내장된 기본값을 사용하세요)
+                </li>
               )}
             </ul>
           </div>
 
-{/* 버전 보기 대화상자 */}
-          <Dialog open={!!viewVer} onOpenChange={(o) => { if (!o) setViewVer(null); }}>
+          {/* 버전 보기 대화상자 */}
+          <Dialog
+            open={!!viewVer}
+            onOpenChange={(o) => {
+              if (!o) setViewVer(null);
+            }}
+          >
             <DialogContent className="sm:max-w-2xl">
               <DialogHeader>
                 <DialogTitle>
                   v{viewVer?.version}
                   {viewVer?.version === versions[0]?.version && (
-                    <Badge variant="secondary" className="ml-2 px-1.5 py-0 align-middle">현재의</Badge>
+                    <Badge variant="secondary" className="ml-2 px-1.5 py-0 align-middle">
+                      현재의
+                    </Badge>
                   )}
                 </DialogTitle>
                 <DialogDescription>
@@ -466,30 +562,56 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
               </pre>
               <div className="flex gap-2 justify-end">
                 {viewVer && viewVer.version !== versions[0]?.version && (
-                  <Button variant="outline" size="sm" onClick={() => {
-                    if (viewVer) { setDiffVer(viewVer); setViewVer(null); }
-                  }}>
-                    <GitCompareIcon className="mr-1 size-3.5" />현재 버전과 비교
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (viewVer) {
+                        setDiffVer(viewVer);
+                        setViewVer(null);
+                      }
+                    }}
+                  >
+                    <GitCompareIcon className="mr-1 size-3.5" />
+                    현재 버전과 비교
                   </Button>
                 )}
-                <Button size="sm" onClick={() => {
-                  if (viewVer) { setPrompt(viewVer.template_text); setViewVer(null); toast.success(`로드된 v${viewVer.version}편집기로 이동하여 확인하고 "새 버전으로 저장"을 클릭하세요.`); }
-                }}>
-편집기에 로드
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (viewVer) {
+                      setPrompt(viewVer.template_text);
+                      setViewVer(null);
+                      toast.success(
+                        `로드된 v${viewVer.version}편집기로 이동하여 확인하고 "새 버전으로 저장"을 클릭하세요.`,
+                      );
+                    }
+                  }}
+                >
+                  편집기에 로드
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
 
-{/* 버전 비교 대화상자 */}
-          <Dialog open={!!diffVer} onOpenChange={(o) => { if (!o) setDiffVer(null); }}>
+          {/* 버전 비교 대화상자 */}
+          <Dialog
+            open={!!diffVer}
+            onOpenChange={(o) => {
+              if (!o) setDiffVer(null);
+            }}
+          >
             <DialogContent className="sm:max-w-3xl">
               <DialogHeader>
-                <DialogTitle>버전 비교: v{diffVer?.version} → v{versions[0]?.version}(현재)</DialogTitle>
+                <DialogTitle>
+                  버전 비교: v{diffVer?.version} → v{versions[0]?.version}(현재)
+                </DialogTitle>
                 <DialogDescription>
                   <span className="inline-flex items-center gap-3 text-xs">
                     <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-red-600 dark:text-red-400">- 삭제</span>
-                    <span className="rounded bg-green-500/15 px-1.5 py-0.5 text-green-600 dark:text-green-400">+ 신규</span>
+                    <span className="rounded bg-green-500/15 px-1.5 py-0.5 text-green-600 dark:text-green-400">
+                      + 신규
+                    </span>
                   </span>
                 </DialogDescription>
               </DialogHeader>
@@ -499,19 +621,24 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
         </div>
       </TabsContent>
 
-{/* 마무리 프롬프트 단어 */}
+      {/* 마무리 프롬프트 단어 */}
       <TabsContent value="wrapup" className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         <div className="grid gap-3">
           <p className="text-muted-foreground text-xs leading-relaxed">
-이 에이전트가<b>타임아웃</b>또는<b>단계 부족</b>종료되면 시스템은 이 "종료 프롬프트 단어"를 삽입하여 종료 라운드를 실행합니다.
-먼저 식별되었지만 라이브러리에 포함되지 않은 콘텐츠를 다시 작성한 다음 요약을 출력합니다(미완성 작업을 방지하기 위해). 내장된 기본값을 사용하려면 비워 두세요.
+            이 에이전트가<b>타임아웃</b>또는<b>단계 부족</b>종료되면 시스템은 이 "종료 프롬프트 단어"를 삽입하여 종료
+            라운드를 실행합니다. 먼저 식별되었지만 라이브러리에 포함되지 않은 콘텐츠를 다시 작성한 다음 요약을
+            출력합니다(미완성 작업을 방지하기 위해). 내장된 기본값을 사용하려면 비워 두세요.
           </p>
           <div className="flex items-center gap-2">
             <Label className="text-xs">종료 프롬프트 텍스트</Label>
             {wrapup.trim() ? (
-              <Badge variant="secondary" className="px-1.5 py-0">사용자 정의</Badge>
+              <Badge variant="secondary" className="px-1.5 py-0">
+                사용자 정의
+              </Badge>
             ) : (
-              <Badge variant="outline" className="px-1.5 py-0">내장된 기본값 사용</Badge>
+              <Badge variant="outline" className="px-1.5 py-0">
+                내장된 기본값 사용
+              </Badge>
             )}
           </div>
           <Textarea
@@ -523,14 +650,24 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
           />
           <div className="grid gap-1.5">
             <Label htmlFor="wrapup-turns" className="text-xs">
-마감 라운드 수(마감 단계의 최대 라운드 수, 0 = 내장된 기본 {wrapupTurnsDefault} 라운드 사용)
+              마감 라운드 수(마감 단계의 최대 라운드 수, 0 = 내장된 기본 {wrapupTurnsDefault} 라운드 사용)
             </Label>
-            <Input id="wrapup-turns" type="number" min={0} className="h-8 w-32"
-              value={wrapupTurns} onChange={(e) => setWrapupTurns(e.target.value)} />
+            <Input
+              id="wrapup-turns"
+              type="number"
+              min={0}
+              className="h-8 w-32"
+              value={wrapupTurns}
+              onChange={(e) => setWrapupTurns(e.target.value)}
+            />
           </div>
           <div className="flex gap-2">
-            <Button size="sm" onClick={saveWrapup}>저장</Button>
-            <Button size="sm" variant="outline" onClick={resetWrapup}>기본값 복원</Button>
+            <Button size="sm" onClick={saveWrapup}>
+              저장
+            </Button>
+            <Button size="sm" variant="outline" onClick={resetWrapup}>
+              기본값 복원
+            </Button>
           </div>
           {wrapupDefault && (
             <>
@@ -548,15 +685,21 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
             <>
               <Separator className="my-2" />
               <p className="text-muted-foreground text-xs leading-relaxed">
-                <b>작업 시간 초과가 종료됩니다.</b>(위의 실행별 결말은 다음과 같습니다.<b>두 세트</b>):언제<b>전체 임무</b>제한 시간 제한에 도달하여 종료되려고 할 때 삽입됩니다.
-의미 체계는 실행별과 반대되는 경우가 많습니다(예: planner: 실행별은 "중지하지 말고 계속 계획을 세우세요"라고 말하고 작업 시간 제한은 "해당 지점에서 중지하고 최종 결정을 내립니다"라고 말합니다). 내장된 기본값을 사용하려면 비워 두세요.
+                <b>작업 시간 초과가 종료됩니다.</b>(위의 실행별 결말은 다음과 같습니다.<b>두 세트</b>):언제
+                <b>전체 임무</b>제한 시간 제한에 도달하여 종료되려고 할 때 삽입됩니다. 의미 체계는 실행별과 반대되는
+                경우가 많습니다(예: planner: 실행별은 "중지하지 말고 계속 계획을 세우세요"라고 말하고 작업 시간 제한은
+                "해당 지점에서 중지하고 최종 결정을 내립니다"라고 말합니다). 내장된 기본값을 사용하려면 비워 두세요.
               </p>
               <div className="flex items-center gap-2">
                 <Label className="text-xs">작업 시간 초과 종료 프롬프트 텍스트</Label>
                 {ttWrapup.trim() ? (
-                  <Badge variant="secondary" className="px-1.5 py-0">사용자 정의</Badge>
+                  <Badge variant="secondary" className="px-1.5 py-0">
+                    사용자 정의
+                  </Badge>
                 ) : (
-                  <Badge variant="outline" className="px-1.5 py-0">내장된 기본값 사용</Badge>
+                  <Badge variant="outline" className="px-1.5 py-0">
+                    내장된 기본값 사용
+                  </Badge>
                 )}
               </div>
               <Textarea
@@ -568,14 +711,24 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
               />
               <div className="grid gap-1.5">
                 <Label htmlFor="tt-turns" className="text-xs">
-종료 라운드 수(0 = 내장된 기본 {ttTurnsDefault} 라운드 사용)
+                  종료 라운드 수(0 = 내장된 기본 {ttTurnsDefault} 라운드 사용)
                 </Label>
-                <Input id="tt-turns" type="number" min={0} className="h-8 w-32"
-                  value={ttTurns} onChange={(e) => setTtTurns(e.target.value)} />
+                <Input
+                  id="tt-turns"
+                  type="number"
+                  min={0}
+                  className="h-8 w-32"
+                  value={ttTurns}
+                  onChange={(e) => setTtTurns(e.target.value)}
+                />
               </div>
               <div className="flex gap-2">
-                <Button size="sm" onClick={saveTaskTimeoutWrapup}>저장</Button>
-                <Button size="sm" variant="outline" onClick={resetTaskTimeoutWrapup}>기본값 복원</Button>
+                <Button size="sm" onClick={saveTaskTimeoutWrapup}>
+                  저장
+                </Button>
+                <Button size="sm" variant="outline" onClick={resetTaskTimeoutWrapup}>
+                  기본값 복원
+                </Button>
               </div>
               {ttWrapupDefault && (
                 <div className="grid gap-1.5">
@@ -590,7 +743,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
         </div>
       </TabsContent>
 
-{/* MCP 가시성 */}
+      {/* MCP 가시성 */}
       <TabsContent value="mcp" className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         <p className="text-muted-foreground mb-3 text-xs">이 에이전트에 표시되는 MCP 서버를 확인하세요.</p>
         <div className="grid gap-2">
@@ -605,7 +758,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
         </div>
       </TabsContent>
 
-{/* 스킬 가시성 */}
+      {/* 스킬 가시성 */}
       <TabsContent value="skill" className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         <p className="text-muted-foreground mb-3 text-xs">이 에이전트에게 표시되는 스킬을 확인하세요.</p>
         <div className="grid gap-2">
@@ -620,7 +773,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
         </div>
       </TabsContent>
 
-{/* 도구 바인딩 */}
+      {/* 도구 바인딩 */}
       <TabsContent value="tools" className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         <p className="text-muted-foreground mb-3 text-xs">이 에이전트에 바인딩된 기본 제공 도구를 확인하세요.</p>
         <div className="grid gap-2">
@@ -630,10 +783,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
             return (
               <label
                 key={t.key}
-                className={cn(
-                  "flex items-center gap-2 rounded-md border p-2 text-sm",
-                  gated && "opacity-60",
-                )}
+                className={cn("flex items-center gap-2 rounded-md border p-2 text-sm", gated && "opacity-60")}
               >
                 <Checkbox
                   checked={t.agents.includes(agentKey)}
@@ -642,10 +792,14 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
                 />
                 <span className="font-mono text-xs">{t.key}</span>
                 {isTraffic && (
-                  <Badge variant="secondary" className="px-1 py-0 text-[9px]">흐름</Badge>
+                  <Badge variant="secondary" className="px-1 py-0 text-[9px]">
+                    흐름
+                  </Badge>
                 )}
                 {!t.enabled && (
-                  <Badge variant="outline" className="text-destructive px-1 py-0 text-[9px]">비활성화됨</Badge>
+                  <Badge variant="outline" className="text-destructive px-1 py-0 text-[9px]">
+                    비활성화됨
+                  </Badge>
                 )}
                 {gated ? (
                   <span className="text-muted-foreground ml-auto text-xs">트래픽 캡처를 켜야 합니다</span>
@@ -663,7 +817,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
         </div>
       </TabsContent>
 
-{/* 트리거(P3, 커스텀 에이전트만 해당) */}
+      {/* 트리거(P3, 커스텀 에이전트만 해당) */}
       {isCustom && (
         <TabsContent value="triggers" className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
           <AgentTriggersTab agentKey={agentKey} agent={detail?.agent} />
@@ -728,12 +882,12 @@ function DiffView({ oldText, newText }: { oldText: string; newText: string }) {
 }
 
 // AgentTriggersTab manages a custom agent's P3 triggers: list + add + delete.
-// Each trigger fires (定时/发现finding/目标达成/任务超时/工具调用，可多选) → a new conversation runs
+// Each trigger fires (/finding///，) → a new conversation runs
 // in parallel with the base user message + auto context appended by the backend.
 function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent }) {
   const [triggers, setTriggers] = React.useState<AgentTrigger[]>([]);
   const [tools, setTools] = React.useState<Tool[]>([]);
-  // 触发后处理策略(每 agent);初值来自 agent detail,改动即保存。
+  // ( agent); agent detail,
   const [runMode, setRunMode] = React.useState<"serial" | "parallel">(agent?.trigger_run_mode ?? "serial");
   const [mergeMode, setMergeMode] = React.useState<"by_task" | "all" | "none">(agent?.trigger_merge_mode ?? "all");
   const [maxParallel, setMaxParallel] = React.useState(String(agent?.trigger_max_parallel ?? 5));
@@ -769,24 +923,30 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
   const [taskCreateMsg, setTaskCreateMsg] = React.useState("");
   const [toolNames, setToolNames] = React.useState<string[]>([]);
   const [saving, setSaving] = React.useState(false);
-  // null = 新增模式；非 null = 正在编辑该 id 的触发器。
+  // null = ； null =  id
   const [editingId, setEditingId] = React.useState<number | null>(null);
 
   const reload = React.useCallback(() => {
-    api.agentTriggers(agentKey).then(setTriggers).catch(() => setTriggers([]));
+    api
+      .agentTriggers(agentKey)
+      .then(setTriggers)
+      .catch(() => setTriggers([]));
   }, [agentKey]);
   React.useEffect(() => {
     reload();
   }, [reload]);
   React.useEffect(() => {
-    api.tools().then(setTools).catch(() => setTools([]));
+    api
+      .tools()
+      .then(setTools)
+      .catch(() => setTools([]));
   }, []);
 
   function toggleTool(key: string) {
     setToolNames((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   }
 
-  // resetForm 清空表单并回到「新增」模式。
+  // resetForm
   function resetForm() {
     setEditingId(null);
     setOnInterval(false);
@@ -805,7 +965,7 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
     setToolNames([]);
   }
 
-  // startEdit 把某条已有触发器灌进表单,进入「编辑」模式。
+  // startEdit ,
   function startEdit(t: AgentTrigger) {
     setEditingId(t.id);
     setOnInterval(t.interval_sec > 0);
@@ -824,7 +984,7 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
     setToolNames(t.tool_names ?? []);
   }
 
-  // submit 依 editingId 走「新增」或「保存修改」;编辑时保留该触发器的启用状态。
+  // submit  editingId ;
   async function submit() {
     const n = onInterval ? Math.max(1, Math.floor(Number(intervalSec) || 0)) : 0;
     if (n === 0 && !onFinding && !onGoalMet && !onTaskTimeout && !onToolCall && !onTaskCreate) {
@@ -915,13 +1075,16 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
   return (
     <div className="grid gap-4">
       <p className="text-muted-foreground text-xs">
-트리거를 사용하면 이 사용자 지정 에이전트가 트리거될 때마다 자동으로 실행될 수 있습니다.<b>새 세션을 생성하고 실행</b>(대화 페이지에 표시됨)
-여러 트리거 조건을 선택할 수 있습니다. 시스템은 귀하가 작성한 기본 메시지에 "이번에 트리거된 이유 + 관련 작업/발견/목표"를 자동으로 추가합니다.
+        트리거를 사용하면 이 사용자 지정 에이전트가 트리거될 때마다 자동으로 실행될 수 있습니다.
+        <b>새 세션을 생성하고 실행</b>(대화 페이지에 표시됨) 여러 트리거 조건을 선택할 수 있습니다. 시스템은 귀하가
+        작성한 기본 메시지에 "이번에 트리거된 이유 + 관련 작업/발견/목표"를 자동으로 추가합니다.
       </p>
 
-{/* 사후 트리거 처리 전략 */}
+      {/* 사후 트리거 처리 전략 */}
       <div className="grid gap-3 rounded-md border p-3">
-        <Label className="text-muted-foreground text-xs">사후 트리거 처리 전략(실행을 위해 트리거가 대기열에 추가/결합되는 방식 결정)</Label>
+        <Label className="text-muted-foreground text-xs">
+          사후 트리거 처리 전략(실행을 위해 트리거가 대기열에 추가/결합되는 방식 결정)
+        </Label>
         <div className="flex flex-wrap items-center gap-4">
           <div className="grid gap-1">
             <Label className="text-xs">작동 모드</Label>
@@ -967,7 +1130,9 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
 
           {runMode === "parallel" && (
             <div className="grid gap-1">
-              <Label htmlFor="tr-maxpar" className="text-xs">최대 동시성(0=제한 없음)</Label>
+              <Label htmlFor="tr-maxpar" className="text-xs">
+                최대 동시성(0=제한 없음)
+              </Label>
               <Input
                 id="tr-maxpar"
                 type="number"
@@ -995,7 +1160,7 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
         </p>
       </div>
 
-{/* 트리거 추가/수정 */}
+      {/* 트리거 추가/수정 */}
       <div className="grid gap-3 rounded-md border p-3">
         <Label className="text-muted-foreground text-xs">
           {editingId != null
@@ -1003,21 +1168,35 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
             : "새 트리거 추가(각 조건은 자체 사용자 메시지를 채울 수 있음)"}
         </Label>
 
-{/* 타이밍 */}
+        {/* 타이밍 */}
         <div className="grid gap-1.5">
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={onInterval} onCheckedChange={(v) => setOnInterval(!!v)} />타이밍 트리거
+            <Checkbox checked={onInterval} onCheckedChange={(v) => setOnInterval(!!v)} />
+            타이밍 트리거
           </label>
           {onInterval && (
             <div className="grid gap-1.5">
               <div className="flex items-center gap-2">
-                <Label htmlFor="tr-interval" className="text-xs">모든</Label>
-                <Input id="tr-interval" type="number" min={1} className="h-8 w-24"
-                  value={intervalSec} onChange={(e) => setIntervalSec(e.target.value)} />
+                <Label htmlFor="tr-interval" className="text-xs">
+                  모든
+                </Label>
+                <Input
+                  id="tr-interval"
+                  type="number"
+                  min={1}
+                  className="h-8 w-24"
+                  value={intervalSec}
+                  onChange={(e) => setIntervalSec(e.target.value)}
+                />
                 <span className="text-muted-foreground text-xs">두번째</span>
               </div>
-              <Textarea className="text-xs" rows={2} value={intervalMsg}
-                placeholder="모든 작업 검사와 같은 예약된 트리거 시 에이전트에 전송됩니다." onChange={(e) => setIntervalMsg(e.target.value)} />
+              <Textarea
+                className="text-xs"
+                rows={2}
+                value={intervalMsg}
+                placeholder="모든 작업 검사와 같은 예약된 트리거 시 에이전트에 전송됩니다."
+                onChange={(e) => setIntervalMsg(e.target.value)}
+              />
             </div>
           )}
         </div>
@@ -1025,75 +1204,113 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
         {/* finding */}
         <div className="grid gap-1.5">
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={onFinding} onCheckedChange={(v) => setOnFinding(!!v)} />발견 항목이 발견되면 트리거됩니다.
+            <Checkbox checked={onFinding} onCheckedChange={(v) => setOnFinding(!!v)} />
+            발견 항목이 발견되면 트리거됩니다.
           </label>
           {onFinding && (
-            <Textarea className="text-xs" rows={2} value={findingMsg}
-              placeholder="검색 결과가 발견되면 에이전트에게 보냅니다. (시스템이 작업 및 검색 결과 세부 정보를 첨부합니다.)" onChange={(e) => setFindingMsg(e.target.value)} />
+            <Textarea
+              className="text-xs"
+              rows={2}
+              value={findingMsg}
+              placeholder="검색 결과가 발견되면 에이전트에게 보냅니다. (시스템이 작업 및 검색 결과 세부 정보를 첨부합니다.)"
+              onChange={(e) => setFindingMsg(e.target.value)}
+            />
           )}
         </div>
 
-{/* 목표 달성 */}
+        {/* 목표 달성 */}
         <div className="grid gap-1.5">
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={onGoalMet} onCheckedChange={(v) => setOnGoalMet(!!v)} />목표 달성 시 발동
+            <Checkbox checked={onGoalMet} onCheckedChange={(v) => setOnGoalMet(!!v)} />
+            목표 달성 시 발동
           </label>
           {onGoalMet && (
-            <Textarea className="text-xs" rows={2} value={goalMsg}
-              placeholder="목표가 달성되면 에이전트에게 전송됩니다(시스템이 작업과 달성된 목표를 첨부합니다)." onChange={(e) => setGoalMsg(e.target.value)} />
+            <Textarea
+              className="text-xs"
+              rows={2}
+              value={goalMsg}
+              placeholder="목표가 달성되면 에이전트에게 전송됩니다(시스템이 작업과 달성된 목표를 첨부합니다)."
+              onChange={(e) => setGoalMsg(e.target.value)}
+            />
           )}
         </div>
 
-{/* 작업 시간 초과 */}
+        {/* 작업 시간 초과 */}
         <div className="grid gap-1.5">
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={onTaskTimeout} onCheckedChange={(v) => setOnTaskTimeout(!!v)} />작업 시간이 초과되면 트리거됨
+            <Checkbox checked={onTaskTimeout} onCheckedChange={(v) => setOnTaskTimeout(!!v)} />
+            작업 시간이 초과되면 트리거됨
           </label>
           {onTaskTimeout && (
-            <Textarea className="text-xs" rows={2} value={taskTimeoutMsg}
-              placeholder="작업 시간이 초과되면 에이전트에 전송됩니다. (시스템에 작업 번호와 대상이 포함됩니다.)" onChange={(e) => setTaskTimeoutMsg(e.target.value)} />
+            <Textarea
+              className="text-xs"
+              rows={2}
+              value={taskTimeoutMsg}
+              placeholder="작업 시간이 초과되면 에이전트에 전송됩니다. (시스템에 작업 번호와 대상이 포함됩니다.)"
+              onChange={(e) => setTaskTimeoutMsg(e.target.value)}
+            />
           )}
         </div>
 
-{/* 도구 호출 */}
+        {/* 도구 호출 */}
         <div className="grid gap-1.5">
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={onToolCall} onCheckedChange={(v) => setOnToolCall(!!v)} />도구가 호출될 때 트리거됩니다.
+            <Checkbox checked={onToolCall} onCheckedChange={(v) => setOnToolCall(!!v)} />
+            도구가 호출될 때 트리거됩니다.
           </label>
           {onToolCall && (
             <div className="grid gap-1.5">
               <div className="text-muted-foreground text-xs">
-모니터링할 도구를 선택합니다(적어도 하나). 작업 실행 중에 매번 이러한 도구<b>통화 완료</b>트리거됩니다. {toolNames.length}이(가) 선택되었습니다.
+                모니터링할 도구를 선택합니다(적어도 하나). 작업 실행 중에 매번 이러한 도구<b>통화 완료</b>트리거됩니다.{" "}
+                {toolNames.length}이(가) 선택되었습니다.
               </div>
               <div className="max-h-40 overflow-y-auto rounded-md border p-2">
-                {tools.length === 0 && <span className="text-muted-foreground text-xs">(도구 목록이 비어 있습니다)</span>}
+                {tools.length === 0 && (
+                  <span className="text-muted-foreground text-xs">(도구 목록이 비어 있습니다)</span>
+                )}
                 <div className="grid gap-1">
                   {tools.map((tool) => (
                     <label key={tool.key} className="flex items-start gap-2 text-xs">
-                      <Checkbox className="mt-0.5" checked={toolNames.includes(tool.key)}
-                        onCheckedChange={() => toggleTool(tool.key)} />
+                      <Checkbox
+                        className="mt-0.5"
+                        checked={toolNames.includes(tool.key)}
+                        onCheckedChange={() => toggleTool(tool.key)}
+                      />
                       <span className="min-w-0">
                         <span className="font-medium">{tool.key}</span>
-                        {tool.description && <span className="text-muted-foreground line-clamp-1"> {tool.description}</span>}
+                        {tool.description && (
+                          <span className="text-muted-foreground line-clamp-1"> {tool.description}</span>
+                        )}
                       </span>
                     </label>
                   ))}
                 </div>
               </div>
-              <Textarea className="text-xs" rows={2} value={toolCallMsg}
-                placeholder="도구 호출 시 에이전트에게 전송됩니다. (시스템에는 작업 정보 및 도구 참여 반환 내용이 포함됩니다.)" onChange={(e) => setToolCallMsg(e.target.value)} />
+              <Textarea
+                className="text-xs"
+                rows={2}
+                value={toolCallMsg}
+                placeholder="도구 호출 시 에이전트에게 전송됩니다. (시스템에는 작업 정보 및 도구 참여 반환 내용이 포함됩니다.)"
+                onChange={(e) => setToolCallMsg(e.target.value)}
+              />
             </div>
           )}
         </div>
 
-{/* 태스크 생성 */}
+        {/* 태스크 생성 */}
         <div className="grid gap-1.5">
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={onTaskCreate} onCheckedChange={(v) => setOnTaskCreate(!!v)} />작업이 생성될 때 트리거됨
+            <Checkbox checked={onTaskCreate} onCheckedChange={(v) => setOnTaskCreate(!!v)} />
+            작업이 생성될 때 트리거됨
           </label>
           {onTaskCreate && (
-            <Textarea className="text-xs" rows={2} value={taskCreateMsg}
-              placeholder="작업이 생성될 때 에이전트에 전송되는 경우(시스템에 작업 번호와 목표가 포함됩니다)" onChange={(e) => setTaskCreateMsg(e.target.value)} />
+            <Textarea
+              className="text-xs"
+              rows={2}
+              value={taskCreateMsg}
+              placeholder="작업이 생성될 때 에이전트에 전송되는 경우(시스템에 작업 번호와 목표가 포함됩니다)"
+              onChange={(e) => setTaskCreateMsg(e.target.value)}
+            />
           )}
         </div>
 
@@ -1103,13 +1320,14 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
           </Button>
           {editingId != null && (
             <Button size="sm" variant="ghost" onClick={resetForm} disabled={saving}>
-              <XIcon />편집 취소
+              <XIcon />
+              편집 취소
             </Button>
           )}
         </div>
       </div>
 
-{/* 기존 트리거 */}
+      {/* 기존 트리거 */}
       <div className="grid gap-2">
         <Label className="text-muted-foreground text-xs">이미 트리거가 있습니다.</Label>
         {triggers.length === 0 && <span className="text-muted-foreground text-xs">(아직 없음)</span>}
@@ -1126,15 +1344,23 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="font-medium">{condLabel(t)}</span>
                 {!t.enabled && (
-                  <Badge variant="outline" className="text-destructive px-1 py-0 text-[9px]">비활성화됨</Badge>
+                  <Badge variant="outline" className="text-destructive px-1 py-0 text-[9px]">
+                    비활성화됨
+                  </Badge>
                 )}
               </div>
               <div className="text-muted-foreground grid gap-0.5 text-xs">
-                {t.interval_sec > 0 && t.interval_message && <div className="line-clamp-1">타이밍: {t.interval_message}</div>}
+                {t.interval_sec > 0 && t.interval_message && (
+                  <div className="line-clamp-1">타이밍: {t.interval_message}</div>
+                )}
                 {t.on_finding && t.finding_message && <div className="line-clamp-1">finding: {t.finding_message}</div>}
                 {t.on_goal_met && t.goal_message && <div className="line-clamp-1">목표: {t.goal_message}</div>}
-                {t.on_task_timeout && t.task_timeout_message && <div className="line-clamp-1">시간 초과: {t.task_timeout_message}</div>}
-                {t.on_task_create && t.task_create_message && <div className="line-clamp-1">태스크 생성: {t.task_create_message}</div>}
+                {t.on_task_timeout && t.task_timeout_message && (
+                  <div className="line-clamp-1">시간 초과: {t.task_timeout_message}</div>
+                )}
+                {t.on_task_create && t.task_create_message && (
+                  <div className="line-clamp-1">태스크 생성: {t.task_create_message}</div>
+                )}
                 {t.on_tool_call && (
                   <>
                     <div className="line-clamp-1">도구: {t.tool_names.join(",") || "(선택되지 않음)"}</div>
@@ -1143,12 +1369,22 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
                 )}
               </div>
             </div>
-            <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground"
-              onClick={() => startEdit(t)} title="편집하다">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-foreground"
+              onClick={() => startEdit(t)}
+              title="편집하다"
+            >
               <PencilIcon className="size-3.5" />
             </Button>
-            <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive"
-              onClick={() => del(t.id)} title="삭제">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-destructive"
+              onClick={() => del(t.id)}
+              title="삭제"
+            >
               <Trash2Icon className="size-3.5" />
             </Button>
           </div>

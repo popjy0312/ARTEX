@@ -17,8 +17,8 @@ export default function SetupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
-  // 查않음到初始化상태时할 수 없음기본값当成"未初始化"——那样会把初始化表单摆给한 개
-  // 其实已经设过비밀번호의实例，사용자照着填就会覆盖掉原비밀번호。此时꺼짐입력口。
+  // 않음상태할 수 없음기본값""——한 개
+  // 비밀번호의，사용자비밀번호꺼짐입력
   const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
@@ -76,7 +76,9 @@ export default function SetupPage() {
       <div className="flex w-full items-center justify-center bg-background p-8 lg:w-2/3">
         <div className="w-full max-w-md space-y-10 py-24 lg:py-32">
           <div className="space-y-4 text-center">
-            <h2 className="text-2xl font-medium tracking-tight">{unavailable ? "초기화 상태를 확인할 수 없음" : "비밀번호 초기화"}</h2>
+            <h2 className="text-2xl font-medium tracking-tight">
+              {unavailable ? "초기화 상태를 확인할 수 없음" : "비밀번호 초기화"}
+            </h2>
             <p className="mx-auto max-w-xl text-muted-foreground">
               {unavailable
                 ? "백엔드 또는 데이터베이스를 일시적으로 사용할 수 없습니다. 기존 비밀번호가 덮어써지는 것을 방지하기 위해 초기화 기능을 잠시 닫았습니다. 서비스를 복구한 후 다시 시도해 주세요."

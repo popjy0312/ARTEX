@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# ARTEX 更新脚本：① Docker 更新（拉新镜像重建）  ② 本地编译更新（重建二进制）
-# 与 install.sh 对应：install 负责首次落地，update 负责升级到新版本。
-# DB 迁移无需手动执行——artex 每次启动都会幂等重跑 schema.sql（含 ADD COLUMN/CREATE
-# INDEX IF NOT EXISTS），所以“重启即迁移”。数据（pgdata 卷、./data、./state、./skills）不受影响。
+# ARTEX update script: 1) Docker update (pull and recreate)  2) local rebuild.
+# This complements install.sh: install performs the initial deployment, update upgrades it.
+# No manual DB migration is required: artex idempotently reapplies schema.sql on startup
+# (including ADD COLUMN/CREATE INDEX IF NOT EXISTS), so restarting performs the migration.
+# Data (the pgdata volume, ./data, ./state, and ./skills) is preserved.
 set -euo pipefail
 cd "$(cd "$(dirname "$0")" && pwd)"
 
@@ -12,7 +13,7 @@ warn(){ printf '\033[33m[!]\033[0m %s\n' "$*"; }
 die(){  printf '\033[31m[x]\033[0m %s\n' "$*" >&2; exit 1; }
 ask(){  local p="$1" d="${2:-}" a; read -rp "$p${d:+ [$d]}: " a; echo "${a:-$d}"; }
 
-# ── 可选：同步仓库到最新代码（compose/脚本/本地编译源码都靠它更新）───────
+# ── Optional: sync the repository to the latest code ─────────────────────────
 sync_repo(){
   [ -d .git ] && command -v git >/dev/null 2>&1 || { warn "Not a git working copy; skipping git pull"; return; }
   [ "$(ask 'Pull the latest code (git pull --ff-only)? (y/n)' y)" = y ] || return
@@ -21,13 +22,14 @@ sync_repo(){
   fi
 }
 
-# ── ① Docker 更新 ───────────────────────────────
+# ── 1) Docker update ────────────────────────────
 update_docker(){
   command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1 \
     || die "docker / docker compose not found; run ./install.sh first"
   [ -f .env ] || die ".env not found; run ./install.sh for the initial deployment"
 
-  # 可选：升级到指定版本 tag（不填则沿用 .env 中的 ARTEX_TAG，缺省为 v0.3.15）
+  # Optional: upgrade to a specific version tag (otherwise keep .env's ARTEX_TAG,
+  # defaulting to v0.3.15).
   local tag; tag="$(ask 'Target image tag (press Enter to keep .env / v0.3.15)' '')"
   if [ -n "$tag" ]; then
     if grep -q '^ARTEX_TAG=' .env; then
@@ -38,9 +40,10 @@ update_docker(){
     ok "ARTEX_TAG set to ${tag}"
   fi
 
-  # 只动 artex：postgres 是固定的 16-alpine，不需要跟着升级（拉它纯属浪费带宽，
-  # 且大版本变动还会有兼容风险）。artex 声明了 depends_on postgres，所以带服务名
-  # up 时若 pg 没起会自动拉起，已在跑的则原样保留、不重建。
+  # Update artex only: postgres is pinned to 16-alpine and does not need to be
+  # upgraded with it. Updating it would waste bandwidth and risk compatibility.
+  # artex declares depends_on postgres, so bringing up the service starts postgres
+  # when needed while leaving an already-running instance unchanged.
   info "Pulling the new image (artex only)..."
   docker compose pull artex
   info "Recreating and starting (artex migrates the schema on restart)..."
@@ -50,7 +53,7 @@ update_docker(){
   info "Clean up old images (optional): docker image prune -f"
 }
 
-# ── ② 本地编译更新 ──────────────────────────────
+# ── 2) Local build update ───────────────────────
 update_local(){
   command -v go >/dev/null 2>&1 || die "Go (>=1.26) was not found: https://go.dev/dl/"
   [ -f config.json ] || warn "config.json not found; use ./install.sh for the initial deployment"

@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/Autumn-27/artex/db"
+	"github.com/Autumn-27/artex/egress"
 	"github.com/Autumn-27/norma/permission"
 	actool "github.com/Autumn-27/norma/tool"
 )
@@ -428,6 +429,9 @@ func (s *Server) runHTTPTool(ctx context.Context, execRaw json.RawMessage, param
 	if strings.TrimSpace(rawURL) == "" {
 		return actool.Errorf("http URL is empty"), nil
 	}
+	if err := egress.CheckURL(rawURL); err != nil {
+		return actool.Errorf(err.Error()), nil
+	}
 	var bodyReader io.Reader
 	if spec.Body != "" {
 		bodyReader = strings.NewReader(renderTemplate(spec.Body, params, identity))
@@ -444,6 +448,16 @@ func (s *Server) runHTTPTool(ctx context.Context, execRaw json.RawMessage, param
 	client := &http.Client{Timeout: timeoutOr(spec.TimeoutMs, 30000)}
 	if tr := s.httpProxyTransport(spec); tr != nil {
 		client.Transport = tr
+	}
+	client.CheckRedirect = func(next *http.Request, via []*http.Request) error {
+		if err := egress.CheckURL(next.URL.String()); err != nil {
+			return err
+		}
+		if len(via) > 0 && !strings.EqualFold(via[0].URL.Scheme, next.URL.Scheme) ||
+			len(via) > 0 && !strings.EqualFold(via[0].URL.Host, next.URL.Host) {
+			return fmt.Errorf("cross-origin redirect is blocked")
+		}
+		return nil
 	}
 	resp, err := client.Do(req)
 	if err != nil {

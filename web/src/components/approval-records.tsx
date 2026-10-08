@@ -100,7 +100,12 @@ function ApprovalOrigin({ row, detail = false }: { row: InterceptApprovalRow; de
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const labels: Record<string, string> = { pending: "승인 대기 중", allowed: "허용됨", denied: "거부됨", timeout: "시간 초과" };
+  const labels: Record<string, string> = {
+    pending: "승인 대기 중",
+    allowed: "허용됨",
+    denied: "거부됨",
+    timeout: "시간 초과",
+  };
   let variant: "default" | "destructive" | "secondary" | "outline" = "outline";
   if (status === "allowed") variant = "default";
   if (status === "denied") variant = "destructive";
@@ -115,7 +120,7 @@ function MatchCell({ row, showReason = true }: { row: InterceptApprovalRow; show
       {source(row) === "model" ? (
         <Badge variant="outline">
           <BotIcon />
-모델 판단
+          모델 판단
         </Badge>
       ) : (
         <span className="truncate">{row.rule_name || "규칙이 기록되지 않았거나 삭제되었습니다."}</span>
@@ -180,7 +185,8 @@ function ModelReviewContext({ input }: { input: InterceptReviewInput }) {
       <div className="flex flex-col gap-2">
         <h3 className="font-medium text-sm">모델 검토 컨텍스트</h3>
         <p className="text-muted-foreground text-xs">
-아래는 이번에 리뷰 모델에 실제로 전송된 입력의 스냅샷입니다. 배경은 현재의 행동을 이해하는 데에만 사용되며, 검토 전략에 따라 판단이 내려집니다.
+          아래는 이번에 리뷰 모델에 실제로 전송된 입력의 스냅샷입니다. 배경은 현재의 행동을 이해하는 데에만 사용되며,
+          검토 전략에 따라 판단이 내려집니다.
           {input.version < 4 ? "이 레코드는 당시 실제로 전송된 내용을 유지하는 레거시 입력을 사용합니다." : null}
         </p>
       </div>
@@ -192,7 +198,9 @@ function ModelReviewContext({ input }: { input: InterceptReviewInput }) {
         input.background ? (
           <div className="flex min-w-0 flex-col gap-2">
             <CodeBlock
-              label={input.background.source === "user_message" ? "배경 · 사용자 메시지" : "배경 · 작업자 의도 요약(레거시)"}
+              label={
+                input.background.source === "user_message" ? "배경 · 사용자 메시지" : "배경 · 작업자 의도 요약(레거시)"
+              }
               text={input.background.text}
               truncated={input.background.truncated}
             />
@@ -208,13 +216,20 @@ function ModelReviewContext({ input }: { input: InterceptReviewInput }) {
       ) : (
         <>
           {input.turn_input ? (
-            <CodeBlock label="현재 라운드 입력(이전 버전)" text={input.turn_input} truncated={input.background_truncated} />
+            <CodeBlock
+              label="현재 라운드 입력(이전 버전)"
+              text={input.turn_input}
+              truncated={input.background_truncated}
+            />
           ) : null}
           {input.task ? (
             <>
               <CodeBlock label="임무 설명(이전 버전)" text={input.task.description} truncated={input.task.truncated} />
               <CodeBlock label="임무 목표(이전 버전)" text={input.task.goal} truncated={input.task.truncated} />
-              <CodeBlock label="태스크 운영 제약사항(이전 버전)" text={JSON.stringify(input.task.constraints, null, 2)} />
+              <CodeBlock
+                label="태스크 운영 제약사항(이전 버전)"
+                text={JSON.stringify(input.task.constraints, null, 2)}
+              />
             </>
           ) : null}
           {input.worker_intent ? (
@@ -251,7 +266,7 @@ function ModelReviewContext({ input }: { input: InterceptReviewInput }) {
         <CollapsibleTrigger asChild>
           <Button variant="outline" size="sm" className="self-start">
             <ChevronDownIcon data-icon="inline-start" />
-전체 모델 검토 입력 JSON 보기
+            전체 모델 검토 입력 JSON 보기
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-3">
@@ -270,11 +285,11 @@ function DecisionActions({ row, busy, decide }: { row: InterceptApprovalRow; bus
     <div className="flex flex-wrap gap-2">
       <Button size="sm" disabled={busy} onClick={() => void decide(row.id, "allowed")}>
         <CheckIcon data-icon="inline-start" />
-허용하다
+        허용하다
       </Button>
       <Button size="sm" variant="destructive" disabled={busy} onClick={() => void decide(row.id, "denied")}>
         <XIcon data-icon="inline-start" />
-거부하다
+        거부하다
       </Button>
     </div>
   );
@@ -331,7 +346,8 @@ export function ApprovalDetail({
   const audit = detail?.audit;
   let execution = audit ? executionLabels[audit.execution_status] : "기록되지 않음";
   if (row.status === "pending") execution = "아직 실행되지 않음";
-  if (audit && audit.correlation !== "exact" && audit.effective_action === "allow") execution = "실행 결과가 연결되지 않음";
+  if (audit && audit.correlation !== "exact" && audit.effective_action === "allow")
+    execution = "실행 결과가 연결되지 않음";
   const command = typeof row.tool_input?.command === "string" ? row.tool_input.command : undefined;
   let initialLabel = source(row) === "model" ? "모델 사전 판정" : "규칙 최초 판정";
   if (audit?.model_fallback) initialLabel = "모델 예외 대체 판정";
@@ -349,7 +365,7 @@ export function ApprovalDetail({
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm">
                   <ChevronDownIcon data-icon="inline-start" />
-명령 내용 보기
+                  명령 내용 보기
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-2">
@@ -358,7 +374,7 @@ export function ApprovalDetail({
             </Collapsible>
           ) : null}
           <p className="text-muted-foreground text-xs">
-실행 결과:<span className="text-foreground">{detail ? execution : "로드 중…"}</span>
+            실행 결과:<span className="text-foreground">{detail ? execution : "로드 중…"}</span>
           </p>
         </div>
         <div className="flex min-w-0 flex-col gap-4 lg:border-l lg:pl-5">
@@ -373,7 +389,9 @@ export function ApprovalDetail({
             {current.reason?.replace(/^\[모델\]\s*/, "") || "주의사항이 기록되지 않았습니다."}
           </p>
           {audit?.decision_reason ? <p className="text-sm">{audit.decision_reason}</p> : null}
-          {audit?.effective_action ? <p className="text-sm">최종 조치: {actionLabels[audit.effective_action]}</p> : null}
+          {audit?.effective_action ? (
+            <p className="text-sm">최종 조치: {actionLabels[audit.effective_action]}</p>
+          ) : null}
           <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-xs">
             <dt className="text-muted-foreground">원천</dt>
             <dd className="break-words">
@@ -405,7 +423,7 @@ export function ApprovalDetail({
             <div className="flex flex-wrap items-center gap-2">
               <span>세부정보 로드 실패: {error}</span>
               <Button variant="outline" size="sm" onClick={() => setRetry((v) => v + 1)}>
-재시도 세부정보
+                재시도 세부정보
               </Button>
             </div>
           </AlertDescription>
@@ -414,7 +432,10 @@ export function ApprovalDetail({
       {!detail && !error ? <Skeleton className="h-8 w-60" /> : null}
       {detail && !audit ? (
         <Alert>
-          <AlertDescription>이 기록에는 승인내역의 스냅샷이 저장되지 않으며, 당시의 맥락, 모델 초기 판단, 실행 출력 등은 복원할 수 없습니다.</AlertDescription>
+          <AlertDescription>
+            이 기록에는 승인내역의 스냅샷이 저장되지 않으며, 당시의 맥락, 모델 초기 판단, 실행 출력 등은 복원할 수
+            없습니다.
+          </AlertDescription>
         </Alert>
       ) : null}
       {audit ? (
@@ -460,16 +481,19 @@ export function ApprovalDetail({
                       <section className="flex min-w-0 flex-col gap-3">
                         <h3 className="font-medium text-muted-foreground text-xs">보이는 세션 컨텍스트</h3>
                         <p className="text-muted-foreground text-xs">
-{fmtTime(audit.captured_at)}에 저장된 세션 녹음 조각입니다. 모델이 사용하는 실제 콘텐츠는 "모델 검토 입력"에 따릅니다.
+                          {fmtTime(audit.captured_at)}에 저장된 세션 녹음 조각입니다. 모델이 사용하는 실제 콘텐츠는
+                          "모델 검토 입력"에 따릅니다.
                         </p>
                         {audit.context_truncated ? (
-                          <p className="text-muted-foreground text-xs">가장 최근 컨텍스트만 저장되며 일부 내용은 잘립니다.</p>
+                          <p className="text-muted-foreground text-xs">
+                            가장 최근 컨텍스트만 저장되며 일부 내용은 잘립니다.
+                          </p>
                         ) : null}
                         {audit.context?.length ? (
                           audit.context.map((entry, index) => (
                             <CodeBlock
                               key={`${entry.kind}-${entry.tool_use_id || index}`}
-                              label={`${contextLabels[entry.kind] ?? entry.kind}${entry.tool ? ` · ${entry.tool}`: ""}${entry.is_error ? " · 예외" : ""}`}
+                              label={`${contextLabels[entry.kind] ?? entry.kind}${entry.tool ? ` · ${entry.tool}` : ""}${entry.is_error ? " · 예외" : ""}`}
                               text={entry.text}
                               truncated={entry.truncated}
                             />
@@ -484,11 +508,16 @@ export function ApprovalDetail({
               ) : null}
               <CodeBlock
                 label={`${initialLabel}: ${actionLabels[audit.initial_action] ?? audit.initial_action}`}
-text={audit.initial_reason.replace(/^\[모델\]\s*/, "")}
+                text={audit.initial_reason.replace(/^\[모델\]\s*/, "")}
               />
               <CodeBlock
                 label="실행 출력"
-                text={audit.output ?? (audit.execution_status === "not_executed" ? "도구가 실행되지 않았습니다." : "아직 실행 출력이 없습니다.")}
+                text={
+                  audit.output ??
+                  (audit.execution_status === "not_executed"
+                    ? "도구가 실행되지 않았습니다."
+                    : "아직 실행 출력이 없습니다.")
+                }
                 truncated={audit.output_truncated}
               />
               {audit.correlation !== "exact" ? (
@@ -681,7 +710,9 @@ export function ApprovalRecords({ taskId }: { taskId?: string }) {
         // filter. Older requests must remain actionable even when newer decisions
         // fill the page or a filter would hide them.
         const [history, pending] = await Promise.allSettled([
-          taskId ? api.interceptTaskPage(taskId, page, pageSize, filter) : api.interceptHistoryPage(page, pageSize, filter),
+          taskId
+            ? api.interceptTaskPage(taskId, page, pageSize, filter)
+            : api.interceptHistoryPage(page, pageSize, filter),
           api.interceptPending(),
         ]);
         if (id !== request.current) return;
@@ -786,10 +817,12 @@ export function ApprovalRecords({ taskId }: { taskId?: string }) {
         </div>
         <Button variant="outline" size="sm" onClick={() => void load(true)} disabled={loading || refreshing}>
           <RefreshCwIcon data-icon="inline-start" className={cn(refreshing && "animate-spin")} />
-새로 고치다
+          새로 고치다
         </Button>
       </div>
-      <p className="text-muted-foreground text-sm">기록을 확장하여 컨텍스트 및 실행 결과와 함께 도구 요청 및 승인 결정을 확인하세요.</p>
+      <p className="text-muted-foreground text-sm">
+        기록을 확장하여 컨텍스트 및 실행 결과와 함께 도구 요청 및 승인 결정을 확인하세요.
+      </p>
       <FieldGroup className="flex-row flex-wrap items-end gap-3" aria-label="승인 기록 필터링">
         <Field className="w-full sm:w-40">
           <FieldLabel htmlFor={`${filterID}-status`}>승인상태</FieldLabel>
@@ -842,7 +875,7 @@ export function ApprovalRecords({ taskId }: { taskId?: string }) {
         </Field>
         {filtered ? (
           <Button variant="ghost" size="sm" onClick={() => changeFilter({})}>
-필터 지우기
+            필터 지우기
           </Button>
         ) : null}
       </FieldGroup>
@@ -853,14 +886,16 @@ export function ApprovalRecords({ taskId }: { taskId?: string }) {
       ) : null}
       {pendingError ? (
         <Alert variant="destructive">
-          <AlertDescription>대기 중인 승인을 로드하지 못했습니다: {pendingError}. 다시 시도하려면 새로고침을 클릭하세요.</AlertDescription>
+          <AlertDescription>
+            대기 중인 승인을 로드하지 못했습니다: {pendingError}. 다시 시도하려면 새로고침을 클릭하세요.
+          </AlertDescription>
         </Alert>
       ) : null}
       {pending.length ? (
         <section className="overflow-hidden rounded-xl border">
           <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-3 font-medium text-sm">
             <ShieldAlertIcon className="size-4" />
-보류 중({pending.length})<span className="text-muted-foreground text-xs">확장 후 허용 또는 거부</span>
+            보류 중({pending.length})<span className="text-muted-foreground text-xs">확장 후 허용 또는 거부</span>
           </div>
           <ApprovalTable rows={pending} busy={deciding} decide={decide} revision={revision} label="승인 대기 중" />
         </section>
@@ -882,7 +917,9 @@ export function ApprovalRecords({ taskId }: { taskId?: string }) {
               <EmptyMedia variant="icon">
                 <ClipboardListIcon />
               </EmptyMedia>
-              <EmptyTitle>{filtered ? "필터 기준에 맞는 승인기록이 없습니다." : "아직 승인 기록이 없습니다."}</EmptyTitle>
+              <EmptyTitle>
+                {filtered ? "필터 기준에 맞는 승인기록이 없습니다." : "아직 승인 기록이 없습니다."}
+              </EmptyTitle>
               <EmptyDescription>
                 {filtered
                   ? "모든 기록을 보시려면 승인 상태나 판정 소스를 조정하시거나, 필터를 해제해 주세요."

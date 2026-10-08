@@ -44,7 +44,7 @@ interface TemplateDraft {
   interceptRules: AssetInterceptRuleInput[];
 }
 
-// TemplateSeed 是「另存为模板」时从创建表单带入的初值。
+// TemplateSeed
 type TemplateSeed = Pick<TemplateDraft, "description" | "goal" | "categoryID" | "interceptRules">;
 
 interface TaskTemplateManagerProps {
@@ -161,12 +161,12 @@ function TaskTemplateManager({
         onCreated(created);
         setSelectedID(created.id);
         setDraft(templateDraft(created));
-      toast.success("템플릿을 생성했습니다.");
+        toast.success("템플릿을 생성했습니다.");
       } else {
         const updated = await api.updateTaskTemplate(selectedID, input);
         onUpdated(updated);
         setDraft(templateDraft(updated));
-      toast.success("템플릿을 업데이트했습니다.");
+        toast.success("템플릿을 업데이트했습니다.");
       }
     } catch (error) {
       toast.error(`저장 실패: ${(error as Error).message}`);
@@ -207,13 +207,15 @@ function TaskTemplateManager({
         <SheetContent className="grid h-full w-full! max-w-none! grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:w-[48rem]! sm:max-w-[48rem]!">
           <SheetHeader className="border-b px-6 py-5">
             <SheetTitle>작업 템플릿 관리</SheetTitle>
-            <SheetDescription>템플릿에 설명, 목표, 분류 및 작업 수준 차단/허용 규칙을 저장합니다. 변경 사항은 이미 생성된 작업에 영향을 주지 않습니다.</SheetDescription>
+            <SheetDescription>
+              템플릿에 설명, 목표, 분류 및 작업 수준 차단/허용 규칙을 저장합니다. 변경 사항은 이미 생성된 작업에 영향을
+              주지 않습니다.
+            </SheetDescription>
           </SheetHeader>
           <div className="grid min-h-0 overflow-y-auto lg:grid-cols-[15rem_minmax(0,1fr)] lg:overflow-hidden">
             <div className="flex min-h-0 flex-col border-b p-3 lg:border-r lg:border-b-0">
               <Button type="button" variant="outline" className="w-full" onClick={startNew}>
-                <PlusIcon data-icon="inline-start" />
-                새 템플릿
+                <PlusIcon data-icon="inline-start" />새 템플릿
               </Button>
               <ScrollArea className="mt-2 max-h-44 lg:max-h-none lg:flex-1">
                 <div className="flex flex-col gap-1 pr-2">
@@ -295,7 +297,8 @@ function TaskTemplateManager({
                     onChange={(rules) => patchDraft({ interceptRules: rules })}
                   />
                   <FieldDescription>
-                    템플릿 적용 시 작업 수준 규칙을 미리 입력합니다(차단/허용, 새 작업에만 적용되며 전역 설정에는 반영되지 않음).
+                    템플릿 적용 시 작업 수준 규칙을 미리 입력합니다(차단/허용, 새 작업에만 적용되며 전역 설정에는
+                    반영되지 않음).
                   </FieldDescription>
                 </Field>
               </FieldGroup>
@@ -482,7 +485,7 @@ export function TaskTemplateControls({
             showClear
           />
           <ComboboxContent portalContainer={portalContainer}>
-          <ComboboxEmpty>일치하는 템플릿이 없습니다.</ComboboxEmpty>
+            <ComboboxEmpty>일치하는 템플릿이 없습니다.</ComboboxEmpty>
             <ComboboxList>
               {(template) => (
                 <ComboboxItem key={template.id} value={template}>
@@ -498,7 +501,9 @@ export function TaskTemplateControls({
             </ComboboxList>
           </ComboboxContent>
         </Combobox>
-        <FieldDescription>선택하면 템플릿의 설명, 목표, 분류 및 작업 수준 규칙을 복사하며 템플릿과 연결되지는 않습니다.</FieldDescription>
+        <FieldDescription>
+          선택하면 템플릿의 설명, 목표, 분류 및 작업 수준 규칙을 복사하며 템플릿과 연결되지는 않습니다.
+        </FieldDescription>
       </Field>
 
       <AlertDialog

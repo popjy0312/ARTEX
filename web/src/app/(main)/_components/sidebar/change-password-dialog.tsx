@@ -66,7 +66,8 @@ export function ChangePasswordDialog({
           <DialogHeader>
             <DialogTitle>비밀번호 변경</DialogTitle>
             <DialogDescription>
-              사용자 이름은 <b>ARTEX</b>로 고정됩니다. 현재 비밀번호를 먼저 확인해야 하며, 변경 후에도 이미 발급된 로그인 토큰은 만료될 때까지 유효합니다.
+              사용자 이름은 <b>ARTEX</b>로 고정됩니다. 현재 비밀번호를 먼저 확인해야 하며, 변경 후에도 이미 발급된
+              로그인 토큰은 만료될 때까지 유효합니다.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3 py-4">

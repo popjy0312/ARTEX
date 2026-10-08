@@ -65,14 +65,15 @@ export function TodoPopover({
           최근 Todo{loading ? " · 불러오는 중…" : ""}
         </p>
         {err && <p className="text-destructive px-1 text-xs">{err}</p>}
-        {todos && todos.length === 0 && !loading && (
-          <p className="text-muted-foreground px-1 text-xs">(비어 있음)</p>
-        )}
+        {todos && todos.length === 0 && !loading && <p className="text-muted-foreground px-1 text-xs">(비어 있음)</p>}
         <ul className="space-y-0.5">
           {(todos ?? []).map((t, i) => (
             <li
               key={`${i}:${t.content}`}
-              className={cn("flex gap-1.5 px-1 text-xs", t.status === "completed" && "text-muted-foreground line-through")}
+              className={cn(
+                "flex gap-1.5 px-1 text-xs",
+                t.status === "completed" && "text-muted-foreground line-through",
+              )}
             >
               <span className="shrink-0">{MARK[t.status] ?? "☐"}</span>
               <span className="break-words">{t.content}</span>

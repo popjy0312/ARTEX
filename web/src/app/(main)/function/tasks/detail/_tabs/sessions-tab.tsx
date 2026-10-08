@@ -163,8 +163,8 @@ function mergeBySeq(current: Activity[], incoming: Activity[]): Activity[] {
 }
 
 // statusIcon maps a session status to its icon. Worker terminal states are
-// distinct & color-coded: 完成(绿勾圈) / 取消停止(琥珀斜杠圈) / 出错(红叉圈) /
-// 步数耗尽(紫). running=蓝色转圈, pending(待领取)=灰时钟.
+// distinct & color-coded: () / () / () /
+// (). running=, pending()=.
 function statusIcon(status: SessionStatus) {
   switch (status) {
     case "running": // 실행 중
@@ -244,7 +244,7 @@ const roleMeta = {
 // dedicated backend "sessions" endpoint — it is a fixed UI affordance whose
 // transcript is the main-agent activity stream (worker="mainagent") for the task.
 // A main-agent session is one resettable conversation segment. Segment 0 is the
-// original session; "新建会话" creates further segments (seq 1,2,…) so the agent
+// original session; "" creates further segments (seq 1,2,…) so the agent
 // starts on a clean transcript while the task's graph/assets/goal stay shared. Each
 // segment is a switchable UI session; only the current (highest) one is writable.
 const mainSessionId = (seg: number) => `s-main-${seg}`;
@@ -309,9 +309,9 @@ function intentStatus(state: string): SessionStatus {
       return "stopped";
     case "paused":
       return "paused";
-case "open": // 수집, 실행과 다름
+    case "open": // 수집, 실행과 다름
       return "pending";
-case "deleted": // 사용자 가짜 삭제
+    case "deleted": // 사용자 가짜 삭제
       return "deleted";
     default: // running
       return "running";
@@ -369,7 +369,7 @@ function SessionItem({
     s.role === "worker" &&
     !s.inherited &&
     !deleted &&
-    // pending = 待领(open)意图;连同运行中/已暂停都允许删除。
+    // pending = (open);/
     (s.status === "running" || s.status === "paused" || s.status === "pending");
   return (
     <div
@@ -391,7 +391,7 @@ function SessionItem({
         )}
         {s.inherited && s.source_task_id && (
           <Badge variant="outline" className="shrink-0">
-소스 #{s.source_task_id}
+            소스 #{s.source_task_id}
           </Badge>
         )}
         <span
@@ -401,7 +401,7 @@ function SessionItem({
         </span>
         {deleted && (
           <Badge variant="outline" className="shrink-0 border-destructive/40 text-destructive">
-삭제됨
+            삭제됨
           </Badge>
         )}
         {hasPending && <ShieldAlertIcon className="size-3.5 shrink-0 text-amber-500" />}
@@ -413,7 +413,7 @@ function SessionItem({
         {s.live && (
           <span className="inline-flex items-center gap-1 rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400">
             <span className="size-1 animate-pulse rounded-full bg-blue-500" />
-실시간
+            실시간
           </span>
         )}
       </button>
@@ -515,9 +515,9 @@ export function SessionsTab({ taskId }: { taskId: string }) {
   const [currentSeg, setCurrentSeg] = React.useState(0);
   const [creatingMain, setCreatingMain] = React.useState(false);
   const [confirmNewMain, setConfirmNewMain] = React.useState(false);
-  // 手机端（<lg）会话列表默认折叠：屏幕高度本就紧张，列表若固定占掉 10~15rem，
-  // 下方的会话记录会被挤到只剩标题与输入框。折叠后记录区拿到几乎全部高度，
-  // 点标题栏可展开选会话，选完自动收起。桌面端不受影响（lg 起始终展开）。
+  // （<lg）：， 10~15rem，
+  // ，
+  // ，（lg ）
   const [listOpen, setListOpen] = React.useState(false);
   // Per-session lazily-loaded caches, keyed by session_key (main | plan | intent:<id>).
   const [store, setStore] = React.useState<SessionStore>({});
@@ -536,12 +536,12 @@ export function SessionsTab({ taskId }: { taskId: string }) {
   const [controllingIntent, setControllingIntent] = React.useState<string | null>(null);
   const [cancelIntent, setCancelIntent] = React.useState<Session | null>(null);
   const [cancelReason, setCancelReason] = React.useState("");
-  // 删除模式:soft=假删除(默认,置 deleted + 记原因,保留数据)| hard=真删除(级联移除独占子孙)。
+  // :soft=(, deleted + ,)| hard=()
   const [deleteMode, setDeleteMode] = React.useState<"soft" | "hard">("soft");
   const [workerMessage, setWorkerMessage] = React.useState("");
   const [workerMessageRequestId, setWorkerMessageRequestId] = React.useState("");
   const [workerMessageSending, setWorkerMessageSending] = React.useState(false);
-  // 方式1 文件上传:选好的附件(已落到任务工作目录 uploads/),随下条消息一起发。
+  // 1 :( uploads/),
   const [attachments, setAttachments] = React.useState<ChatAttachment[]>([]);
   const [uploading, setUploading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -609,16 +609,18 @@ export function SessionsTab({ taskId }: { taskId: string }) {
           patchIntentState(session.intent_id, "open");
           toast.success(`Worker #${session.intent_id}복원되었으며 다시 픽업되기를 기다리고 있습니다.`);
         } else if (mode === "hard") {
-          // 真删除:意图及独占下游已物理移除,从列表剔除该行。
+          // :,
           patchIntentState(session.intent_id);
           const d = res.deleted;
           const extra = d ? ` (${d.intents}개 의도 / ${d.facts}개 사실 / ${d.findings}개 취약점)` : "";
           toast.success(`Worker #${session.intent_id}와 독점 하위 항목을 완전히 삭제했습니다.${extra}`);
           setCancelReason("");
         } else {
-          // 假删除:意图置 deleted、记录删除原因,保留节点与产出。
+          // : deleted,
           patchIntentState(session.intent_id, "deleted");
-          toast.success(`Worker #${session.intent_id}을(를) 삭제했습니다. 사유를 기록했으며 플래너가 이를 반영해 다시 계획합니다.`);
+          toast.success(
+            `Worker #${session.intent_id}을(를) 삭제했습니다. 사유를 기록했으며 플래너가 이를 반영해 다시 계획합니다.`,
+          );
           setCancelReason("");
         }
       } catch (error) {
@@ -1156,7 +1158,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
     for (const node of allIntents) {
       let title = `Intent ${node.id}`;
       let parsedPayload: unknown = node.payload;
-      // 假删除:意图 state='deleted',删除原因在独立字段 delete_reason 上。
+      // : state='deleted', delete_reason
       const deleted = node.state === "deleted";
       const deleteReason = node.delete_reason ?? "";
       if (node.payload) {
@@ -1280,8 +1282,8 @@ export function SessionsTab({ taskId }: { taskId: string }) {
   const activeSettled =
     !!activeLast && (activeLast.kind === "result" || (activeLast.kind === "text" && activeLast.is_error));
   const mainBusy = isMain && (sending || (!activeSettled && (mainChatRunning ?? recentLive(activeKey))));
-  // 折叠态（手机端）标题栏要替代整张列表：显示当前会话名 + 其它会话的未读合计，
-  // 否则收起后既不知道自己在看哪个会话，也看不到别处有新消息。
+  // （）： + ，
+  // ，
   const activeDisplayTitle = (active.role === "worker" ? sessionMeta.get(active.id)?.title : "") || active.title;
   const hiddenUnread = React.useMemo(
     () => Object.entries(store).reduce((sum, [key, s]) => (key === activeKey ? sum : sum + s.unread), 0),
@@ -1547,7 +1549,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
   }
 
   const mainLoaded = !!store[currentMainKey]?.loaded;
-  // 发送键位由系统设置决定（localStorage），默认 Enter 发送。
+  // （localStorage）， Enter
   const sendMode = useChatSendMode();
   // What the transcript pane should show for the active session.
   const showLoader = !activeState || (activeState.loading && !activeState.loaded);
@@ -1563,7 +1565,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
 
   return (
     <TooltipProvider delayDuration={300}>
-{/* 높이 예약: 페이지 헤더(제목 행 + 대상 + 탭 ≒ 7.5rem) + 콘텐츠 여백. 모바일 버전 p-4、
+      {/* 높이 예약: 페이지 헤더(제목 행 + 대상 + 탭 ≒ 7.5rem) + 콘텐츠 여백. 모바일 버전 p-4
 데스크탑 lg: p-6, 데스크탑은 스크롤 여백을 남겨야 하므로 10rem / 13rem은 각각 두 레벨(휴대폰)용으로 예약되어 있습니다.
 13rem을 사용하면 3rem이라는 기록적인 높이를 헛되이 먹어치울 것입니다. */}
       <div
@@ -1607,17 +1609,21 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                     "inline-flex items-center gap-1 text-[10px]",
                     sseLive ? "text-emerald-500" : "text-amber-500",
                   )}
-                  title={sseLive ? "실시간 연결은 정상입니다" : "실시간 연결이 중단되었다가 자동으로 다시 연결됩니다. (이력은 계속 보입니다.)"}
+                  title={
+                    sseLive
+                      ? "실시간 연결은 정상입니다"
+                      : "실시간 연결이 중단되었다가 자동으로 다시 연결됩니다. (이력은 계속 보입니다.)"
+                  }
                 >
                   {sseLive ? (
                     <>
                       <span className="size-1 animate-pulse rounded-full bg-emerald-500" />
-실시간
+                      실시간
                     </>
                   ) : (
                     <>
                       <WifiOffIcon className="size-3" />
-다시 연결하는 중
+                      다시 연결하는 중
                     </>
                   )}
                 </span>
@@ -1637,8 +1643,8 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-입력 {taskTokens.input_tokens.toLocaleString()} · 출력 {taskTokens.output_tokens.toLocaleString()} ·
-캐시 읽기 {taskTokens.cache_read_tokens.toLocaleString()} · 캐시 쓰기 {" "}
+                  입력 {taskTokens.input_tokens.toLocaleString()} · 출력 {taskTokens.output_tokens.toLocaleString()} ·
+                  캐시 읽기 {taskTokens.cache_read_tokens.toLocaleString()} · 캐시 쓰기{" "}
                   {taskTokens.cache_write_tokens.toLocaleString()}
                 </TooltipContent>
               </Tooltip>
@@ -1676,7 +1682,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                           ) : (
                             <PlusIcon className="size-3.5" />
                           )}
-새로운
+                          새로운
                         </button>
                       )}
                     </div>
@@ -1693,7 +1699,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                           onClick={() => {
                             approvalFocus.close();
                             setActiveId(s.id);
-setListOpen(false); //휴대폰 선택 후 닫고 높이를 세션 기록에 반환
+                            setListOpen(false); //휴대폰 선택 후 닫고 높이를 세션 기록에 반환
                             setWorkerMessage("");
                             setWorkerMessageRequestId("");
                           }}
@@ -1717,7 +1723,7 @@ setListOpen(false); //휴대폰 선택 후 닫고 높이를 세션 기록에 반
                         ) : (
                           <RotateCwIcon className="size-3.5" />
                         )}
-이전 작업자 로드
+                        이전 작업자 로드
                       </button>
                     )}
                   </div>
@@ -1763,7 +1769,9 @@ setListOpen(false); //휴대폰 선택 후 닫고 높이를 세션 기록에 반
                       variant="outline"
                       className="max-w-28 shrink-0 font-normal"
                       aria-label={
-                        activeResolution.available ? `현재 구성:${resolutionLabel(activeResolution)}` : "모델을 사용할 수 없음"
+                        activeResolution.available
+                          ? `현재 구성:${resolutionLabel(activeResolution)}`
+                          : "모델을 사용할 수 없음"
                       }
                     >
                       <span className="truncate">
@@ -1785,18 +1793,18 @@ setListOpen(false); //휴대폰 선택 후 닫고 높이를 세션 기록에 반
               {active.live && (
                 <span className="inline-flex items-center gap-1 rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400">
                   <span className="size-1 animate-pulse rounded-full bg-blue-500" />
-실시간
+                  실시간
                 </span>
               )}
               {activeState?.hasMore && (
                 <span className="text-[10px] text-muted-foreground" title="이전 기록을 로드하려면 위로 스크롤하세요.">
-↑ 이전 역사
+                  ↑ 이전 역사
                 </span>
               )}
               <div className="ml-auto flex min-w-0 max-w-full items-center justify-end gap-x-3 gap-y-1 text-xs text-muted-foreground max-sm:w-full max-sm:flex-wrap">
                 {tokenTotal.any && (
                   <Tooltip>
-{/* 휴대폰에서는 짧은 레이블(in/slow/out)을 사용합니다. 긴 레이블은 이 라인을 두 라인으로 분할하여 녹음 영역을 더욱 압축합니다. */}
+                    {/* 휴대폰에서는 짧은 레이블(in/slow/out)을 사용합니다. 긴 레이블은 이 라인을 두 라인으로 분할하여 녹음 영역을 더욱 압축합니다. */}
                     <TooltipTrigger asChild>
                       <span className="inline-flex min-w-0 items-center">
                         <TokenMetrics
@@ -1816,9 +1824,9 @@ setListOpen(false); //휴대폰 선택 후 닫고 높이를 세션 기록에 반
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>
-입력 {activeTokens.input_tokens.toLocaleString()} · 출력 {" "}
-{activeTokens.output_tokens.toLocaleString()} · 캐시 읽기{" "}
-{activeTokens.cache_read_tokens.toLocaleString()} · 캐시 쓰기{" "}
+                      입력 {activeTokens.input_tokens.toLocaleString()} · 출력{" "}
+                      {activeTokens.output_tokens.toLocaleString()} · 캐시 읽기{" "}
+                      {activeTokens.cache_read_tokens.toLocaleString()} · 캐시 쓰기{" "}
                       {activeTokens.cache_write_tokens.toLocaleString()}
                     </TooltipContent>
                   </Tooltip>
@@ -1841,7 +1849,7 @@ setListOpen(false); //휴대폰 선택 후 닫고 높이를 세션 기록에 반
                   <div className="min-w-0">
                     <span className="font-medium text-destructive">이 인텐트는 사용자에 의해 삭제되었습니다.</span>
                     <span className="text-muted-foreground">
-(실행 중지, 기획자에게 통보, 의도 및 결과 유지, 이력은 아래에서 확인 가능)
+                      (실행 중지, 기획자에게 통보, 의도 및 결과 유지, 이력은 아래에서 확인 가능)
                     </span>
                     {dm.deleteReason && (
                       <p className="mt-1 break-words text-foreground">
@@ -1872,25 +1880,25 @@ setListOpen(false); //휴대폰 선택 후 닫고 높이를 세션 기록에 반
                 {activeState?.loadingMore && (
                   <div className="flex items-center justify-center gap-2 pb-2 text-xs text-muted-foreground">
                     <Loader2Icon className="size-3.5 animate-spin" />
-이전 기록 로드 중…
+                    이전 기록 로드 중…
                   </div>
                 )}
                 {showLoader ? (
                   <div className="flex items-center gap-2 pl-9 text-xs text-muted-foreground">
                     <Loader2Icon className="size-3.5 animate-spin" />
-활동 스트림 로드 중…
+                    활동 스트림 로드 중…
                   </div>
                 ) : activeState?.error ? (
                   <div className="flex items-center gap-2 pl-9 text-xs text-red-500">
                     <CircleXIcon className="size-3.5" />
-로드 실패: {activeState.error}
+                    로드 실패: {activeState.error}
                     <Button
                       size="sm"
                       variant="ghost"
                       className="h-6 px-2 text-xs"
                       onClick={() => loadSession(activeKey)}
                     >
-다시 시도하세요
+                      다시 시도하세요
                     </Button>
                   </div>
                 ) : activity.length ? (
@@ -1903,7 +1911,9 @@ setListOpen(false); //휴대폰 선택 후 닫고 높이를 세션 기록에 반
                   />
                 ) : (
                   <div className="pl-9 text-xs text-muted-foreground">
-                    {isMain ? "아직 대화가 없습니다. 탐색 방향이나 개입 과정을 안내하기 위해 아래의 주요 에이전트에게 메시지를 보냅니다." : "아직 활동기록이 없습니다."}
+                    {isMain
+                      ? "아직 대화가 없습니다. 탐색 방향이나 개입 과정을 안내하기 위해 아래의 주요 에이전트에게 메시지를 보냅니다."
+                      : "아직 활동기록이 없습니다."}
                   </div>
                 )}
               </div>
@@ -1946,7 +1956,9 @@ setListOpen(false); //휴대폰 선택 후 닫고 높이를 세션 기록에 반
                     rows={1}
                     aria-label="대표 Agent에게 메시지 보내기"
                     placeholder={
-                      mainBusy ? "기본 에이전트가 실행 중입니다. /btw를 입력하여 질문할 수 있습니다." : "메인 Agent에게 메시지를 보냅니다. @는 취약점, 자산 등을 의미합니다."
+                      mainBusy
+                        ? "기본 에이전트가 실행 중입니다. /btw를 입력하여 질문할 수 있습니다."
+                        : "메인 Agent에게 메시지를 보냅니다. @는 취약점, 자산 등을 의미합니다."
                     }
                     value={input}
                     disabled={sending}
@@ -2119,13 +2131,16 @@ setListOpen(false); //휴대폰 선택 후 닫고 높이를 세션 기록에 반
                 {deleteMode === "hard" ? (
                   <>
                     <strong>삭제하시겠습니까?</strong>의도를 물리적으로 제거하고<strong>그것만으로 지원</strong>
-다운스트림 노드(고아 데이터를 남기지 않도록 리프에 계단식으로 연결됨) 공유 노드, 대상 및 작업 루트 사실은 보존됩니다.
-                    <strong>이 작업은 되돌릴 수 없습니다.</strong>삭제 사실은 기획자에게 통보되며 이에 따라 재기획을 진행합니다.
+                    다운스트림 노드(고아 데이터를 남기지 않도록 리프에 계단식으로 연결됨) 공유 노드, 대상 및 작업 루트
+                    사실은 보존됩니다.
+                    <strong>이 작업은 되돌릴 수 없습니다.</strong>삭제 사실은 기획자에게 통보되며 이에 따라 재기획을
+                    진행합니다.
                   </>
                 ) : (
                   <>
-                    <strong>가짜 삭제</strong>인텐트는 "삭제"로 설정되며, 삭제 사유, 인텐트 노드, 실행 기록,
-등록된 사실 및 취약점<strong>유지됩니다</strong>. 기획자는 "사용자에 의해 삭제된 의도 + 이유"를 전달받고 이에 따라 재기획을 하게 됩니다.
+                    <strong>가짜 삭제</strong>인텐트는 "삭제"로 설정되며, 삭제 사유, 인텐트 노드, 실행 기록, 등록된 사실
+                    및 취약점<strong>유지됩니다</strong>. 기획자는 "사용자에 의해 삭제된 의도 + 이유"를 전달받고 이에
+                    따라 재기획을 하게 됩니다.
                   </>
                 )}
               </AlertDialogDescription>
@@ -2157,7 +2172,7 @@ setListOpen(false); //휴대폰 선택 후 닫고 높이를 세션 기록에 반
               </div>
               <div className="grid gap-2">
                 <label htmlFor="cancel-reason" className="text-sm font-medium">
-삭제사유 (필수)
+                  삭제사유 (필수)
                 </label>
                 <Textarea
                   id="cancel-reason"
@@ -2188,7 +2203,8 @@ setListOpen(false); //휴대폰 선택 후 닫고 높이를 세션 기록에 반
             <AlertDialogHeader>
               <AlertDialogTitle>새 세션을 시작하시겠습니까?</AlertDialogTitle>
               <AlertDialogDescription className="break-words whitespace-normal">
-현재 세션은 보관되며(언제든지 다시 전환 가능) 기본 에이전트는 깨끗한 컨텍스트를 계속 유지합니다. 미션 맵, 자산, 목표는 영향을 받지 않습니다.
+                현재 세션은 보관되며(언제든지 다시 전환 가능) 기본 에이전트는 깨끗한 컨텍스트를 계속 유지합니다. 미션
+                맵, 자산, 목표는 영향을 받지 않습니다.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

@@ -25,23 +25,21 @@ flowchart LR
     Proxy --> PG
     Scheduler[Triggers / scheduler / notifier] --> Agents
     Scheduler --> PG
-    Updater[Self-update subsystem] -->|GitHub Releases| API
 ```
 
 ## 시작 및 종료 흐름
 
-1. [`start.sh`](../start.sh)가 바이너리를 감독하고 예약된 업데이트 종료 코드가 발생하면 재시작합니다.
+1. [`start.sh`](../start.sh)가 바이너리를 감독하고 예기치 않은 충돌 후 재시작합니다.
 2. [`cmd/artex/main.go`](../cmd/artex/main.go)가 HTTP 주소, 데이터 디렉터리, JWT 키 디렉터리, 프록시 플래그를 해석합니다.
-3. 네트워크 리스너와 저장소를 열기 전에 self-update bootstrap이 준비된 바이너리를 설치하거나 롤백합니다.
-4. [`server.NewManager`](../server/manager.go)가 PostgreSQL을 열고, 트래픽 저장소와 선택적 MITM 프록시를 초기화하고, 영구 설정을 불러옵니다.
-5. [`server.New`](../server/server.go)가 JWT 키를 불러오고 agent와 도구를 연결하며, task runtime을 복구하고 scheduler, 알림, MCP 탐색, evidence GC, archive 처리를 시작합니다.
-6. 신호 또는 업데이트 요청이 graceful shutdown을 시작할 때까지 HTTP 서버가 동작합니다.
+3. [`server.NewManager`](../server/manager.go)가 PostgreSQL을 열고, 트래픽 저장소와 선택적 MITM 프록시를 초기화하고, 영구 설정을 불러옵니다.
+4. [`server.New`](../server/server.go)가 JWT 키를 불러오고 agent와 도구를 연결하며, task runtime을 복구하고 scheduler, 알림, MCP 탐색, evidence GC, archive 처리를 시작합니다.
+5. 신호가 graceful shutdown을 시작할 때까지 HTTP 서버가 동작합니다.
 
 ## 주요 구성 요소
 
 | 구성 요소 | 책임 | 주요 경로 |
 | --- | --- | --- |
-| 프로세스 진입점 | 플래그, 생명주기, 업데이트 bootstrap, HTTP listener | `cmd/artex`, `start.sh`, `selfupdate` |
+| 프로세스 진입점 | 플래그, 생명주기, HTTP listener | `cmd/artex`, `start.sh` |
 | API 및 오케스트레이션 | route, 인증, task admission, agent 생명주기, 설정 | `server` |
 | Agent runtime | planner/worker/main-agent prompt, tool catalog, goal, context compaction | `agent` |
 | 안전 경계 | tool-call audit, intercept rule, 모델 또는 사람 승인 | `guard`, `intercept` |

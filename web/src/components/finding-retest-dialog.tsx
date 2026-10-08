@@ -27,7 +27,7 @@ interface FindingRetestDialogProps {
   onStarted?: (retest: FindingRetest) => void;
 }
 
-// 仅在打开时挂载，关闭后清空说明；列表与详情共用提交锁及错误处理，启动后留在当前页。
+// ，；，
 export function FindingRetestDialog({ findingId, findingName, onClose, onStarted }: FindingRetestDialogProps) {
   const notesId = React.useId();
   const [notes, setNotes] = React.useState("");
@@ -42,7 +42,11 @@ export function FindingRetestDialog({ findingId, findingName, onClose, onStarted
       const result = await api.startFindingRetest(findingId, notes.trim());
       onStarted?.(result.retest);
       onClose();
-      toast.success(result.created ? '재테스트가 시작되었습니다. "재테스트 중"을 클릭하면 세션을 볼 수 있습니다.' : "이 취약점은 재테스트 중이며 기존 세션을 볼 수 있습니다.");
+      toast.success(
+        result.created
+          ? '재테스트가 시작되었습니다. "재테스트 중"을 클릭하면 세션을 볼 수 있습니다.'
+          : "이 취약점은 재테스트 중이며 기존 세션을 볼 수 있습니다.",
+      );
     } catch (e) {
       toast.error(`재테스트를 시작하지 못했습니다.${(e as Error).message}`);
     } finally {
@@ -58,8 +62,9 @@ export function FindingRetestDialog({ findingId, findingName, onClose, onStarted
           <DialogTitle>취약점 #{findingId} 재테스트</DialogTitle>
           <DialogDescription className="break-words">
             {findingName ? <span className="mb-2 block">{findingName}</span> : null}
-재테스트 에이전트
-원본 증거와 테스트 제약 조건을 읽고 별도의 세션에서 대상 검증을 수행합니다. 재테스트가 성공적으로 완료되고 수정 사항이 확인되면 취약점 상태가 자동으로 "Fixed"로 변경되고 다른 결론은 원래 상태로 유지됩니다.
+            재테스트 에이전트 원본 증거와 테스트 제약 조건을 읽고 별도의 세션에서 대상 검증을 수행합니다. 재테스트가
+            성공적으로 완료되고 수정 사항이 확인되면 취약점 상태가 자동으로 "Fixed"로 변경되고 다른 결론은 원래 상태로
+            유지됩니다.
           </DialogDescription>
         </DialogHeader>
         <FieldGroup>
@@ -79,7 +84,7 @@ export function FindingRetestDialog({ findingId, findingName, onClose, onStarted
         </FieldGroup>
         <DialogFooter>
           <Button variant="outline" disabled={submitting} onClick={onClose}>
-취소
+            취소
           </Button>
           <Button disabled={submitting} onClick={() => void start()}>
             {submitting ? <Spinner data-icon="inline-start" /> : <RotateCcwIcon data-icon="inline-start" />}

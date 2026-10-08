@@ -17,12 +17,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/Autumn-27/artex/egress"
 	"github.com/Autumn-27/norma/llm"
 	"github.com/Autumn-27/norma/permission"
 	actool "github.com/Autumn-27/norma/tool"
@@ -92,19 +94,55 @@ func normalizeHeaders(headers map[string]string) (map[string]string, error) {
 	return out, nil
 }
 
+func validateEndpoint(raw string) (*url.URL, error) {
+	u, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil || u.Hostname() == "" {
+		return nil, fmt.Errorf("invalid MCP URL")
+	}
+	if u.Scheme != "https" {
+		ip := net.ParseIP(u.Hostname())
+		if u.Scheme != "http" || (u.Hostname() != "localhost" && (ip == nil || !ip.IsLoopback())) {
+			return nil, fmt.Errorf("remote MCP endpoints must use HTTPS")
+		}
+	}
+	if err := egress.CheckURL(u.String()); err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
+func sameOrigin(a, b *url.URL) bool {
+	return strings.EqualFold(a.Scheme, b.Scheme) && strings.EqualFold(a.Host, b.Host)
+}
+
+func guardedHTTPClient(origin *url.URL, timeout time.Duration, insecure bool) *http.Client {
+	hc := &http.Client{Timeout: timeout}
+	hc.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		if !sameOrigin(origin, req.URL) {
+			return fmt.Errorf("MCP redirect to a different origin is blocked")
+		}
+		return nil
+	}
+	if insecure {
+		hc.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	}
+	return hc
+}
+
 // New connects to a remote MCP endpoint and performs the initialize handshake.
 // headers are sent on every request (Authorization, custom API keys, …).
 // When insecure is true, TLS certificate verification is skipped so servers that
 // present a self-signed certificate can still be reached (issue #108).
 func New(ctx context.Context, server, url string, headers map[string]string, insecure bool) (*Client, error) {
+	origin, err := validateEndpoint(url)
+	if err != nil {
+		return nil, err
+	}
 	cleanHeaders, err := normalizeHeaders(headers)
 	if err != nil {
 		return nil, err
 	}
-	hc := &http.Client{Timeout: 120 * time.Second}
-	if insecure {
-		hc.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	}
+	hc := guardedHTTPClient(origin, 120*time.Second, insecure)
 	c := &Client{
 		server:   server,
 		url:      url,
@@ -122,14 +160,15 @@ func New(ctx context.Context, server, url string, headers map[string]string, ins
 // announces a per-session POST /message endpoint, while JSON-RPC responses are
 // delivered asynchronously as SSE message events.
 func NewSSE(ctx context.Context, server, sseURL string, headers map[string]string, insecure bool) (*Client, error) {
+	origin, err := validateEndpoint(sseURL)
+	if err != nil {
+		return nil, err
+	}
 	cleanHeaders, err := normalizeHeaders(headers)
 	if err != nil {
 		return nil, err
 	}
-	hc := &http.Client{} // the SSE stream is intentionally long-lived.
-	if insecure {
-		hc.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	}
+	hc := guardedHTTPClient(origin, 0, insecure) // the SSE stream is intentionally long-lived.
 	streamCtx, cancel := context.WithCancel(context.Background())
 	req, err := http.NewRequestWithContext(streamCtx, http.MethodGet, sseURL, nil)
 	if err != nil {
@@ -156,6 +195,12 @@ func NewSSE(ctx context.Context, server, sseURL string, headers map[string]strin
 		resp.Body.Close()
 		cancel()
 		return nil, err
+	}
+	messageEndpoint, err := url.Parse(endpoint)
+	if err != nil || !sameOrigin(origin, messageEndpoint) {
+		resp.Body.Close()
+		cancel()
+		return nil, fmt.Errorf("mcp sse message endpoint must use the configured origin")
 	}
 	c := &Client{
 		server:       server,

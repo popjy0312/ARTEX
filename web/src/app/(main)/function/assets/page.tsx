@@ -320,15 +320,17 @@ export default function AssetsPage() {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">
-총 <span className="tabular-nums">{totalAssets}</span>개 자산
+            총 <span className="tabular-nums">{totalAssets}</span>개 자산
           </span>
           {selected.size > 0 && (
             <Button variant="destructive" size="sm" onClick={() => openDelete(Array.from(selected) as number[])}>
-              <Trash2Icon className="size-3.5" />선택 항목 삭제({selected.size})
+              <Trash2Icon className="size-3.5" />
+              선택 항목 삭제({selected.size})
             </Button>
           )}
           <Button variant="outline" size="sm" onClick={refresh} disabled={loading}>
-            <RefreshCwIcon className={cn("size-4", loading && "animate-spin")} />새로 고치다
+            <RefreshCwIcon className={cn("size-4", loading && "animate-spin")} />
+            새로 고치다
           </Button>
           <CompanyDialog onSaved={refresh} />
         </div>
@@ -347,7 +349,7 @@ export default function AssetsPage() {
           </TabsList>
         </div>
 
-{/* 엔터프라이즈 */}
+        {/* 엔터프라이즈 */}
         <TabsContent value="company" className="mt-0 flex min-h-0 flex-1 flex-col">
           <Card className="flex min-h-0 flex-1 flex-col overflow-hidden py-0">
             <div className="min-h-0 flex-1 overflow-auto">
@@ -406,7 +408,8 @@ export default function AssetsPage() {
                   {companies.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={4} className="py-10 text-center text-sm text-muted-foreground">
-아직 업체가 없습니다. 오른쪽 상단의 "기업 추가"를 클릭하고 자산 범위를 입력하세요. 시스템은 자동으로 히트 자산을 청구합니다.
+                        아직 업체가 없습니다. 오른쪽 상단의 "기업 추가"를 클릭하고 자산 범위를 입력하세요. 시스템은
+                        자동으로 히트 자산을 청구합니다.
                       </TableCell>
                     </TableRow>
                   )}
@@ -416,7 +419,7 @@ export default function AssetsPage() {
           </Card>
         </TabsContent>
 
-{/* 루트 도메인 이름 */}
+        {/* 루트 도메인 이름 */}
         <TabsContent value="root_domain" className="mt-0 flex min-h-0 flex-1 flex-col gap-2">
           {searchBox}
           <AssetCard
@@ -504,7 +507,7 @@ export default function AssetsPage() {
           </AssetCard>
         </TabsContent>
 
-{/* 하위 도메인 이름 */}
+        {/* 하위 도메인 이름 */}
         <TabsContent value="subdomain" className="mt-0 flex min-h-0 flex-1 flex-col gap-2">
           {searchBox}
           <AssetCard
@@ -546,7 +549,7 @@ export default function AssetsPage() {
           </AssetCard>
         </TabsContent>
 
-{/* 애플리케이션 */}
+        {/* 애플리케이션 */}
         <TabsContent value="app" className="mt-0 flex min-h-0 flex-1 flex-col gap-2">
           {searchBox}
           <AssetCard
@@ -586,7 +589,7 @@ export default function AssetsPage() {
           </AssetCard>
         </TabsContent>
 
-{/* 제공하다 */}
+        {/* 제공하다 */}
         <TabsContent value="service" className="mt-0 flex min-h-0 flex-1 flex-col gap-2">
           {searchBox}
           <AssetCard
@@ -682,7 +685,7 @@ export default function AssetsPage() {
           </AssetCard>
         </TabsContent>
 
-{/* 인터페이스 */}
+        {/* 인터페이스 */}
         <TabsContent value="endpoint" className="mt-0 flex min-h-0 flex-1 flex-col gap-2">
           {searchBox}
           <AssetCard
@@ -739,8 +742,8 @@ export default function AssetsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>삭제 확인</AlertDialogTitle>
             <AlertDialogDescription>
-영구적으로 삭제됩니다<span className="font-semibold tabular-nums">{deleteIds.length}</span>{" "}
-자산 기록이 없으므로 이 작업은 취소할 수 없습니다.
+              영구적으로 삭제됩니다<span className="font-semibold tabular-nums">{deleteIds.length}</span> 자산 기록이
+              없으므로 이 작업은 취소할 수 없습니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -784,8 +787,10 @@ export default function AssetsPage() {
                     onCheckedChange={(v) => setCompanyDeleteAssets(!!v)}
                   />
                   <span className="text-sm leading-snug">
-기업 내 모든 자산을 동시에 삭제
-                    <span className="block text-xs text-muted-foreground">선택을 취소하면 자산은 유지되며 소유권 관계만 취소됩니다.</span>
+                    기업 내 모든 자산을 동시에 삭제
+                    <span className="block text-xs text-muted-foreground">
+                      선택을 취소하면 자산은 유지되며 소유권 관계만 취소됩니다.
+                    </span>
                   </span>
                 </label>
               </div>
@@ -887,7 +892,7 @@ function AssetCard({
               <SelectGroup>
                 {PAGE_SIZES.map((n) => (
                   <SelectItem key={n} value={String(n)}>
-{n}/페이지
+                    {n}/페이지
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -951,8 +956,8 @@ function CompanyAvatar({ name, logo }: { name: string; logo?: string }) {
   );
 }
 
-// 后端返回的 warnings 说的是既有数据问题（不是本次提交的行有错），保存本身已经
-// 成功。给更长的停留时间，因为它需要用户去处理具体的资产，扫一眼标题不够。
+//  warnings （），
+// ，，
 function showScopeWarnings(warnings?: string[]) {
   for (const warning of warnings ?? []) {
     toast.warning(warning, { duration: 15000 });
@@ -971,7 +976,7 @@ function savedScopeText(company: Company): string {
     .join("\n");
 }
 
-// 新增企业使用与任务、LLM 编辑一致的右侧抽屉。
+// LLM
 function CompanyDialog({ onSaved }: { onSaved: () => void }) {
   const [open, setOpen] = React.useState(false);
   const [name, setName] = React.useState("");
@@ -999,7 +1004,8 @@ function CompanyDialog({ onSaved }: { onSaved: () => void }) {
       const res = await api.createCompany(name.trim(), parsedScope.rules);
       const added = res.scope_added ?? 0;
       const invalid = res.scope_invalid ?? 0;
-      if (invalid > 0) toast.warning(`기업을 생성하고 ${added}개 범위를 추가했습니다. ${invalid}개 행은 유효하지 않습니다.`);
+      if (invalid > 0)
+        toast.warning(`기업을 생성하고 ${added}개 범위를 추가했습니다. ${invalid}개 행은 유효하지 않습니다.`);
       else toast.success(`기업을 생성하고 ${added}개 범위를 추가했습니다.`);
       setOpen(false);
       onSaved();
@@ -1022,7 +1028,9 @@ function CompanyDialog({ onSaved }: { onSaved: () => void }) {
       <SheetContent className="w-full! max-w-none! gap-0 p-0 sm:w-[520px]! sm:max-w-[520px]!">
         <SheetHeader className="border-b p-6">
           <SheetTitle>새 기업 추가</SheetTitle>
-          <SheetDescription>기업과 해당 자산 범위를 구성합니다. 키워드는 상담원 프롬프트로만 사용되며 자동으로 자산에 귀속되지 않습니다.</SheetDescription>
+          <SheetDescription>
+            기업과 해당 자산 범위를 구성합니다. 키워드는 상담원 프롬프트로만 사용되며 자동으로 자산에 귀속되지 않습니다.
+          </SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto p-6">
           <FieldGroup>
@@ -1040,7 +1048,7 @@ function CompanyDialog({ onSaved }: { onSaved: () => void }) {
         </div>
         <SheetFooter className="flex-row justify-end gap-2 border-t p-4">
           <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>
-취소
+            취소
           </Button>
           <Button onClick={submit} disabled={busy || !name.trim() || parsedScope.errors.length > 0}>
             {busy ? "저장 중…" : "저장"}
@@ -1051,7 +1059,7 @@ function CompanyDialog({ onSaved }: { onSaved: () => void }) {
   );
 }
 
-// 编辑（覆盖）资产范围弹窗
+// （）
 function EditScopeDialog({ company, onSaved }: { company: Company; onSaved: () => void }) {
   const [open, setOpen] = React.useState(false);
   const [scopeText, setScopeText] = React.useState("");
@@ -1094,14 +1102,15 @@ function EditScopeDialog({ company, onSaved }: { company: Company; onSaved: () =
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-7">
-편집하다
+          편집하다
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>자산 범위 수정 · {company.name}</DialogTitle>
           <DialogDescription>
-수정하면 기존 범위가 모두 대체됩니다. ICP는 자산과 정확하게 일치하며 기업 키워드는 상담원 프롬프트로만 사용됩니다.
+            수정하면 기존 범위가 모두 대체됩니다. ICP는 자산과 정확하게 일치하며 기업 키워드는 상담원 프롬프트로만
+            사용됩니다.
           </DialogDescription>
         </DialogHeader>
         <FieldGroup className="py-2">
@@ -1123,7 +1132,7 @@ function EditScopeDialog({ company, onSaved }: { company: Company; onSaved: () =
         </FieldGroup>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>
-취소
+            취소
           </Button>
           <Button onClick={submit} disabled={busy || parsedScope.errors.length > 0}>
             {busy ? "저장 중…" : "덮어쓰고 저장"}
@@ -1134,7 +1143,7 @@ function EditScopeDialog({ company, onSaved }: { company: Company; onSaved: () =
   );
 }
 
-// 追加资产范围弹窗
+//
 function AppendScopeDialog({ company, onSaved }: { company: Company; onSaved: () => void }) {
   const [open, setOpen] = React.useState(false);
   const [scopeText, setScopeText] = React.useState("");
@@ -1177,13 +1186,16 @@ function AppendScopeDialog({ company, onSaved }: { company: Company; onSaved: ()
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-7">
-추가
+          추가
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>자산 범위 추가 · {company.name}</DialogTitle>
-          <DialogDescription>새 범위가 기존 범위에 추가됩니다. ICP는 자산과 정확하게 일치하며 기업 키워드는 상담원 프롬프트로만 사용됩니다.</DialogDescription>
+          <DialogDescription>
+            새 범위가 기존 범위에 추가됩니다. ICP는 자산과 정확하게 일치하며 기업 키워드는 상담원 프롬프트로만
+            사용됩니다.
+          </DialogDescription>
         </DialogHeader>
         <FieldGroup className="py-2">
           <ScopeTextEditor
@@ -1204,7 +1216,7 @@ function AppendScopeDialog({ company, onSaved }: { company: Company; onSaved: ()
         </FieldGroup>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>
-취소
+            취소
           </Button>
           <Button onClick={submit} disabled={busy || parsedScope.rules.length === 0 || parsedScope.errors.length > 0}>
             {busy ? "저장 중…" : "추가"}

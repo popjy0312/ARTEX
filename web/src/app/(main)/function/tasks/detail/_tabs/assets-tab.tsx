@@ -133,7 +133,10 @@ function Chips({ items, mono }: { items: string[]; mono?: boolean }) {
 
 function SourceCell({ asset }: { asset: Asset }) {
   const source = firstText([asset.task_source], "legacy");
-  const summary = firstText([asset.task_source_summary], "과거 작업 자산에서 마이그레이션되었으므로 더 자세한 소스 설명이 제공되지 않습니다.");
+  const summary = firstText(
+    [asset.task_source_summary],
+    "과거 작업 자산에서 마이그레이션되었으므로 더 자세한 소스 설명이 제공되지 않습니다.",
+  );
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -192,7 +195,7 @@ function AssetCard({
     tableRows = (
       <TableRow>
         <TableCell colSpan={cols.length} className="py-10 text-center text-muted-foreground text-sm">
-현재 현재 카테고리에는 테스트 자산이 없습니다.
+          현재 현재 카테고리에는 테스트 자산이 없습니다.
         </TableCell>
       </TableRow>
     );
@@ -227,7 +230,7 @@ function AssetCard({
               <SelectGroup>
                 {PAGE_SIZES.map((value) => (
                   <SelectItem key={value} value={String(value)}>
-{value}/페이지
+                    {value}/페이지
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -309,7 +312,8 @@ function AddTaskAssetsSheet({
         <SheetHeader>
           <SheetTitle>테스트 자산 추가</SheetTitle>
           <SheetDescription>
-테스트 범위를 직접 입력하세요. 도메인 이름과 IP는 글로벌 자산을 생성하거나 재사용합니다. CIDR, ICP 및 키워드는 에이전트 범위 컨텍스트로 사용됩니다.
+            테스트 범위를 직접 입력하세요. 도메인 이름과 IP는 글로벌 자산을 생성하거나 재사용합니다. CIDR, ICP 및
+            키워드는 에이전트 범위 컨텍스트로 사용됩니다.
           </SheetDescription>
         </SheetHeader>
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4">
@@ -324,7 +328,7 @@ function AddTaskAssetsSheet({
         </div>
         <SheetFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-취소
+            취소
           </Button>
           <Button
             onClick={() => void attach()}
@@ -482,7 +486,7 @@ export function AssetsTab({ taskId }: { taskId: string }) {
         </div>
         <Button size="sm" onClick={() => setAddOpen(true)}>
           <PlusIcon data-icon="inline-start" />
-테스트 자산 추가
+          테스트 자산 추가
         </Button>
       </div>
 
@@ -683,7 +687,7 @@ export function AssetsTab({ taskId }: { taskId: string }) {
             <AlertDialogTitle>현재 작업에서 나가시겠습니까?</AlertDialogTitle>
             <AlertDialogDescription className="[overflow-wrap:anywhere]">
               {removeTarget ? `할 것이다"${assetLabel(removeTarget)}"현재 작업의 테스트 자산에서 제거되었습니다.` : ""}
-글로벌 자산, 관련 트래픽 및 과거 칠판 앵커는 그대로 유지됩니다.
+              글로벌 자산, 관련 트래픽 및 과거 칠판 앵커는 그대로 유지됩니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -118,7 +118,9 @@ export function FindingRetestPanel({
           <Empty>
             <EmptyHeader>
               <EmptyTitle>재테스트 기록이 없습니다</EmptyTitle>
-              <EmptyDescription>수정 사항을 배포한 후 재테스트를 시작해 이전 증거와 비교할 수 있습니다.</EmptyDescription>
+              <EmptyDescription>
+                수정 사항을 배포한 후 재테스트를 시작해 이전 증거와 비교할 수 있습니다.
+              </EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : null}

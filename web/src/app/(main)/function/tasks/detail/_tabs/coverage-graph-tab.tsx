@@ -1,34 +1,18 @@
 "use client";
 
 import * as React from "react";
-import type { Graph as G6Graph } from "@antv/g6";
-import {
-  AppWindow,
-  Building2,
-  Globe,
-  Link2,
-  type LucideIcon,
-  Radio,
-  RefreshCw,
-  Server,
-  Waypoints,
-} from "lucide-react";
+import type { Graph as G6Graph } from "@antv/g6/esm/runtime/graph";
+import { AppWindow, Building2, Globe, Link2, type LucideIcon, Radio, RefreshCw, Server, Waypoints } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { api } from "@/lib/api";
 import type { CoverageAssetRef, CoverageAssetRefs, CoverageGraphEdge, CoverageGraphNode } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-// 每个父节点下、同一类型的子节点默认展示的数量；超出折叠，"展示更多"每次再拉这么多。
 const FOLD_LIMIT = 20;
 const FOLD_STEP = 20;
 
@@ -38,17 +22,14 @@ type KindMeta = { label: string; icon: LucideIcon; iconBg: string; hex: string; 
 
 const kindMeta: Record<Kind, KindMeta> = {
   company: { label: "회사", icon: Building2, iconBg: "bg-slate-500", hex: "#64748b", size: 46 },
-  root_domain: { label: "루트 도메인 이름", icon: Globe, iconBg: "bg-indigo-500", hex: "#6366f1", size: 38 },
-  subdomain: { label: "하위 도메인 이름", icon: Waypoints, iconBg: "bg-blue-500", hex: "#3b82f6", size: 30 },
+  root_domain: { label: "루트 도메인", icon: Globe, iconBg: "bg-indigo-500", hex: "#6366f1", size: 38 },
+  subdomain: { label: "서브도메인", icon: Waypoints, iconBg: "bg-blue-500", hex: "#3b82f6", size: 30 },
   ip: { label: "IP", icon: Server, iconBg: "bg-cyan-600", hex: "#0891b2", size: 28 },
-  service: { label: "제공하다", icon: Radio, iconBg: "bg-amber-500", hex: "#f59e0b", size: 26 },
+  service: { label: "서비스", icon: Radio, iconBg: "bg-amber-500", hex: "#f59e0b", size: 26 },
   app: { label: "App", icon: AppWindow, iconBg: "bg-fuchsia-500", hex: "#d946ef", size: 26 },
-  endpoint: { label: "끝점", icon: Link2, iconBg: "bg-rose-500", hex: "#f43f5e", size: 20 },
+  endpoint: { label: "엔드포인트", icon: Link2, iconBg: "bg-rose-500", hex: "#f43f5e", size: 20 },
 };
 
-// G6 节点图标用平台一致的 lucide 图标：把 lucide 的 SVG 路径（v1.22）渲染成白色描边的
-// data URI，作为节点 iconSrc（白色在实色/灰色底上都清晰）。手写内嵌，避免 react-dom/server
-// 在 React19/Next 客户端打包的问题。
 function svgUri(inner: string, filled = false): string {
   const attrs = filled
     ? 'fill="#fff" stroke="none"'
@@ -86,9 +67,7 @@ const FOLD_ICON = svgUri(
   true,
 );
 
-// ---------------------------------------------------------------------------
-// Folding: full graph → currently-visible node/edge set (自顶向下级联折叠)。
-// ---------------------------------------------------------------------------
+// Derive the visible node and edge set from the full graph after folding.
 type FoldNode = {
   fold: true;
   key: string;
@@ -174,9 +153,6 @@ function computeVisible(
   return { renderNodes, renderEdges };
 }
 
-// ---------------------------------------------------------------------------
-// G6 数据映射。自定义字段放节点顶层（G6 v5 官方 force 示例约定：style/layout 回调直接读 d.<field>）。
-// ---------------------------------------------------------------------------
 type G6NodeDatum = {
   id: string;
   kind: Kind;
@@ -191,8 +167,7 @@ function trunc(s: string, n = 26): string {
   return s.length > n ? `${s.slice(0, n - 1)}…` : s;
 }
 
-// 图里的节点文案：服务不显示完整 URL，只显示 端口·标题·状态码；端点只显示 path。
-// 其余类型沿用后端给的 label。
+// Build a compact label from the most useful fields for each asset type.
 function graphLabel(n: CoverageGraphNode): string {
   if (n.kind === "service") {
     const parts: string[] = [];
@@ -204,9 +179,7 @@ function graphLabel(n: CoverageGraphNode): string {
   if (n.kind === "endpoint" && n.url) {
     try {
       return new URL(n.url).pathname || "/";
-    } catch {
-      /* 非法 URL：回退到完整 label */
-    }
+    } catch {}
   }
   return n.label;
 }
@@ -236,11 +209,8 @@ function toG6Nodes(renderNodes: RenderNode[]): G6NodeDatum[] {
   });
 }
 
-// G6 的类型把自定义字段归在 data 下，但官方 force 示例（及运行时）按顶层读 d.<field>。
-// 回调形参用 unknown 满足 G6 签名，内部用 nd() 强转回我们的顶层结构。
 const nd = (d: unknown) => d as G6NodeDatum;
 
-// 已测=实色高亮；范围内未测=灰；范围外/折叠=更淡的灰 + 虚线描边。
 function nodeFill(d: G6NodeDatum): string {
   if (d.fold) return "#f1f5f9";
   if (!d.inScope) return "#e2e8f0";
@@ -253,9 +223,6 @@ function nodeStroke(d: G6NodeDatum): string {
   return "#64748b";
 }
 
-// ---------------------------------------------------------------------------
-// 抽屉：资产节点看详情；折叠节点看隐藏列表 + "展示更多"。
-// ---------------------------------------------------------------------------
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   if (children === undefined || children === null || children === "") return null;
   return (
@@ -284,7 +251,7 @@ function RefList({ title, items }: { title: string; items: CoverageAssetRef[] })
             <span className="min-w-32 flex-1 break-words text-foreground">{r.summary || "—"}</span>
             {r.inherited && r.source_task_id && (
               <Badge variant="outline" className="shrink-0">
-소스 #{r.source_task_id} · 읽기 전용
+                소스 #{r.source_task_id} · 읽기 전용
               </Badge>
             )}
           </div>
@@ -317,9 +284,7 @@ function AssetSheet({
       .then((r) => {
         if (!cancelled) setRefs(r);
       })
-      .catch(() => {
-        /* 无关联或出错：不展示该区块 */
-      });
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -331,7 +296,9 @@ function AssetSheet({
           <>
             <SheetHeader className="border-b p-4">
               <div className="flex items-center gap-2.5 pr-8">
-                <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg shadow-sm", meta.iconBg)}>
+                <span
+                  className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg shadow-sm", meta.iconBg)}
+                >
                   <Icon className="size-4 text-white" />
                 </span>
                 <div className="min-w-0">
@@ -414,9 +381,11 @@ function FoldSheet({
           <>
             <SheetHeader className="border-b p-4">
               <SheetTitle className="text-base">
-숨겨진 {meta.label}({fold.hidden.length})
+                숨겨진 {meta.label}({fold.hidden.length})
               </SheetTitle>
-              <p className="text-muted-foreground text-xs">테스트된 항목이 먼저 표시됩니다. 다음 배치를 사진으로 가져오려면 "더 보기"를 클릭하세요.</p>
+              <p className="text-muted-foreground text-xs">
+                테스트된 항목이 먼저 표시됩니다. 다음 배치를 사진으로 가져오려면 "더 보기"를 클릭하세요.
+              </p>
             </SheetHeader>
             <ScrollArea className="min-h-0 flex-1">
               <div className="flex flex-col gap-1 p-3">
@@ -445,7 +414,7 @@ function FoldSheet({
             </ScrollArea>
             <div className="border-t p-3">
               <Button className="w-full" variant="outline" onClick={() => onShowMore(fold.groupId)}>
-더보기(+{FOLD_STEP})
+                더보기(+{FOLD_STEP})
               </Button>
             </div>
           </>
@@ -455,7 +424,6 @@ function FoldSheet({
   );
 }
 
-// ---------------------------------------------------------------------------
 function GraphInner({ taskId, coverageEnabled = true }: { taskId: string; coverageEnabled?: boolean }) {
   const [data, setData] = React.useState<{
     nodes: CoverageGraphNode[];
@@ -468,7 +436,6 @@ function GraphInner({ taskId, coverageEnabled = true }: { taskId: string; covera
 
   const containerRef = React.useRef<HTMLDivElement>(null);
   const graphRef = React.useRef<G6Graph | null>(null);
-  // click 处理需要最新的 key→RenderNode 映射（G6 事件回调闭包外读 ref）。
   const renderMapRef = React.useRef<Map<string, RenderNode>>(new Map());
   const gDataRef = React.useRef<{ nodes: G6NodeDatum[]; edges: { source: string; target: string }[] }>({
     nodes: [],
@@ -480,13 +447,12 @@ function GraphInner({ taskId, coverageEnabled = true }: { taskId: string; covera
     api
       .taskCoverageGraph(taskId)
       .then((g) => {
-        // 资产覆盖度功能关闭(B1)：仍出图(范围内资产/company 关联依旧可见)，但抹平
-        // tested 状态——不显示测试进度、不做已测高亮。
+        // Keep tested nodes visually distinct from untested nodes.
         const nodes = coverageEnabled ? (g.nodes ?? []) : (g.nodes ?? []).map((n) => ({ ...n, tested: false }));
         setData({ nodes, edges: g.edges ?? [] });
       })
       .catch(() => {
-        /* 保留上一次数据 */
+        /*  */
       })
       .finally(() => setLoading(false));
   }, [taskId, coverageEnabled]);
@@ -503,14 +469,15 @@ function GraphInner({ taskId, coverageEnabled = true }: { taskId: string; covera
     [data, expanded],
   );
 
-  // 结构签名：只在可见节点/边集合变化时重建图 + 重跑布局，避免无谓抖动。
   const sig = React.useMemo(
     () =>
-      `${renderNodes.map((n) => `${n.key}:${n.fold ? "f" : n.node.tested ? "t" : "u"}`).sort().join(",")}|${renderEdges.length}`,
+      `${renderNodes
+        .map((n) => `${n.key}:${n.fold ? "f" : n.node.tested ? "t" : "u"}`)
+        .sort()
+        .join(",")}|${renderEdges.length}`,
     [renderNodes, renderEdges],
   );
 
-  // 维护 gDataRef + renderMapRef（供事件与图数据应用读取）。
   gDataRef.current = {
     nodes: toG6Nodes(renderNodes),
     edges: renderEdges.map((e) => ({ source: e.src, target: e.dst })),
@@ -523,20 +490,17 @@ function GraphInner({ taskId, coverageEnabled = true }: { taskId: string; covera
     const graph = graphRef.current;
     if (!graph || graph.destroyed) return;
     graph.setData(gDataRef.current);
-    // render() 异步跑 d3-force 布局;若组件在布局落地前被卸载/销毁,g6 会在已清空的
-    // context 上访问 transform 抛错(见 runtime/layout transformDataAfterLayout)。这是纯
-    // teardown 竞态,吞掉它,不影响功能;真正的渲染错误(图未销毁)仍打日志。
+    // render() runs layout and applies runtime transforms before painting.
     void graph.render().catch((err) => {
       if (!graph.destroyed) console.error("[coverage-graph] render:", err);
     });
   }, []);
 
-  // 建图（一次）。动态 import 避开 SSR/静态导出期的 window 依赖。
   React.useEffect(() => {
     let destroyed = false;
     let graph: G6Graph | null = null;
     void (async () => {
-      const { Graph } = await import("@antv/g6");
+      const { Graph } = await import("@antv/g6/esm/runtime/graph");
       if (destroyed || !containerRef.current) return;
       graph = new Graph({
         container: containerRef.current,
@@ -571,7 +535,6 @@ function GraphInner({ taskId, coverageEnabled = true }: { taskId: string; covera
           collide: { radius: (d: unknown) => (nd(d).size ? nd(d).size : 20) + 8 },
           link: {
             distance: (edge: unknown) => {
-              // 顶层（公司/根域名）离子节点远一点，叶子近一点。edge.source 可能是 id 或已解析节点。
               const s = (edge as { source: string | { id?: string } }).source;
               const srcId = typeof s === "string" ? s : (s?.id ?? "");
               const src = renderMapRef.current.get(srcId);
@@ -598,19 +561,18 @@ function GraphInner({ taskId, coverageEnabled = true }: { taskId: string; covera
     })();
     return () => {
       destroyed = true;
-      // 先停布局再销毁:尽量缩短"布局在飞、context 被清空"的竞态窗口。
+      // The graph owns its rendering context; destroy it during cleanup.
       try {
         graph?.stopLayout();
       } catch {
-        /* 图可能尚未建成或已无布局上下文 */
+        /*  */
       }
       graph?.destroy();
       graphRef.current = null;
     };
   }, [applyData]);
 
-  // 可见集合变化 → 重新灌数据 + 布局。sig 只作为重排触发器（applyData 读 gDataRef）。
-  // biome-ignore lint/correctness/useExhaustiveDependencies: sig 是刻意的重排触发依赖
+  // biome-ignore lint/correctness/useExhaustiveDependencies: sig
   React.useEffect(() => {
     applyData();
   }, [sig, applyData]);
@@ -639,22 +601,24 @@ function GraphInner({ taskId, coverageEnabled = true }: { taskId: string; covera
     <div className="relative h-full w-full">
       <div ref={containerRef} className="h-full w-full" />
 
-{/* 범례 + 통계 + 새로고침(오버레이) */}
+      {/* 범례 + 통계 + 새로고침(오버레이) */}
       <div className="bg-card/95 pointer-events-auto absolute top-3 left-3 flex max-w-[340px] flex-col gap-2.5 rounded-lg border p-3 text-xs shadow-sm backdrop-blur">
         <div className="flex items-center justify-between gap-3">
           {total > 0 ? (
             <span className="text-muted-foreground">
-범위 내<span className="text-foreground font-semibold tabular-nums">{inScope}</span>
+              범위 내<span className="text-foreground font-semibold tabular-nums">{inScope}</span>
               {coverageEnabled && (
                 <>
                   {" "}
-· 테스트된 {" "}
+                  · 테스트된{" "}
                   <span className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">{tested}</span>
                 </>
               )}
             </span>
           ) : (
-            <span className="text-muted-foreground">{loading ? "로드 중…" : "현재 범위 내에 자산이 없습니다(먼저 작업 범위를 고정하세요)."}</span>
+            <span className="text-muted-foreground">
+              {loading ? "로드 중…" : "현재 범위 내에 자산이 없습니다(먼저 작업 범위를 고정하세요)."}
+            </span>
           )}
           <Button variant="ghost" size="icon" className="size-6" onClick={fetchGraph} title="새로 고치다">
             <RefreshCw className={cn("size-3.5", loading && "animate-spin")} />
@@ -678,19 +642,23 @@ function GraphInner({ taskId, coverageEnabled = true }: { taskId: string; covera
           {coverageEnabled && (
             <>
               <span className="inline-flex items-center gap-1.5">
-                <span className="size-3 rounded-full bg-emerald-500" />측정됨(강조표시됨)
+                <span className="size-3 rounded-full bg-emerald-500" />
+                측정됨(강조표시됨)
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="size-3 rounded-full bg-neutral-400" />테스트되지 않음
+                <span className="size-3 rounded-full bg-neutral-400" />
+                테스트되지 않음
               </span>
             </>
           )}
           <span className="inline-flex items-center gap-1.5">
-            <span className="size-3 rounded-full border border-dashed border-neutral-400 bg-neutral-200" />범위를 벗어남
+            <span className="size-3 rounded-full border border-dashed border-neutral-400 bg-neutral-200" />
+            범위를 벗어남
           </span>
         </div>
         <p className="text-muted-foreground/80 border-border/60 border-t pt-2 leading-relaxed">
-힘 중심 레이아웃, 스크롤 휠을 사용하여 노드를 드래그하고 확대/축소할 수 있습니다. 회색 "⋯"은 접힌 노드이며, 클릭하면 더 확장할 수 있습니다.
+          힘 중심 레이아웃, 스크롤 휠을 사용하여 노드를 드래그하고 확대/축소할 수 있습니다. 회색 "⋯"은 접힌 노드이며,
+          클릭하면 더 확장할 수 있습니다.
         </p>
       </div>
 

@@ -105,11 +105,14 @@ func TestValidateHTTPURLRejectsLiteralPrivateTargets(t *testing.T) {
 			t.Errorf("%s 应在配置阶段被拒绝", raw)
 		}
 	}
-	// 公网地址与私网地址照常通过（私网留给拨号阶段，那里不拦）。
-	for _, raw := range []string{"https://oapi.dingtalk.com/robot/send", "http://10.0.0.9/hook"} {
+	// 일반 공인 주소와 사설망 주소는 통과한다(사설망은 dial 단계에서도 허용).
+	for _, raw := range []string{"https://hooks.example.com/robot/send", "http://10.0.0.9/hook"} {
 		if err := validateHTTPURL(raw); err != nil {
 			t.Errorf("%s 应通过校验: %v", raw, err)
 		}
+	}
+	if err := validateHTTPURL("https://oapi.dingtalk.com/robot/send"); err == nil {
+		t.Fatal("China-operated notification destination must be blocked")
 	}
 }
 

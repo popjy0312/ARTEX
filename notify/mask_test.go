@@ -39,13 +39,13 @@ func TestMaskedValueShortSecretGivesNoHint(t *testing.T) {
 
 func TestMaskConfigMasksOnlySecrets(t *testing.T) {
 	cfg := map[string]any{
-		"webhook": "https://example.com/hook?token=SECRETVALUE",
-		"secret":  "SECtest123456",
+		"url":     "https://example.com/hook?token=SECRETVALUE",
+		"headers": map[string]any{"Authorization": "Bearer SECtest123456"},
 		"port":    float64(587),
 		"host":    "smtp.example.com",
 	}
-	masked := MaskConfig(KindDingTalk, cfg)
-	for _, k := range []string{"webhook", "secret"} {
+	masked := MaskConfig(KindWebhook, cfg)
+	for _, k := range []string{"url", "headers"} {
 		s, _ := masked[k].(string)
 		if !IsMasked(s) {
 			t.Errorf("%s 应被掩码，得到 %q", k, s)
@@ -67,9 +67,9 @@ func TestMaskConfigUnknownKindReturnsEmpty(t *testing.T) {
 
 func TestMaskConfigDoesNotMutateInput(t *testing.T) {
 	// 掩码是展示层行为，不能反过来把库里的真值改掉。
-	cfg := map[string]any{"webhook": "https://example.com/hook", "secret": "SECtest123456"}
-	_ = MaskConfig(KindDingTalk, cfg)
-	if IsMasked(cfg["secret"].(string)) {
+	cfg := map[string]any{"url": "https://example.com/hook", "headers": "SECtest123456"}
+	_ = MaskConfig(KindWebhook, cfg)
+	if IsMasked(cfg["headers"].(string)) {
 		t.Fatal("MaskConfig 修改了入参，会导致真实凭据被掩码值覆盖")
 	}
 }
@@ -168,11 +168,11 @@ func TestPrepareConfigUpdateBlocksDestinationSwap(t *testing.T) {
 			wantMissing: "bot_token",
 		},
 		{
-			name:        "钉钉改 Webhook 想沿用加签密钥",
-			kind:        KindDingTalk,
-			stored:      map[string]any{"webhook": "https://oapi.dingtalk.com/robot/send?access_token=OLD", "secret": "REALSEC"},
-			incoming:    map[string]any{"webhook": "https://attacker.tld/hook"},
-			wantMissing: "secret",
+			name:        "Webhook destination changed while retaining authorization headers",
+			kind:        KindWebhook,
+			stored:      map[string]any{"url": "https://hooks.example.com/old", "headers": map[string]any{"Authorization": "Bearer REAL"}},
+			incoming:    map[string]any{"url": "https://attacker.tld/hook"},
+			wantMissing: "headers",
 		},
 	}
 	for _, tc := range cases {

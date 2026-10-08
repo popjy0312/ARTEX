@@ -105,3 +105,46 @@ func TestLegacySSEClientDiscoverAndCall(t *testing.T) {
 		t.Fatalf("Call() = %q, %v", got, err)
 	}
 }
+
+func TestMCPRedirectNeverForwardsCredentialsAcrossOrigins(t *testing.T) {
+	var leaked bool
+	target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		leaked = r.Header.Get("X-API-Key") != ""
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer target.Close()
+
+	source := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, target.URL, http.StatusTemporaryRedirect)
+	}))
+	defer source.Close()
+
+	_, err := New(context.Background(), "redirect-test", source.URL, map[string]string{"X-API-Key": "secret"}, false)
+	if err == nil || !strings.Contains(err.Error(), "different origin") {
+		t.Fatalf("expected cross-origin redirect rejection, got %v", err)
+	}
+	if leaked {
+		t.Fatal("credential header reached the redirected origin")
+	}
+}
+
+func TestLegacySSERejectsCrossOriginMessageEndpoint(t *testing.T) {
+	foreign := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		t.Fatal("foreign endpoint must never be contacted")
+	}))
+	defer foreign.Close()
+
+	source := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprintf(w, "event: endpoint\ndata: %s/message\n\n", foreign.URL)
+		w.(http.Flusher).Flush()
+	}))
+	defer source.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	_, err := NewSSE(ctx, "sse-origin-test", source.URL, map[string]string{"X-API-Key": "secret"}, false)
+	if err == nil || !strings.Contains(err.Error(), "configured origin") {
+		t.Fatalf("expected cross-origin endpoint rejection, got %v", err)
+	}
+}

@@ -73,9 +73,9 @@ export function RetestsTab({ taskId }: { taskId: string }) {
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>
-작업 취약점을 로드하지 못했습니다: {error}
+            작업 취약점을 로드하지 못했습니다: {error}
             <Button variant="outline" size="sm" onClick={refresh}>
-다시 시도하세요
+              다시 시도하세요
             </Button>
           </AlertDescription>
         </Alert>
@@ -110,7 +110,9 @@ export function RetestsTab({ taskId }: { taskId: string }) {
               <Empty>
                 <EmptyHeader>
                   <EmptyTitle>현재 재테스트 취약점은 없습니다.</EmptyTitle>
-                  <EmptyDescription>이 작업에서 취약점을 발견한 후 여기에서 수동으로 재테스트를 시작할 수 있습니다.</EmptyDescription>
+                  <EmptyDescription>
+                    이 작업에서 취약점을 발견한 후 여기에서 수동으로 재테스트를 시작할 수 있습니다.
+                  </EmptyDescription>
                 </EmptyHeader>
               </Empty>
             ) : null}
@@ -127,7 +129,7 @@ export function RetestsTab({ taskId }: { taskId: string }) {
                 <ChevronLeftIcon />
               </Button>
               <span className="text-muted-foreground text-xs">
-페이지 {page} / {Math.ceil(data.total / PAGE_SIZE)}
+                페이지 {page} / {Math.ceil(data.total / PAGE_SIZE)}
               </span>
               <Button
                 variant="outline"
@@ -148,7 +150,8 @@ export function RetestsTab({ taskId }: { taskId: string }) {
                 <h2 className="min-w-0 flex-1 break-words font-medium">{findingLabel(selected)}</h2>
                 <Button asChild variant="ghost" size="sm">
                   <Link href={`/function/findings/detail?id=${selected.finding_id || selected.id}`}>
-취약점 세부정보<ArrowUpRightIcon data-icon="inline-end" />
+                    취약점 세부정보
+                    <ArrowUpRightIcon data-icon="inline-end" />
                   </Link>
                 </Button>
               </div>

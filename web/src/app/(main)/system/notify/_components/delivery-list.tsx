@@ -14,7 +14,7 @@ import { api } from "@/lib/api";
 import { statusMeta, toneClasses } from "@/lib/status";
 import type { NotificationChannel, NotificationDelivery } from "@/lib/types";
 
-// DeliveryList 은전달 기록表：可按渠道와상태筛选，실패项可수동重发。
+// DeliveryList 은전달 기록：와상태，실패수동
 export function DeliveryList({ channels }: { channels: NotificationChannel[] }) {
   const [rows, setRows] = React.useState<NotificationDelivery[]>([]);
   const [total, setTotal] = React.useState(0);
@@ -146,7 +146,7 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
                   <TableCell className="text-muted-foreground text-sm">{d.attempts}</TableCell>
                   <TableCell className="text-muted-foreground max-w-md text-xs break-all">{d.last_error}</TableCell>
                   <TableCell>
-                    {/* 만있음실패/의재전송입력：완료의재전송。 */}
+                    {/* 만있음실패/의재전송입력：완료의재전송 */}
                     {(d.state === "failed" || d.state === "skipped") && (
                       <Button size="sm" variant="outline" onClick={() => retry(d.id)}>
                         <RotateCcwIcon /> 재전송

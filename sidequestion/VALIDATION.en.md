@@ -90,6 +90,6 @@ Main transcript checksum: `e7e61f135a4a120954b539f357e8c4205d7d5cd7460dcaf3dc0fd
 
 ## Qwen review
 
-The review model was `qwen-flash` at the OpenAI-compatible endpoint `https://dashscope.aliyuncs.com/compatible-mode/v1`, which returned HTTP 200. It received the first three real side-question conversations, main-session tool evidence, and engineering assertions; it returned `verdict: accept` and `concerns: []`, judging that the answers matched the asset, marker, and page-reading evidence and that refusing side-question tools complied with constraints. Review usage: prompt 6625, completion 312, total 6937.
+The review model was `qwen-flash` at an approved OpenAI-compatible review endpoint, which returned HTTP 200. It received the first three real side-question conversations, main-session tool evidence, and engineering assertions; it returned `verdict: accept` and `concerns: []`, judging that the answers matched the asset, marker, and page-reading evidence and that refusing side-question tools complied with constraints. Review usage: prompt 6625, completion 312, total 6937.
 
 This Qwen review did not include the later service restart or non-streaming test. Qwen’s statement that there was “no writing” was too broad: the main-session curl did create a local temporary response file, as stated above. Engineering assertions, not the model review, established concurrency, zero tool execution, and transcript isolation.

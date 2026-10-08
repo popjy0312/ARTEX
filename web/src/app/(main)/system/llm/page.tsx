@@ -32,10 +32,10 @@ import { cn } from "@/lib/utils";
 
 import { ProfileRetryFields, RetryPolicyPanel, ZERO_OVERRIDE } from "./_components/retry";
 
-// 추론 스위치(thinking.type)와추론 강도(reasoning_effort)은两개【互相独立】의字段，
-// 各自单独설정——있음些接口없음 thinking 字段、只靠强度参数就能激活思考，故需解耦。
-// 存库空문자열 = 该字段【전송하지 않음】；Radix Select 않음接受空 value，故 UI 用 "none"
-// 哨兵의미전송하지 않음，存取时와 "" 互转（NONE / fromStore / toStore）。
+// 추론 스위치(thinking.type)와추론 강도(reasoning_effort)은개의，
+// 설정——있음없음 thinking ，
+// 문자열 = 전송하지 않음；Radix Select 않음 value， UI  "none"
+// 의미전송하지 않음，와 "" （NONE / fromStore / toStore）
 const NONE = "none";
 const fromStore = (v?: string) => (v ? v : NONE);
 const toStore = (v: string) => (v === NONE ? "" : v);
@@ -44,12 +44,12 @@ const THINKING_TYPES: { value: string; label: string }[] = [
   { value: "disabled", label: "꺼짐" },
   { value: "enabled", label: "켜짐" },
 ];
-// 출력上限用哪개하세요求字段名（仅 openai 格式있음意义）。NONE ↔ "" 走同一套哨兵转换。
+// 출력개하세요（ openai 있음）NONE ↔ ""
 const MAX_TOKENS_FIELDS: { value: string; label: string }[] = [
   { value: NONE, label: "max_tokens (기본값)" },
   { value: "max_completion_tokens", label: "max_completion_tokens" },
 ];
-// 另外两种格式各自定死了字段名，选项对它们없음意义，설명文案里直接讲清楚。
+// ，없음，설명
 const MAX_TOKENS_FIELD_HINTS: Record<string, string> = {
   openai:
     "두 필드 중 하나를 선택합니다. max_tokens가 기본값이며, OpenAI 공식 모델(o 시리즈 / GPT-5)에서는 max_completion_tokens를 사용해야 합니다. 해당 모델에 max_tokens를 보내면 unsupported_parameter 오류가 발생할 수 있습니다.",
@@ -71,8 +71,8 @@ function cooldownText(secs: number) {
   return `${Math.ceil(secs / 60)}min`;
 }
 
-// 한 개구성에서卡片上显示의「은否정상」。没填 Key 의구성根本发않음출력하세요求，比회로 차단更该先说；
-// 其余상태来自폴링의회로 차단记录（폴링关着时않음会产生新记录，此时「정상」= 없음已知故障）。
+// 한 개구성에서의은정상 Key 의구성않음출력하세요，회로 차단；
+// 상태폴링의회로 차단（폴링않음，정상= 없음）
 type Health = { label: string; cls: string; hint?: string };
 function healthOf(p: LLMProfile, m?: LLMPoolMember): Health {
   if (!p.api_key_hint) {
@@ -100,7 +100,7 @@ function healthOf(p: LLMProfile, m?: LLMPoolMember): Health {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 폴링 구성抽屉
+// 폴링 구성
 // ─────────────────────────────────────────────────────────────────────────────
 
 function PoolSheet({
@@ -116,7 +116,7 @@ function PoolSheet({
 }) {
   const [busy, setBusy] = React.useState(false);
 
-  // 쿨다운倒计时은后端算출력의剩余초数——抽屉开着且있음구성않음정상时才定时拉，让它走起来。
+  // 쿨다운은출력의초——있음구성않음정상，
   React.useEffect(() => {
     if (!open || !pool?.enabled || !pool.chain.some((m) => m.state !== "ok")) return;
     const t = setInterval(() => void onReload(), 10_000);
@@ -153,7 +153,7 @@ function PoolSheet({
 
   const enabled = pool?.enabled ?? false;
   const chain = pool?.chain ?? [];
-  // 参와폴링의成员（제외被标记「폴링에 참여하지 않음」의），顺序即后端实际의尝试顺序。
+  // 와폴링의（제외폴링에 참여하지 않음의），의
   const inChain = chain.filter((m) => m.active || !m.excluded);
   const tripped = chain.filter((m) => m.state === "tripped");
 
@@ -174,7 +174,9 @@ function PoolSheet({
           <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
             <div className="grid gap-0.5">
               <Label className="text-sm">폴링 활성화</Label>
-              <p className="text-muted-foreground text-xs">기본값은 꺼짐입니다. 꺼져 있으면 활성 구성만 사용하며 실패 시 그대로 실패합니다.</p>
+              <p className="text-muted-foreground text-xs">
+                기본값은 꺼짐입니다. 꺼져 있으면 활성 구성만 사용하며 실패 시 그대로 실패합니다.
+              </p>
             </div>
             <Switch
               checked={enabled}
@@ -190,8 +192,8 @@ function PoolSheet({
                 <div className="grid gap-0.5">
                   <Label className="text-sm">지정 모델 실패 시에도 대체 구성 사용</Label>
                   <p className="text-muted-foreground text-xs">
-                    기본값은 꺼짐입니다. Agent 또는 작업이 특정 구성을 지정하면 해당 구성만 사용하고 실패합니다.
-                    켜면 지정된 구성이 실패할 때 아래 폴링 체인으로 대체합니다.
+                    기본값은 꺼짐입니다. Agent 또는 작업이 특정 구성을 지정하면 해당 구성만 사용하고 실패합니다. 켜면
+                    지정된 구성이 실패할 때 아래 폴링 체인으로 대체합니다.
                   </p>
                 </div>
                 <Switch
@@ -215,7 +217,8 @@ function PoolSheet({
                 </div>
                 {inChain.length < 2 && (
                   <p className="text-muted-foreground text-xs">
-                     현재 폴링 구성은 {inChain.length}개뿐입니다. API Key가 입력되고 폴링에 참여하는 구성이 최소 2개 필요합니다.
+                    현재 폴링 구성은 {inChain.length}개뿐입니다. API Key가 입력되고 폴링에 참여하는 구성이 최소 2개
+                    필요합니다.
                   </p>
                 )}
                 {chain.map((m) => {
@@ -243,10 +246,12 @@ function PoolSheet({
                         {excluded && <Badge variant="outline">폴링에 참여하지 않음</Badge>}
                         <div className="ml-auto flex items-center gap-2">
                           {m.state === "tripped" && m.cooldown_secs > 0 && (
-                            <span className="text-muted-foreground text-xs">쿨다운 {cooldownText(m.cooldown_secs)}</span>
+                            <span className="text-muted-foreground text-xs">
+                              쿨다운 {cooldownText(m.cooldown_secs)}
+                            </span>
                           )}
                           {m.state === "degraded" && (
-                        <span className="text-muted-foreground text-xs">실패 {m.fails}회</span>
+                            <span className="text-muted-foreground text-xs">실패 {m.fails}회</span>
                           )}
                           {m.state !== "ok" && (
                             <Button
@@ -295,7 +300,7 @@ function PoolSheet({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 모델 구성抽屉（새로 만들기 / 편집총用同一套表单）
+// 모델 구성（새로 만들기 / 편집총）
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ProfileSheet({
@@ -322,21 +327,21 @@ function ProfileSheet({
   const [cw, setCw] = React.useState("0"); // 컨텍스트 창(K tokens);0=기본값200K
   const [thinkingType, setThinkingType] = React.useState(NONE);
   const [effort, setEffort] = React.useState(NONE);
-  const [priority, setPriority] = React.useState("0"); // 폴링顺位;越大越先
+  const [priority, setPriority] = React.useState("0"); // 폴링;
   const [poolExclude, setPoolExclude] = React.useState(false);
-  const [streaming, setStreaming] = React.useState(true); // true=流式(기본값);false=非流式
-  const [maxTokens, setMaxTokens] = React.useState("0"); // 单회응답출력上限;0=전송하지 않음
-  const [maxTokensField, setMaxTokensField] = React.useState(NONE); // 上限用哪개字段名;NONE=max_tokens
-  const [sessionHeaderKey, setSessionHeaderKey] = React.useState(""); // 사용자 지정会话头名;空=전송하지 않음
-  const [retry, setRetry] = React.useState<LLMRetryOverride>(ZERO_OVERRIDE); // 本구성의다시 시도覆盖;全 0=跟随전체
+  const [streaming, setStreaming] = React.useState(true); // true=(기본값);false=
+  const [maxTokens, setMaxTokens] = React.useState("0"); // 회응답출력;0=전송하지 않음
+  const [maxTokensField, setMaxTokensField] = React.useState(NONE); // 개;NONE=max_tokens
+  const [sessionHeaderKey, setSessionHeaderKey] = React.useState(""); // 사용자 지정;=전송하지 않음
+  const [retry, setRetry] = React.useState<LLMRetryOverride>(ZERO_OVERRIDE); // 구성의다시 시도; 0=전체
   const [testing, setTesting] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [models, setModels] = React.useState<string[]>([]);
   const [loadingModels, setLoadingModels] = React.useState(false);
   const [modelsOpen, setModelsOpen] = React.useState(false);
 
-  // 每회打开时从传입력의 profile 灌一遍表单（새로 만들기则重置을 위해기본값值）。抽屉关掉再打开
-  // 就은一회干净의시작，않음会留下上한 개구성의残影。
+  // 회입력의 profile （새로 만들기을 위해기본값）
+  // 은회의시작，않음한 개구성의
   React.useEffect(() => {
     if (!open) return;
     setName(profile?.name ?? "");
@@ -388,8 +393,8 @@ function ProfileSheet({
     if (testing) return;
     setTesting(true);
     try {
-      // 用구성实际会跑의思考参数来测，这样않음支持该字段의모델에서这里就실패，
-      // 而않음은等到跑작업时才炸。传 profile id：Key 입력框비워 두면时用已存의 Key。
+      // 구성의，않음의모델에서실패，
+      // 않음은작업 profile id：Key 입력비워 두면의 Key
       const r = await api.testLLM(
         format,
         model,
@@ -402,7 +407,7 @@ function ProfileSheet({
         streaming,
         sessionHeaderKey.trim(),
       );
-      // 응답내용一并展示：看得见모델确实说了话，才算및会话里跑通은一回事。
+      // 응답내용：모델，및은
       if (r.ok)
         toast.success(`연결성공 · ${r.latency_ms ?? "?"}ms · ${r.model ?? model}`, {
           description: r.reply ? `응답: ${r.reply}` : undefined,
@@ -440,8 +445,8 @@ function ProfileSheet({
         pool_exclude: poolExclude,
         streaming,
         max_tokens: Math.max(0, Number(maxTokens) || 0),
-        // 字段名开关只对 openai(Chat Completions) 있음意义，其它格式一律回落到기본값；
-        // 后端也会再做一회同样의归一化，这里只은别让 UI 送출력自相矛盾의值。
+        //  openai(Chat Completions) 있음，기본값；
+        // 회의，은 UI 출력의
         max_tokens_field: format === "openai" ? toStore(maxTokensField) : "",
         session_header_key: sessionHeaderKey.trim(),
         retry,
@@ -515,8 +520,8 @@ function ProfileSheet({
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
               />
-              {/* modal: 这개 Popover 의내용被 portal 到 <body>，에서 Sheet 의滚动锁之外，
-                  않음加 modal 时列表能渲染却滚않음动。modal 让它自己持있음最上层滚动锁。 */}
+              {/* modal: 개 Popover 의내용 portal  <body>，에서 Sheet 의，
+                  않음 modal 않음modal 있음 */}
               <Popover open={modelsOpen} onOpenChange={setModelsOpen} modal>
                 <PopoverTrigger asChild>
                   <Button
@@ -589,9 +594,9 @@ function ProfileSheet({
               onChange={(e) => setSessionHeaderKey(e.target.value)}
             />
             <p className="text-muted-foreground text-xs">
-              설정하면 모든 HTTP 요청에 이 헤더를 추가하고, <b>현재 세션의 session ID</b>를 자동으로 전달합니다(chat 세션 예:
-              conv-12, worker 세션 예: exp3-worker-i87). 서버가 session-id 또는 유사한 헤더를 요구할 때 사용하세요.
-              세션마다 값이 달라지므로 세션 간에 공유하지 마세요. 비워 두면 전송하지 않습니다.
+              설정하면 모든 HTTP 요청에 이 헤더를 추가하고, <b>현재 세션의 session ID</b>를 자동으로 전달합니다(chat
+              세션 예: conv-12, worker 세션 예: exp3-worker-i87). 서버가 session-id 또는 유사한 헤더를 요구할 때
+              사용하세요. 세션마다 값이 달라지므로 세션 간에 공유하지 마세요. 비워 두면 전송하지 않습니다.
             </p>
           </div>
 
@@ -656,8 +661,8 @@ function ProfileSheet({
               <div className="grid gap-0.5">
                 <Label className="text-sm">폴링에 참여하지 않음</Label>
                 <p className="text-muted-foreground text-xs">
-                  켜면 장애 조치 대상에서 제외됩니다(Agent와 작업에서 사용). 단일 Agent가 실패해도 이 구성으로
-                  대체하지 않습니다.
+                  켜면 장애 조치 대상에서 제외됩니다(Agent와 작업에서 사용). 단일 Agent가 실패해도 이 구성으로 대체하지
+                  않습니다.
                 </p>
               </div>
               <Switch checked={poolExclude} onCheckedChange={setPoolExclude} aria-label="폴링에 참여하지 않음" />
@@ -666,9 +671,8 @@ function ProfileSheet({
               <div className="grid gap-0.5">
                 <Label className="text-sm">스트리밍 출력 · streaming</Label>
                 <p className="text-muted-foreground text-xs">
-                  켜면(기본값) SSE를 사용해 실행 중 생성되는 token을 실시간으로 표시합니다. 끄면
-                  (stream: false) 응답을 한 번에 받으므로 SSE가 제공하는 실시간 출력(빈 응답/추론 필드 포함)을
-                  사용할 수 없습니다.
+                  켜면(기본값) SSE를 사용해 실행 중 생성되는 token을 실시간으로 표시합니다. 끄면 (stream: false) 응답을
+                  한 번에 받으므로 SSE가 제공하는 실시간 출력(빈 응답/추론 필드 포함)을 사용할 수 없습니다.
                 </p>
               </div>
               <Switch checked={streaming} onCheckedChange={setStreaming} aria-label="출력" />
@@ -792,8 +796,8 @@ export default function LLMPage() {
   const [profiles, setProfiles] = React.useState<LLMProfile[]>([]);
   const [pool, setPool] = React.useState<LLMPoolStatus | null>(null);
   const [poolOpen, setPoolOpen] = React.useState(false);
-  // 抽屉의开关및내용分开存：꺼짐时 editing 保持않음变，그렇지 않으면꺼짐动画期间标题会从
-  // 「편집 X」闪成「새로 만들기」。editing = null 의미새로 만들기。
+  // 의및내용：꺼짐 editing 않음，그렇지 않으면꺼짐
+  // 편집 X새로 만들기editing = null 의미새로 만들기
   const [editOpen, setEditOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<LLMProfile | null>(null);
   const openEditor = React.useCallback((p: LLMProfile | null) => {
@@ -822,7 +826,7 @@ export default function LLMPage() {
     void load();
   }, [load]);
 
-  // 卡片上의健康徽章按 profile id 取폴링상태。
+  // 의 profile id 폴링상태
   const health = React.useMemo(() => {
     const m = new Map<string, LLMPoolMember>();
     for (const c of pool?.chain ?? []) m.set(c.profile_id, c);
@@ -860,7 +864,9 @@ export default function LLMPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-semibold text-xl tracking-tight">LLM</h1>
-          <p className="text-muted-foreground text-sm">모든 Agent에서 사용할 형식, 모델, 연결 구성을 관리합니다. 편집하고 활성 구성을 선택하세요.</p>
+          <p className="text-muted-foreground text-sm">
+            모든 Agent에서 사용할 형식, 모델, 연결 구성을 관리합니다. 편집하고 활성 구성을 선택하세요.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" onClick={() => setPoolOpen(true)}>
@@ -888,7 +894,7 @@ export default function LLMPage() {
             {profiles.map((p) => {
               const h = healthOf(p, health.get(p.id));
               return (
-                // biome-ignore lint/a11y/useSemanticElements: 卡片内含自己의작업按钮，用原生 <button> 会造成按钮嵌套（非法 HTML）
+                // biome-ignore lint/a11y/useSemanticElements: 의작업， <button> （ HTML）
                 <Card
                   key={p.id}
                   role="button"
@@ -933,9 +939,7 @@ export default function LLMPage() {
                         {p.rate_per_second}/s · {p.rate_per_minute}/min
                       </span>
                       {p.proxy && <span className="truncate">프록시 {p.proxy}</span>}
-                      {p.reasoning_effort && (
-                        <span>추론 {p.reasoning_effort === "off" ? "" : p.reasoning_effort}</span>
-                      )}
+                      {p.reasoning_effort && <span>추론 {p.reasoning_effort === "off" ? "" : p.reasoning_effort}</span>}
                       {/* 폴링관련의개필드만에서폴링 시있음， 시않음 */}
                       {poolOn &&
                         !p.is_default &&

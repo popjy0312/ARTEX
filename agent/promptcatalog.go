@@ -9,12 +9,11 @@ package agent
 
 // autoDefaultTmpl is the built-in "Auto" platform-operator agent's prompt. Auto
 // runs via the chat page and drives the platform through tools: task ops
-// (spawn/list/pause/hint + read graph/findings/traces) and platform management
-// (create/modify skill, custom tool, MCP). It seeds into agent_prompts like the
-// other built-ins.
+// (spawn/list/pause/hint + read graph/findings/traces). Executable resource
+// management remains an authenticated administrator-only operation.
 const autoDefaultTmpl = `You are Auto, the platform operator. You do not perform penetration testing yourself; operate the platform through the tools requested by the user.
 
-Task operations: use list_tasks for global state, spawn_task to create a task, get_task_graph/list_task_findings to inspect progress and findings, get_task_worker_trace to inspect a work run, pause_task to pause, and add_task_hint to guide a task. Platform management: use create_skill/update_skill for skills, create_custom_tool/update_custom_tool for command/script/http tools, and create_mcp/update_mcp for MCP servers.
+Task operations: use list_tasks for global state, spawn_task to create a task, get_task_graph/list_task_findings to inspect progress and findings, get_task_worker_trace to inspect a work run, pause_task to pause, and add_task_hint to guide a task. Skill, custom tool, and MCP configuration is administrator-only and must not be created or modified by this agent.
 
 Inspect current state before changing it. Translate the user's intent into the smallest correct structured parameters, including kind, exec, schema, and scope. Use only real tool results, preserve authorization boundaries, and report actions and results concisely. Do not perform target operations that belong to the task agents.`
 

@@ -90,6 +90,6 @@ OpenAI 호환 엔드포인트 `http://127.0.0.1:12580/tingly/openai`에서 `grok
 
 ## Qwen 검토
 
-검토 모델은 OpenAI 호환 엔드포인트 `https://dashscope.aliyuncs.com/compatible-mode/v1`의 `qwen-flash`이며 HTTP 200을 반환했습니다. 최초 세 개의 실제 우회 대화, 주 세션 도구 근거 및 엔지니어링 단언을 제공했고 `verdict: accept`, `concerns: []`를 반환했습니다. 자산, 마커 및 페이지 읽기 근거와 답변이 일치하며 우회 도구 거부가 제약을 준수한다고 판단했습니다. 검토 사용량은 prompt 6625, completion 312, total 6937입니다.
+검토 모델은 승인된 OpenAI 호환 검토 엔드포인트의 `qwen-flash`이며 HTTP 200을 반환했습니다. 최초 세 개의 실제 우회 대화, 주 세션 도구 근거 및 엔지니어링 단언을 제공했고 `verdict: accept`, `concerns: []`를 반환했습니다. 자산, 마커 및 페이지 읽기 근거와 답변이 일치하며 우회 도구 거부가 제약을 준수한다고 판단했습니다. 검토 사용량은 prompt 6625, completion 312, total 6937입니다.
 
 이 Qwen 검토에는 이후 추가된 서비스 재시작과 비스트리밍 테스트가 포함되지 않았습니다. Qwen의 “쓰기 없음”이라는 요약은 너무 넓었습니다. 위에서 명시했듯 주 세션 curl은 로컬 임시 응답 파일을 실제로 만들었습니다. 동시성, 도구 실행 0회, transcript 격리는 모델 검토가 아니라 엔지니어링 단언으로 확인했습니다.

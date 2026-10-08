@@ -33,13 +33,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
@@ -58,7 +52,7 @@ function fmtTime(ts?: string) {
 // ── Tree node ──────────────────────────────────────────────────────────────
 interface TreeNode {
   name: string;
-  path: string;   // relative to skill root, dirs WITHOUT trailing slash
+  path: string; // relative to skill root, dirs WITHOUT trailing slash
   type: "file" | "dir";
   children: TreeNode[];
 }
@@ -124,9 +118,7 @@ function sortNodes(nodes: TreeNode[]): void {
 }
 
 // ── State types ───────────────────────────────────────────────────────────
-type Selected =
-  | { skill: string; path: null }
-  | { skill: string; path: string };
+type Selected = { skill: string; path: null } | { skill: string; path: string };
 
 type Creating = {
   skill: string;
@@ -177,7 +169,9 @@ function SkillsOverview({
   if (skills.length === 0) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-sm text-muted-foreground">Skill이 없습니다. 왼쪽에서 새 Skill 만들기 또는 압축 파일 업로드를 선택해 시작하세요.</p>
+        <p className="text-sm text-muted-foreground">
+          Skill이 없습니다. 왼쪽에서 새 Skill 만들기 또는 압축 파일 업로드를 선택해 시작하세요.
+        </p>
       </div>
     );
   }
@@ -185,15 +179,25 @@ function SkillsOverview({
   const stats: { label: string; value: React.ReactNode; hint?: string }[] = [
     { label: "Skill 수", value: skills.length, hint: `${agg.usedCount}개 호출됨` },
     { label: "누적 호출", value: agg.totalCalls },
-    { label: "미사용", value: agg.neverUsed.length, hint: agg.neverUsed.length > 0 ? "어떤 Agent도 로드하지 않음" : "모두 사용됨" },
-    { label: "호출 누락", value: agg.missingCalls, hint: missing.length > 0 ? `${missing.length}개 존재하지 않는 Skill` : "없음" },
+    {
+      label: "미사용",
+      value: agg.neverUsed.length,
+      hint: agg.neverUsed.length > 0 ? "어떤 Agent도 로드하지 않음" : "모두 사용됨",
+    },
+    {
+      label: "호출 누락",
+      value: agg.missingCalls,
+      hint: missing.length > 0 ? `${missing.length}개 존재하지 않는 Skill` : "없음",
+    },
   ];
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
       <div>
         <h2 className="text-base font-semibold">스킬 라이브러리 개요</h2>
-        <p className="text-muted-foreground text-sm">왼쪽에서 Skill을 선택해 세부 정보와 호출 기록을 보거나 전체 사용 현황을 확인하세요.</p>
+        <p className="text-muted-foreground text-sm">
+          왼쪽에서 Skill을 선택해 세부 정보와 호출 기록을 보거나 전체 사용 현황을 확인하세요.
+        </p>
       </div>
 
       {/*  */}
@@ -223,16 +227,16 @@ function SkillsOverview({
                 onClick={() => onSelect(s.name)}
                 className="group flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left hover:bg-muted"
               >
-                <span className="w-40 shrink-0 truncate font-mono text-xs" title={s.name}>{s.name}</span>
+                <span className="w-40 shrink-0 truncate font-mono text-xs" title={s.name}>
+                  {s.name}
+                </span>
                 <span className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted">
                   <span
                     className="absolute inset-y-0 left-0 rounded-full bg-primary/70"
                     style={{ width: `${agg.topCalls > 0 ? (s.calls / agg.topCalls) * 100 : 0}%` }}
                   />
                 </span>
-                <span className="w-16 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-                  {s.calls}회
-                </span>
+                <span className="w-16 shrink-0 text-right text-xs tabular-nums text-muted-foreground">{s.calls}회</span>
               </button>
             ))}
           </div>
@@ -254,8 +258,12 @@ function SkillsOverview({
                   onClick={() => onSelect(s.name)}
                   className="flex w-full items-center gap-2 rounded px-1.5 py-1 text-left hover:bg-muted"
                 >
-                  <span className="min-w-0 flex-1 truncate font-mono text-xs" title={s.name}>{s.name}</span>
-                  <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{fmtTime(s.last_used)}</span>
+                  <span className="min-w-0 flex-1 truncate font-mono text-xs" title={s.name}>
+                    {s.name}
+                  </span>
+                  <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                    {fmtTime(s.last_used)}
+                  </span>
                 </button>
               ))}
             </div>
@@ -273,13 +281,11 @@ function SkillsOverview({
           ) : (
             <div className="flex flex-wrap gap-1.5">
               {agg.neverUsed.map((s) => (
-                <button
-                  key={s.name}
-                  type="button"
-                  onClick={() => onSelect(s.name)}
-                  title={s.name}
-                >
-                  <Badge variant="outline" className="max-w-[12rem] cursor-pointer truncate font-mono text-xs font-normal hover:bg-muted">
+                <button key={s.name} type="button" onClick={() => onSelect(s.name)} title={s.name}>
+                  <Badge
+                    variant="outline"
+                    className="max-w-[12rem] cursor-pointer truncate font-mono text-xs font-normal hover:bg-muted"
+                  >
                     {s.name}
                   </Badge>
                 </button>
@@ -334,28 +340,43 @@ export default function SkillsPage() {
   const [pendingDelete, setPendingDelete] = React.useState<PendingDelete>(null);
   const [deleting, setDeleting] = React.useState(false);
 
-  // 호출 통계：列表页의회数/최근 호출随 api.skills() 一起回来；选中某개 skill 时再拉它의
-  // 최근 호출明细。missing = 被点名但존재하지 않는 skill（想用但없음）。
+  // 호출 통계：의회/최근 호출 api.skills() ；개 skill 의
+  // 최근 호출missing = 존재하지 않는 skill（없음）
   const [usageCalls, setUsageCalls] = React.useState<SkillCall[]>([]);
   const [usageLoading, setUsageLoading] = React.useState(false);
   const [missing, setMissing] = React.useState<MissingSkill[]>([]);
 
   // ── Data ──────────────────────────────────────────────────────────────────
   const load = React.useCallback(() => {
-    api.agents().then(setAgents).catch(() => {});
-    api.mcpServers().then(setMcpOptions).catch(() => {});
-    api.missingSkills().then(setMissing).catch(() => {});
-    api.skills().then((ss) => {
-      setSkills(ss);
-      ss.forEach((s) =>
-        api.skillVisibility(s.name)
-          .then((ids) => setVisibility((v) => ({ ...v, [s.name]: ids })))
-          .catch(() => {}),
-      );
-    }).catch(() => {});
+    api
+      .agents()
+      .then(setAgents)
+      .catch(() => {});
+    api
+      .mcpServers()
+      .then(setMcpOptions)
+      .catch(() => {});
+    api
+      .missingSkills()
+      .then(setMissing)
+      .catch(() => {});
+    api
+      .skills()
+      .then((ss) => {
+        setSkills(ss);
+        ss.forEach((s) =>
+          api
+            .skillVisibility(s.name)
+            .then((ids) => setVisibility((v) => ({ ...v, [s.name]: ids })))
+            .catch(() => {}),
+        );
+      })
+      .catch(() => {});
   }, []);
 
-  React.useEffect(() => { load(); }, [load]);
+  React.useEffect(() => {
+    load();
+  }, [load]);
 
   // ── Upload a .zip skill ───────────────────────────────────────────────────
   async function uploadZip(file: File, overwrite = false) {
@@ -401,20 +422,32 @@ export default function SkillsPage() {
 
   // Recent calls for the selected skill (detail panel only).
   React.useEffect(() => {
-    if (!selected || selected.path !== null) { setUsageCalls([]); return; }
+    if (!selected || selected.path !== null) {
+      setUsageCalls([]);
+      return;
+    }
     const name = selected.skill;
     setUsageLoading(true);
-    api.skillUsage(name, 20)
+    api
+      .skillUsage(name, 20)
       .then((calls) => setUsageCalls(calls))
       .catch(() => setUsageCalls([]))
       .finally(() => setUsageLoading(false));
   }, [selected]);
 
   React.useEffect(() => {
-    if (!selected || selected.path === null) { setFileContent(""); setDirty(false); return; }
+    if (!selected || selected.path === null) {
+      setFileContent("");
+      setDirty(false);
+      return;
+    }
     setFileLoading(true);
-    api.readSkillFile(selected.skill, selected.path)
-      .then((c) => { setFileContent(c); setDirty(false); })
+    api
+      .readSkillFile(selected.skill, selected.path)
+      .then((c) => {
+        setFileContent(c);
+        setDirty(false);
+      })
       .catch(() => toast.error("파일을 읽지 못했습니다"))
       .finally(() => setFileLoading(false));
   }, [selected]);
@@ -423,7 +456,8 @@ export default function SkillsPage() {
   function toggleExpanded(key: string) {
     setExpanded((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   }
@@ -453,12 +487,19 @@ export default function SkillsPage() {
   // Use a ref snapshot so commitCreate reads the latest creating value
   // without depending on potentially stale closure state.
   const creatingRef = React.useRef<Creating>(null);
-  React.useEffect(() => { creatingRef.current = creating; }, [creating]);
+  React.useEffect(() => {
+    creatingRef.current = creating;
+  }, [creating]);
   const newEntryRef = React.useRef("");
-  React.useEffect(() => { newEntryRef.current = newEntryName; }, [newEntryName]);
+  React.useEffect(() => {
+    newEntryRef.current = newEntryName;
+  }, [newEntryName]);
 
   async function commitCreate() {
-    if (cancelRef.current) { cancelRef.current = false; return; }
+    if (cancelRef.current) {
+      cancelRef.current = false;
+      return;
+    }
     const c = creatingRef.current;
     const name = newEntryRef.current.trim();
     setCreating(null);
@@ -533,13 +574,13 @@ export default function SkillsPage() {
       setDirty(false);
     } catch (e) {
       toast.error("저장 실패: " + (e as Error).message);
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function toggleSkillMcp(skillName: string, mcpName: string, mcpOn: boolean) {
-    const next = mcpOn
-      ? [...detailMcps, mcpName]
-      : detailMcps.filter((n) => n !== mcpName);
+    const next = mcpOn ? [...detailMcps, mcpName] : detailMcps.filter((n) => n !== mcpName);
     setDetailMcps(next);
     try {
       await api.updateSkillMeta(skillName, { mcps: next });
@@ -565,13 +606,20 @@ export default function SkillsPage() {
   }
 
   async function createNewSkill() {
-    if (!newName.trim()) { toast.error("Skill 이름을 입력해 주세요"); return; }
-    if (!newDesc.trim()) { toast.error("description 은 필수 항목입니다"); return; }
+    if (!newName.trim()) {
+      toast.error("Skill 이름을 입력해 주세요");
+      return;
+    }
+    if (!newDesc.trim()) {
+      toast.error("description 은 필수 항목입니다");
+      return;
+    }
     setCreatingSkill(true);
     try {
       const name = newName.trim();
       await api.createSkill({
-        name, description: newDesc.trim(),
+        name,
+        description: newDesc.trim(),
         license: newLicense.trim() || undefined,
         compatibility: newCompat.trim() || undefined,
         mcps: newMcps.length ? newMcps : undefined,
@@ -581,27 +629,31 @@ export default function SkillsPage() {
       await Promise.all(newVisibility.map((id) => api.toggleSkillVisibility(id, name, true)));
       toast.success("Skill을 생성했습니다");
       setNewOpen(false);
-      setNewName(""); setNewDesc(""); setNewLicense(""); setNewCompat(""); setNewInst("");
-      setNewMcps([]); setNewVisibility([]);
+      setNewName("");
+      setNewDesc("");
+      setNewLicense("");
+      setNewCompat("");
+      setNewInst("");
+      setNewMcps([]);
+      setNewVisibility([]);
       load();
     } catch (e) {
       toast.error("생성 실패: " + (e as Error).message);
-    } finally { setCreatingSkill(false); }
+    } finally {
+      setCreatingSkill(false);
+    }
   }
 
   // ── Inline input JSX helper (NOT a React component — avoids remount on re-render) ──
   // Defined as a plain function returning JSX so React never sees a new component type.
   function inlineInputJSX(indent: number) {
     return (
-      <div
-        key="__inline_create__"
-        className="flex items-center gap-1 py-0.5 pr-2"
-        style={{ paddingLeft: indent }}
-      >
-        {creating?.kind === "dir"
-          ? <FolderIcon className="size-3.5 shrink-0 text-amber-500" />
-          : <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" />
-        }
+      <div key="__inline_create__" className="flex items-center gap-1 py-0.5 pr-2" style={{ paddingLeft: indent }}>
+        {creating?.kind === "dir" ? (
+          <FolderIcon className="size-3.5 shrink-0 text-amber-500" />
+        ) : (
+          <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" />
+        )}
         <Input
           ref={inlineRef}
           className="h-6 flex-1 px-1 py-0 font-mono text-xs"
@@ -609,10 +661,15 @@ export default function SkillsPage() {
           value={newEntryName}
           onChange={(e) => setNewEntryName(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") { cancelRef.current = false; void commitCreate(); }
+            if (e.key === "Enter") {
+              cancelRef.current = false;
+              void commitCreate();
+            }
             if (e.key === "Escape") cancelCreate();
           }}
-          onBlur={() => { void commitCreate(); }}
+          onBlur={() => {
+            void commitCreate();
+          }}
         />
       </div>
     );
@@ -635,23 +692,50 @@ export default function SkillsPage() {
               onClick={() => toggleExpanded(key)}
             >
               <ChevronRightIcon className={cn("size-3.5 shrink-0 transition-transform", open && "rotate-90")} />
-              {open
-                ? <FolderOpenIcon className="size-3.5 shrink-0 text-amber-500" />
-                : <FolderIcon className="size-3.5 shrink-0 text-amber-500" />
-              }
-              <span className="min-w-0 flex-1 truncate" title={node.path}>{node.name}</span>
+              {open ? (
+                <FolderOpenIcon className="size-3.5 shrink-0 text-amber-500" />
+              ) : (
+                <FolderIcon className="size-3.5 shrink-0 text-amber-500" />
+              )}
+              <span className="min-w-0 flex-1 truncate" title={node.path}>
+                {node.name}
+              </span>
               {/* Absolute so a long name can never push the actions out of view */}
               <span className="absolute inset-y-0 right-1 hidden items-center gap-0.5 rounded bg-muted pl-1 group-hover:flex">
-                <Button size="icon" variant="ghost" className="size-5" title="새 파일 만들기"
-                  onClick={(e) => { e.stopPropagation(); startCreate(skill, node.path, "file"); }}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-5"
+                  title="새 파일 만들기"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startCreate(skill, node.path, "file");
+                  }}
+                >
                   <FilePlusIcon className="size-3 text-muted-foreground" />
                 </Button>
-                <Button size="icon" variant="ghost" className="size-5" title="새 폴더 만들기"
-                  onClick={(e) => { e.stopPropagation(); startCreate(skill, node.path, "dir"); }}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-5"
+                  title="새 폴더 만들기"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startCreate(skill, node.path, "dir");
+                  }}
+                >
                   <FolderPlusIcon className="size-3 text-muted-foreground" />
                 </Button>
-                <Button size="icon" variant="ghost" className="size-5" title="폴더 삭제"
-                  onClick={(e) => { e.stopPropagation(); setPendingDelete({ kind: "dir", skill, path: node.path }); }}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-5"
+                  title="폴더 삭제"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPendingDelete({ kind: "dir", skill, path: node.path });
+                  }}
+                >
                   <Trash2Icon className="size-3 text-destructive" />
                 </Button>
               </span>
@@ -659,8 +743,7 @@ export default function SkillsPage() {
             {open && (
               <>
                 {renderTree(node.children, skill, depth + 1)}
-                {creating?.skill === skill && creating.inDir === node.path &&
-                  inlineInputJSX(baseIndent + 14)}
+                {creating?.skill === skill && creating.inDir === node.path && inlineInputJSX(baseIndent + 14)}
               </>
             )}
           </div>
@@ -680,14 +763,25 @@ export default function SkillsPage() {
           onClick={() => setSelected({ skill, path: node.path })}
         >
           <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="min-w-0 flex-1 truncate font-mono text-xs" title={node.path}>{node.name}</span>
-          <span className={cn(
-            "absolute inset-y-0 right-1 hidden items-center rounded pl-1 group-hover:flex",
-            isSelected ? "bg-accent" : "bg-muted",
-          )}>
-            <Button size="icon" variant="ghost" className="size-5"
+          <span className="min-w-0 flex-1 truncate font-mono text-xs" title={node.path}>
+            {node.name}
+          </span>
+          <span
+            className={cn(
+              "absolute inset-y-0 right-1 hidden items-center rounded pl-1 group-hover:flex",
+              isSelected ? "bg-accent" : "bg-muted",
+            )}
+          >
+            <Button
+              size="icon"
+              variant="ghost"
+              className="size-5"
               title="파일 삭제"
-              onClick={(e) => { e.stopPropagation(); setPendingDelete({ kind: "file", skill, path: node.path }); }}>
+              onClick={(e) => {
+                e.stopPropagation();
+                setPendingDelete({ kind: "file", skill, path: node.path });
+              }}
+            >
               <Trash2Icon className="size-3 text-destructive" />
             </Button>
           </span>
@@ -696,9 +790,7 @@ export default function SkillsPage() {
     });
   }
 
-  const selectedSkill = selected
-    ? skills.find((s) => s.name === selected.skill) ?? null
-    : null;
+  const selectedSkill = selected ? (skills.find((s) => s.name === selected.skill) ?? null) : null;
 
   return (
     <div data-content-padding="false" className="flex flex-1 flex-col overflow-hidden">
@@ -707,7 +799,7 @@ export default function SkillsPage() {
           <h1 className="text-sm font-semibold leading-tight">Skill</h1>
           <p className="text-muted-foreground text-xs">스킬 라이브러리 · agentskills.io 사양 · Agent별 권한으로 표시</p>
         </div>
-        {/* ：agent 지정 호출、없음의 skill —— 은해당의。 */}
+        {/* ：agent 지정 호출없음의 skill —— 은해당의 */}
         {missing.length > 0 && (
           <Popover>
             <PopoverTrigger asChild>
@@ -723,7 +815,9 @@ export default function SkillsPage() {
               <div className="space-y-1">
                 {missing.map((m) => (
                   <div key={m.skill} className="flex items-center gap-2 text-sm">
-                    <code className="min-w-0 flex-1 truncate font-mono text-xs" title={m.skill}>{m.skill}</code>
+                    <code className="min-w-0 flex-1 truncate font-mono text-xs" title={m.skill}>
+                      {m.skill}
+                    </code>
                     <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{m.calls} 회</span>
                     <span className="shrink-0 text-xs text-muted-foreground">{fmtTime(m.last_used)}</span>
                   </div>
@@ -781,12 +875,17 @@ export default function SkillsPage() {
                         setSelected({ skill: s.name, path: null });
                       }}
                     >
-                      <ChevronRightIcon className={cn("size-3.5 shrink-0 transition-transform", isOpen && "rotate-90")} />
-                      {isOpen
-                        ? <FolderOpenIcon className="size-3.5 shrink-0 text-blue-500" />
-                        : <FolderIcon className="size-3.5 shrink-0 text-blue-500" />
-                      }
-                      <span className="min-w-0 flex-1 truncate font-semibold" title={s.name}>{s.name}</span>
+                      <ChevronRightIcon
+                        className={cn("size-3.5 shrink-0 transition-transform", isOpen && "rotate-90")}
+                      />
+                      {isOpen ? (
+                        <FolderOpenIcon className="size-3.5 shrink-0 text-blue-500" />
+                      ) : (
+                        <FolderIcon className="size-3.5 shrink-0 text-blue-500" />
+                      )}
+                      <span className="min-w-0 flex-1 truncate font-semibold" title={s.name}>
+                        {s.name}
+                      </span>
                       {s.calls > 0 && (
                         <span
                           className="shrink-0 rounded bg-muted px-1 text-[10px] tabular-nums text-muted-foreground"
@@ -795,20 +894,46 @@ export default function SkillsPage() {
                           {s.calls}
                         </span>
                       )}
-                      <span className={cn(
-                        "absolute inset-y-0 right-1 hidden items-center gap-0.5 rounded pl-1 group-hover:flex",
-                        isSkillSelected ? "bg-accent" : "bg-muted",
-                      )}>
-                        <Button size="icon" variant="ghost" className="size-5" title="새 파일 만들기"
-                          onClick={(e) => { e.stopPropagation(); startCreate(s.name, "", "file"); }}>
+                      <span
+                        className={cn(
+                          "absolute inset-y-0 right-1 hidden items-center gap-0.5 rounded pl-1 group-hover:flex",
+                          isSkillSelected ? "bg-accent" : "bg-muted",
+                        )}
+                      >
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-5"
+                          title="새 파일 만들기"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startCreate(s.name, "", "file");
+                          }}
+                        >
                           <FilePlusIcon className="size-3 text-muted-foreground" />
                         </Button>
-                        <Button size="icon" variant="ghost" className="size-5" title="새 폴더 만들기"
-                          onClick={(e) => { e.stopPropagation(); startCreate(s.name, "", "dir"); }}>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-5"
+                          title="새 폴더 만들기"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startCreate(s.name, "", "dir");
+                          }}
+                        >
                           <FolderPlusIcon className="size-3 text-muted-foreground" />
                         </Button>
-                        <Button size="icon" variant="ghost" className="size-5" title="Skill 삭제"
-                          onClick={(e) => { e.stopPropagation(); setPendingDelete({ kind: "skill", skill: s.name }); }}>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-5"
+                          title="Skill 삭제"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPendingDelete({ kind: "skill", skill: s.name });
+                          }}
+                        >
                           <Trash2Icon className="size-3 text-destructive" />
                         </Button>
                       </span>
@@ -818,8 +943,7 @@ export default function SkillsPage() {
                     {isOpen && (
                       <>
                         {renderTree(tree, s.name, 0)}
-                        {creating?.skill === s.name && creating.inDir === "" &&
-                          inlineInputJSX(22)}
+                        {creating?.skill === s.name && creating.inDir === "" && inlineInputJSX(22)}
                       </>
                     )}
                   </div>
@@ -852,17 +976,21 @@ export default function SkillsPage() {
                 )}
                 <div className="mt-2 flex flex-wrap gap-2">
                   {selectedSkill.license && (
-                    <Badge variant="outline" className="text-xs font-normal">License: {selectedSkill.license}</Badge>
+                    <Badge variant="outline" className="text-xs font-normal">
+                      License: {selectedSkill.license}
+                    </Badge>
                   )}
                   {selectedSkill.compatibility && (
-                    <Badge variant="secondary" className="text-xs font-normal">{selectedSkill.compatibility}</Badge>
+                    <Badge variant="secondary" className="text-xs font-normal">
+                      {selectedSkill.compatibility}
+                    </Badge>
                   )}
                 </div>
               </div>
 
-              {/* 左右分栏：구성（MCP/표시 권한）에서左을 위해主，호출 통계에서右을 위해辅。
-                  lg 以下放않음下时用 flex-row-reverse 回落到单列——统计因 DOM 顺序에서 전，
-                  窄屏时自然落到구성上方（와改版 전의上下顺序一致）。 */}
+              {/* ：구성（MCP/표시 권한）에서을 위해，호출 통계에서을 위해
+                  lg 않음 flex-row-reverse —— DOM 에서 전，
+                  구성（와 전의） */}
               <div className="flex flex-col gap-6 lg:flex-row-reverse lg:items-start">
                 {/* ── ：호출 통계 ── */}
                 <div className="space-y-2 lg:w-80 lg:shrink-0">
@@ -887,7 +1015,9 @@ export default function SkillsPage() {
                     <div className="flex flex-wrap items-center gap-1">
                       <span className="text-xs text-muted-foreground">호출자:</span>
                       {selectedSkill.usage_agents.map((k) => (
-                        <Badge key={k} variant="secondary" className="text-xs font-normal">{k}</Badge>
+                        <Badge key={k} variant="secondary" className="text-xs font-normal">
+                          {k}
+                        </Badge>
                       ))}
                     </div>
                   )}
@@ -898,9 +1028,14 @@ export default function SkillsPage() {
                       <div className="border-b px-2 py-1 text-xs text-muted-foreground">{usageCalls.length}회 호출</div>
                       <div className="max-h-56 overflow-y-auto">
                         {usageCalls.map((c, i) => (
-                          <div key={`${c.ts}-${i}`} className="flex items-center gap-2 border-b px-2 py-1 text-xs last:border-b-0">
+                          <div
+                            key={`${c.ts}-${i}`}
+                            className="flex items-center gap-2 border-b px-2 py-1 text-xs last:border-b-0"
+                          >
                             <span className="tabular-nums text-muted-foreground">{fmtTime(c.ts)}</span>
-                            <Badge variant="outline" className="font-normal">{c.agent_key || "—"}</Badge>
+                            <Badge variant="outline" className="font-normal">
+                              {c.agent_key || "—"}
+                            </Badge>
                             <span className="ml-auto text-muted-foreground">
                               {c.task_id > 0 ? `작업 #${c.task_id}` : c.session_id ? "대화 세션" : "—"}
                             </span>
@@ -921,7 +1056,9 @@ export default function SkillsPage() {
                       <span className="ml-1 font-normal">(Skill을 로드할 때 선택한 도구가 공개·활성화됩니다)</span>
                     </Label>
                     {mcpOptions.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">MCP가 없습니다. “MCP” 페이지에서 추가할 수 있습니다.</p>
+                      <p className="text-xs text-muted-foreground">
+                        MCP가 없습니다. “MCP” 페이지에서 추가할 수 있습니다.
+                      </p>
                     ) : (
                       <div className="flex flex-wrap gap-x-4 gap-y-2">
                         {mcpOptions.map((m) => (
@@ -949,9 +1086,7 @@ export default function SkillsPage() {
                           {a.name}
                         </label>
                       ))}
-                      {agents.length === 0 && (
-                        <span className="text-xs text-muted-foreground">(Agent 없음)</span>
-                      )}
+                      {agents.length === 0 && <span className="text-xs text-muted-foreground">(Agent 없음)</span>}
                     </div>
                   </div>
                 </div>
@@ -975,7 +1110,10 @@ export default function SkillsPage() {
                 <Textarea
                   className="flex-1 resize-none font-mono text-xs"
                   value={fileContent}
-                  onChange={(e) => { setFileContent(e.target.value); setDirty(true); }}
+                  onChange={(e) => {
+                    setFileContent(e.target.value);
+                    setDirty(true);
+                  }}
                 />
               )}
             </div>
@@ -984,7 +1122,12 @@ export default function SkillsPage() {
       </div>
 
       {/* ── 삭제회확인 ── */}
-      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => { if (!o) setPendingDelete(null); }}>
+      <AlertDialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => {
+          if (!o) setPendingDelete(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -1004,7 +1147,10 @@ export default function SkillsPage() {
             <AlertDialogCancel disabled={deleting}>취소</AlertDialogCancel>
             <AlertDialogAction
               disabled={deleting}
-              onClick={(e) => { e.preventDefault(); void runPendingDelete(); }}
+              onClick={(e) => {
+                e.preventDefault();
+                void runPendingDelete();
+              }}
             >
               {deleting ? "삭제 중…" : "삭제"}
             </AlertDialogAction>
@@ -1040,34 +1186,67 @@ export default function SkillsPage() {
             </TabsList>
 
             {/* 기본 정보 */}
-            <TabsContent value="basic" className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 pt-4 data-[state=inactive]:hidden">
+            <TabsContent
+              value="basic"
+              className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 pt-4 data-[state=inactive]:hidden"
+            >
               <div className="grid gap-1.5">
-                <Label htmlFor="sk-name">이름 <span className="text-destructive">*</span></Label>
-                <Input id="sk-name" placeholder="sqli-deepdive" value={newName} onChange={(e) => setNewName(e.target.value)} />
+                <Label htmlFor="sk-name">
+                  이름 <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="sk-name"
+                  placeholder="sqli-deepdive"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                />
                 <p className="text-muted-foreground text-xs">소문자, 숫자, 하이픈으로 1~64자</p>
               </div>
               <div className="grid gap-1.5">
-                <Label htmlFor="sk-desc">설명 <span className="text-destructive">*</span></Label>
-                <Textarea id="sk-desc" rows={2} className="resize-none"
+                <Label htmlFor="sk-desc">
+                  설명 <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  id="sk-desc"
+                  rows={2}
+                  className="resize-none"
                   placeholder="이 Skill의 용도와 사용 방법을 설명하세요."
-                  value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-1.5">
                   <Label className="text-muted-foreground text-xs">license</Label>
-                  <Input placeholder="MIT / Proprietary" value={newLicense} onChange={(e) => setNewLicense(e.target.value)} />
+                  <Input
+                    placeholder="MIT / Proprietary"
+                    value={newLicense}
+                    onChange={(e) => setNewLicense(e.target.value)}
+                  />
                 </div>
                 <div className="grid gap-1.5">
                   <Label className="text-muted-foreground text-xs">compatibility</Label>
-                  <Input placeholder="필요한 도구: sqlmap, python3" value={newCompat} onChange={(e) => setNewCompat(e.target.value)} />
+                  <Input
+                    placeholder="필요한 도구: sqlmap, python3"
+                    value={newCompat}
+                    onChange={(e) => setNewCompat(e.target.value)}
+                  />
                 </div>
               </div>
               <div className="flex min-h-0 flex-1 flex-col gap-1.5">
-                <Label htmlFor="sk-inst">본문 <span className="text-muted-foreground text-xs font-normal">(비워 두면 기본 골격을 자동 생성합니다)</span></Label>
-                <Textarea id="sk-inst"
+                <Label htmlFor="sk-inst">
+                  본문{" "}
+                  <span className="text-muted-foreground text-xs font-normal">
+                    (비워 두면 기본 골격을 자동 생성합니다)
+                  </span>
+                </Label>
+                <Textarea
+                  id="sk-inst"
                   className="min-h-40 flex-1 resize-none font-mono text-sm leading-relaxed"
                   placeholder={"## 실행 방법\n\n1. 오류 처리\n2. 입력 유형\n\n스크립트는 scripts/ 디렉터리에 둡니다."}
-                  value={newInst} onChange={(e) => setNewInst(e.target.value)} />
+                  value={newInst}
+                  onChange={(e) => setNewInst(e.target.value)}
+                />
               </div>
             </TabsContent>
 
@@ -1083,7 +1262,7 @@ export default function SkillsPage() {
                       <Checkbox
                         checked={newMcps.includes(m.name)}
                         onCheckedChange={(on) =>
-                          setNewMcps((cur) => on ? [...cur, m.name] : cur.filter((n) => n !== m.name))
+                          setNewMcps((cur) => (on ? [...cur, m.name] : cur.filter((n) => n !== m.name)))
                         }
                       />
                       {m.name}
@@ -1105,7 +1284,7 @@ export default function SkillsPage() {
                       <Checkbox
                         checked={newVisibility.includes(a.id)}
                         onCheckedChange={(on) =>
-                          setNewVisibility((cur) => on ? [...cur, a.id] : cur.filter((id) => id !== a.id))
+                          setNewVisibility((cur) => (on ? [...cur, a.id] : cur.filter((id) => id !== a.id)))
                         }
                       />
                       {a.name}
@@ -1117,8 +1296,12 @@ export default function SkillsPage() {
           </Tabs>
 
           <SheetFooter className="flex-row justify-end gap-2 border-t px-4 py-3">
-            <Button variant="outline" onClick={() => setNewOpen(false)}>취소</Button>
-            <Button onClick={createNewSkill} disabled={creatingSkill}>{creatingSkill ? "생성 중…" : "생성"}</Button>
+            <Button variant="outline" onClick={() => setNewOpen(false)}>
+              취소
+            </Button>
+            <Button onClick={createNewSkill} disabled={creatingSkill}>
+              {creatingSkill ? "생성 중…" : "생성"}
+            </Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>

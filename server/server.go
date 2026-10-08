@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/Autumn-27/artex/agent"
+	"github.com/Autumn-27/artex/config"
 	"github.com/Autumn-27/artex/db"
 	"github.com/Autumn-27/artex/intercept"
 	"github.com/Autumn-27/artex/llmpool"
@@ -27,7 +28,6 @@ import (
 	"github.com/Autumn-27/artex/report"
 	"github.com/Autumn-27/artex/traffic"
 	"github.com/Autumn-27/norma/llm"
-	actool "github.com/Autumn-27/norma/tool"
 	"github.com/Autumn-27/norma/transcript"
 )
 
@@ -158,6 +158,18 @@ func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDi
 		profChatAgents: map[int64]*agent.ChatAgent{},
 		provByProfile:  map[int64]*provEntry{}, llmHealth: newLLMHealthRegistry(m.pg),
 		taskAgents: map[string]*taskAgentBundle{}, archiveWake: make(chan struct{}, 1)}
+	// Resolve every environment-backed credential before any scheduler, notifier,
+	// Agent command, or stdio MCP process can start. Those subprocesses inherit the
+	// parent environment, so scrub secrets once ARTEX has copied what it needs.
+	bootstrapLLM, bootstrapLLMOK := s.loadLLMConfig()
+	bootstrapLLMSource := "database"
+	if !bootstrapLLMOK {
+		bootstrapLLM, bootstrapLLMOK = agent.FromEnv()
+		bootstrapLLMSource = "environment"
+	}
+	if removed := config.ScrubSensitiveEnv(); len(removed) > 0 {
+		log.Printf("[security] removed %d credential-bearing environment variables before starting subprocess-capable services", len(removed))
+	}
 	if _, err := s.workspaceRootHandle(); err != nil {
 		log.Fatalf("[workspace] open root: %v", err)
 	}
@@ -241,23 +253,16 @@ func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDi
 		// 漏洞 IM 推送投递引擎。与 Scheduler 并列但独立：推送的实时性要求(3s)
 		// 与触发器的业务节奏不同，且两者失败互不牵连——推送卡住不该影响 agent 触发。
 		go newNotifier(s).Run(s.ctx)
-		// Fill the tool cache for any enabled MCP that has none yet (notably the
-		// seeded browser MCP on first run). Async so it never blocks startup.
-		go s.discoverEmptyMCPsOnStartup()
+		// MCP discovery is intentionally administrator-triggered. Starting the
+		// service must not create network connections or spawn MCP subprocesses.
 		logSink.SetDB(ctx, m.pg) // restore last 100 log rows and enable async persistence
 	}
-	// precedence: persisted DB config > env.
-	if cfg, ok := s.loadLLMConfig(); ok {
-		if err := s.applyLLM(cfg); err != nil {
-			log.Printf("[engine] saved LLM config init failed — engine idle: %v", err)
+	// Persisted DB configuration takes precedence over the environment snapshot.
+	if bootstrapLLMOK {
+		if err := s.applyLLM(bootstrapLLM); err != nil {
+			log.Printf("[engine] %s LLM config init failed — engine idle: %v", bootstrapLLMSource, err)
 		} else {
-			log.Printf("[engine] LLM configured from DB: %s / %s", cfg.Provider(), cfg.Model)
-		}
-	} else if cfg, ok := agent.FromEnv(); ok {
-		if err := s.applyLLM(cfg); err != nil {
-			log.Printf("[engine] env provider init failed — engine idle: %v", err)
-		} else {
-			log.Printf("[engine] LLM configured from env: %s / %s", cfg.Provider(), cfg.Model)
+			log.Printf("[engine] LLM configured from %s: %s / %s", bootstrapLLMSource, bootstrapLLM.Provider(), bootstrapLLM.Model)
 		}
 	} else {
 		log.Printf("[engine] no LLM provider configured — engine idle until set via /api/llm or env")
@@ -672,13 +677,6 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/logs", s.getLogs)
 	mux.HandleFunc("GET /api/logs/history", s.getLogsHistory)
 	mux.HandleFunc("GET /api/logs/stream", s.streamLogs)
-
-	// 页面一键更新。走的是默认的 JWT 鉴权（auth.go 只放行 /api/auth/* 和
-	// /api/health），所以这几个改动程序自身的接口天然需要登录。
-	mux.HandleFunc("GET /api/update/check", s.updateCheck)
-	mux.HandleFunc("POST /api/update/apply", s.updateApply)
-	mux.HandleFunc("POST /api/update/rollback", s.updateRollback)
-	mux.HandleFunc("GET /api/update/stream", s.updateStream)
 
 	mux.HandleFunc("GET /api/tasks", s.listTasks)
 	mux.HandleFunc("POST /api/tasks", s.createTask)
@@ -3565,64 +3563,13 @@ func (s *Server) putSettings(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, s.settingsPayload())
 }
 
-// testWebSearch runs a real "test" search with the given (or currently saved)
-// backend/proxy/key to verify the config can actually reach a search backend —
-// mirroring testLLM. Backend/proxy come from the request (so the form's unsaved
-// edits are tested); empty API keys fall back to stored values so the user need
-// not retype them. Always 200 with {ok, error?, count?, backend?}.
+// testWebSearch is retained as a compatibility endpoint but never performs an
+// outbound request. External search can disclose task queries and is disabled by
+// the egress security policy.
 func (s *Server) testWebSearch(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Backend   string `json:"web_search_backend"`
-		Proxy     string `json:"web_search_proxy"`
-		BraveKey  string `json:"brave_search_api_key"`
-		TavilyKey string `json:"tavily_search_api_key"`
-	}
-	// Empty body is fine — fall back entirely to the saved config below.
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil && err != io.EOF {
-		writeErr(w, 400, err.Error())
-		return
-	}
-	_, backend, storedBraveKey, storedTavilyKey, _ := s.m.WebSearch()
-	if strings.TrimSpace(req.Backend) != "" {
-		backend = req.Backend
-	}
-	// Proxy is taken from the form as-is (empty = direct), so testing reflects exactly
-	// what's shown — including an intentional "clear proxy to test direct" before saving.
-	proxy := strings.TrimSpace(req.Proxy)
-	// API keys are secrets the form omits when already saved, so fall back to stored.
-	braveKey := storedBraveKey
-	if strings.TrimSpace(req.BraveKey) != "" {
-		braveKey = req.BraveKey
-	}
-	tavilyKey := storedTavilyKey
-	if strings.TrimSpace(req.TavilyKey) != "" {
-		tavilyKey = req.TavilyKey
-	}
-	cfg := actool.WebSearchConfig{Backend: backend, BraveAPIKey: braveKey, TavilyAPIKey: tavilyKey, Proxy: proxy}
-	// Hard cap so a slow/blocked proxy can't hang the request.
-	wall := 30 * time.Second
-	// deepseek 的凭据不在表单里，来自当前激活的 LLM 配置；同时它每次搜索都跑一次
-	// 模型推理，30s 的通用上限偏紧，单独放宽。这里不预判配置能不能用——测这一下
-	// 本来就是给用户自己确认的手段，真跑不通时下面的报错比预判更有信息量。
-	probeQuery := "test"
-	if strings.TrimSpace(backend) == deepSeekWebSearchBackend {
-		cfg.DeepSeekBaseURL, cfg.DeepSeekAPIKey, cfg.DeepSeekModel = s.m.deepSeekSearchCreds()
-		wall = 120 * time.Second
-		// 搜索词由 DeepSeek 端的模型自行决定，"test" 太空泛会让它跳过搜索直接作答。
-		probeQuery = "DeepSeek company official website"
-	}
-	ctx, cancel := context.WithTimeout(r.Context(), wall)
-	defer cancel()
-	results, err := actool.WebSearchProbe(ctx, cfg, probeQuery, 3)
-	if err != nil {
-		writeJSON(w, 200, map[string]any{"ok": false, "error": err.Error(), "backend": backend})
-		return
-	}
-	if len(results) == 0 {
-		writeJSON(w, 200, map[string]any{"ok": false, "error": "search returned no results (possibly rate-limited or unreachable through the proxy)", "backend": backend})
-		return
-	}
-	writeJSON(w, 200, map[string]any{"ok": true, "count": len(results), "backend": backend})
+	writeJSON(w, http.StatusForbidden, map[string]any{
+		"ok": false, "error": "web search is disabled by the egress security policy",
+	})
 }
 
 // mainSessions lists the task's main-agent conversation segments (newest-first) and

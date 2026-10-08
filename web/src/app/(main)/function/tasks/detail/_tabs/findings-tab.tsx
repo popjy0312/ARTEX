@@ -67,7 +67,7 @@ function Row({
               <span className="truncate font-medium">{findingLabel(f)}</span>
               {f.inherited && f.source_task_id && (
                 <Badge variant="outline" className="shrink-0">
-소스 #{f.source_task_id} · 읽기 전용
+                  소스 #{f.source_task_id} · 읽기 전용
                 </Badge>
               )}
             </div>
@@ -120,7 +120,7 @@ function Row({
             className="text-muted-foreground hover:text-primary inline-flex shrink-0 items-center gap-0.5 text-xs"
             title="취약점 세부정보 보기"
           >
-세부
+            세부
             <ArrowUpRightIcon className="size-3" />
           </Link>
         )}
@@ -215,7 +215,9 @@ export function FindingsTab({ taskId }: { taskId: string }) {
           <Row key={f.id} f={f} contextTaskId={taskId} onStatus={onStatus} />
         ))}
         {items.length === 0 && (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">이 작업이나 직접 관련된 작업에 대해 확인된 결과가 없습니다.</p>
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+            이 작업이나 직접 관련된 작업에 대해 확인된 결과가 없습니다.
+          </p>
         )}
       </CardContent>
     </Card>

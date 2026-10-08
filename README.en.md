@@ -107,7 +107,7 @@ cp config.example.json config.json   # fill in the database connection
 ./start.sh                           # → http://localhost:8787
 ```
 
-> Start with `start.sh` / `start.bat` instead of running `./artex` directly. It is a watchdog script: after the program exits, it decides whether to restart it based on the exit code, and **the [one-click page update](#method-1-one-click-page-update-recommended) relies on it to complete the replacement**. If you run `./artex` directly, it will not be relaunched after an update.
+> Start with `start.sh` / `start.bat` instead of running `./artex` directly. It is a watchdog script that restarts the process after an unexpected crash.
 > To keep it running in the background: `nohup ./start.sh >artex.log 2>&1 &`.
 
 ### Method 4: Build a single binary from source
@@ -144,21 +144,7 @@ ARTEX_TARGETS=linux/amd64,windows/amd64 ./build.sh --release
 
 > Upgrades replace only the program and do not touch data: the Postgres data volume `pgdata`, `./data` (workspace / SQLite, etc.), `./state` (JWT key), and `./skills` are preserved. **You do not need to run database migrations manually**—each time `artex` starts, it reruns `schema.sql` idempotently (including `ADD COLUMN` / `CREATE INDEX IF NOT EXISTS`), so restarting performs the migration. Back up `./data`, `./state`, and the database before upgrading anyway.
 
-<a id="method-1-one-click-page-update-recommended"></a>
-### Method 1: One-click page update (recommended)
-
-On the **System Configuration** page (sidebar **System Configuration** → `/system/settings`), the **Version and Updates** card can check for and install a new version directly, without logging in to the server.
-
-After you click **Update**, the system downloads the release package for the current platform → compares its `SHA256SUMS` with the Release → smoke-tests the new binary with `-h` → stages it as `artex.new` → exits, then `start.sh` / `start.bat` relaunches the program and completes the replacement. The page automatically refreshes after the new version is online.
-
-- **A failure does not leave a broken program**: if verification or the smoke test fails, the staged file is discarded and the current version continues running; if the newly installed version fails to start three times in a row, it automatically rolls back to `artex.old` (the failed version is kept as `artex.failed` for troubleshooting).
-- **Rollback is always available**: the previous version is kept as `artex.old`, and the card includes **Rollback to previous version**. Database schemas do not roll back.
-- **Updates interrupt running tasks**—an update restarts the program, so perform it while idle.
-- **Development builds cannot be updated**: updates are disabled when the version is `dev` or `git describe` has a suffix, preventing a release from overwriting a local debug binary.
-- **Docker replaces only the program, not the image**: tools such as Playwright and nmap in the image are not upgraded, and rebuilding the container with `docker compose up -d` returns to the version bundled in the image. To upgrade the image as well, run `docker compose pull artex && docker compose up -d artex`.
-- If GitHub requires a proxy, configure the **global proxy** on the same page; the update path uses it. Updates download only from the GitHub domain and enforce HTTPS.
-
-### Method 2: One-click update script
+### Method 1: Manual update script
 
 ```bash
 cd ARTEX
@@ -170,7 +156,7 @@ The script optionally runs `git pull` to fetch the latest code, then lets you ch
 - **① Docker**: Specify a target image tag (press Enter to reuse `.env`'s `ARTEX_TAG`; the current template defaults to `v0.3.15`) → `docker compose pull` → `docker compose up -d` (the new image restarts and automatically migrates the schema).
 - **② Local**: Rebuild the frontend's static artifacts → recompile `./artex` (the process takes effect after restarting).
 
-### Method 3: Docker Compose (manual)
+### Method 2: Docker Compose (manual)
 
 ```bash
 cd ARTEX

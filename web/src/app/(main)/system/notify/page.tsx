@@ -32,10 +32,10 @@ import { ConfigField, FilterSummary } from "./_components/channel-form";
 import { DeliveryList } from "./_components/delivery-list";
 import { formatBacklog, StatTile } from "./_components/stat-tile";
 
-// 本页只负责编排：加载데이터、维护表单상태、调用接口。
-// 字段定义와解析에서 _components/channel-fields.ts，控件와过滤摘要에서
+// ：데이터상태
+// 와에서 _components/channel-fields.ts，와에서
 // _components/channel-form.tsx，전달 기록에서 _components/delivery-list.tsx——
-// 拆开은因을 위해它们各自能被单独读懂，而挤에서한 개파일里时这개页面接近 1100 줄。
+// 은을 위해，에서한 개파일개 1100 줄
 export default function NotifyPage() {
   const [meta, setMeta] = React.useState<NotificationMeta | null>(null);
   const [channels, setChannels] = React.useState<NotificationChannel[]>([]);
@@ -43,7 +43,7 @@ export default function NotifyPage() {
 
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<NotificationChannel | null>(null);
-  const [form, setForm] = React.useState<ChannelForm>(emptyForm("dingtalk"));
+  const [form, setForm] = React.useState<ChannelForm>(emptyForm("webhook"));
   const [saving, setSaving] = React.useState(false);
   const [testing, setTesting] = React.useState(false);
 
@@ -60,8 +60,8 @@ export default function NotifyPage() {
         setDigestMin(m.digest_interval_min);
       })
       .catch((e) => toast.error("푸시 구성 읽기 실패: " + (e as Error).message));
-    // 渠道列表로드 실패要报출력来：静默실패会显示成「한 개渠道都없음」，
-    // 사용자会以을 위해구성丢了，比直接报错更让人慌。
+    // 로드 실패출력：실패한 개없음，
+    // 사용자을 위해구성，
     api
       .notifyChannels()
       .then(setChannels)
@@ -80,13 +80,13 @@ export default function NotifyPage() {
 
   function openAdd() {
     setEditing(null);
-    setForm(emptyForm(meta?.kinds[0]?.kind ?? "dingtalk"));
+    setForm(emptyForm(meta?.kinds[0]?.kind ?? "webhook"));
     setOpen(true);
   }
 
   function openEdit(ch: NotificationChannel) {
     setEditing(ch);
-    // filter 에서后端은 Go 结构体，永远序列化成对象（않음会은 null），所以않음필요兜底。
+    // filter 에서은 Go ，（않음은 null），않음필요
     const f = ch.filter;
     setForm({
       name: ch.name,
@@ -94,8 +94,8 @@ export default function NotifyPage() {
       mode: ch.mode,
       enabled: ch.enabled,
       ratePerMin: String(ch.rate_per_min),
-      // 后端回显의 config 里凭据은掩码值；原样放进表单，提交时原样送回，
-      // 后端据此保留库中原值。
+      // 의 config 은；，，
+      //
       config: { ...ch.config },
       minSeverity: f.min_severity ?? "",
       includeText: (f.vulnclass_include ?? []).join("\n"),
@@ -107,17 +107,17 @@ export default function NotifyPage() {
     setOpen(true);
   }
 
-  // buildConfig 把表单상태转成渠道 config。
+  // buildConfig 상태 config
   //
-  // 唯一의규칙，两类值：
-  //   - 掩码值（"__masked__..."）原样送回 → 后端解读을 위해「这개字段没改，保留库中原值」
-  //   - 其余一律按사용자입력提交，空串即「지우기该字段」
+  // 의규칙，：
+  //   - （"__masked__..."） → 을 위해개，
+  //   - 사용자입력，지우기
   //
-  // 之所以않음特殊照顾凭据字段（比如「凭据비워 두면就跳过」），은因을 위해那会让사용자**없음法清除**
-  // 한 개设错의키——界面上없음任何작업能表达「我要把它删掉」。现에서의규칙下，
-  // 지우기입력框就等于지우기该字段，语义唯一且사용자可控。
-  // 掩码值않음会출력现에서입력框里（见 ConfigField），所以「框里있음字」永远等于
-  // 「사용자主动填의」。
+  // 않음（비워 두면），은을 위해사용자**없음**
+  // 한 개의키——없음작업에서의규칙，
+  // 지우기입력지우기，사용자
+  // 않음출력에서입력（ ConfigField），있음
+  // 사용자의
   function buildConfig(): Record<string, unknown> {
     const defs = CHANNEL_FIELDS[form.kind] ?? [];
     const out: Record<string, unknown> = {};
@@ -203,7 +203,7 @@ export default function NotifyPage() {
       const r = await api.notifyTestChannel(editing.id);
       toast.success(`테스트 메시지를 보냈습니다(${r.latency_ms}ms). 그룹에서 확인해 주세요`);
     } catch (e) {
-      // 后端把渠道뒤로의原始오류如实回传，这은排查구성의唯一线索，原样展示。
+      // 뒤로의오류，은구성의，
       toast.error("테스트 실패: " + (e as Error).message, { duration: 12000 });
     } finally {
       setTesting(false);
@@ -269,12 +269,12 @@ export default function NotifyPage() {
         <div>
           <h1 className="text-xl font-semibold tracking-tight">알림 푸시</h1>
           <p className="text-muted-foreground text-sm">
-            발견한 취약점을 DingTalk, Feishu, WeCom 등의 채널로 전송하고 채널별 시점과 필터를 설정합니다.
+            발견한 취약점을 범용 Webhook, Telegram, 이메일 채널로 전송하고 채널별 시점과 필터를 설정합니다.
           </p>
         </div>
         {meta && (
-          // 用 div 而않음은 label：Switch 自带 aria-label，外面再套一层 label
-          // 既연결않음到任何原生控件，又会让点击文字看起来应该能切换。
+          //  div 않음은 label：Switch  aria-label， label
+          // 연결않음，
           <div className="flex shrink-0 items-center gap-2 text-sm">
             <span className="text-muted-foreground">전체 스위치</span>
             <Switch
@@ -296,7 +296,7 @@ export default function NotifyPage() {
           <StatTile
             label="가장 오래된 대기"
             value={formatBacklog(meta.stats.backlog_age_ms)}
-            // 积压년龄比积压개数있음用得多：积压 3 개할 수 있음은从 3 초到 3 시간。
+            // 년개있음： 3 개할 수 있음은 3 초 3 시간
             hint={meta.stats.backlog_age_ms > 5 * 60_000 ? "푸시가 멈췄을 수 있습니다" : undefined}
             tone={meta.stats.backlog_age_ms > 5 * 60_000 ? "red" : undefined}
           />
@@ -316,7 +316,9 @@ export default function NotifyPage() {
               value={baseURL}
               onChange={(e) => setBaseURL(e.target.value)}
             />
-            <p className="text-muted-foreground text-xs">메시지의 “세부 정보 보기” 링크에 사용할 기본 주소입니다. 비워 두면 링크를 포함하지 않습니다.</p>
+            <p className="text-muted-foreground text-xs">
+              메시지의 “세부 정보 보기” 링크에 사용할 기본 주소입니다. 비워 두면 링크를 포함하지 않습니다.
+            </p>
           </div>
           <div className="grid gap-2">
             <Label htmlFor="n-digest">요약 주기 (분)</Label>
@@ -366,10 +368,10 @@ export default function NotifyPage() {
                   <div className="flex items-center gap-2">
                     <BellIcon className="text-muted-foreground size-4 shrink-0" />
                     <CardTitle className="truncate text-base">{ch.name}</CardTitle>
-                    {/* 卡片整体可点（进입력편집），所以这两개控件必须各自吞掉冒泡，
-                        그렇지 않으면开关/삭제会顺带触发편집。把 stopPropagation 挂에서控件自己
-                        身上，而않음은套一层 div：套 div 会造출력한 개「看起来可交互但없음
-                        角色」의静态元素，既触发 a11y 告警，语义上也说않음通。 */}
+                    {/* （입력편집），개，
+                        그렇지 않으면/삭제편집 stopPropagation 에서
+                        ，않음은 div： div 출력한 개없음
+                        의， a11y ，않음 */}
                     <div className="ml-auto flex items-center gap-2">
                       <Switch
                         checked={ch.enabled}
@@ -383,8 +385,8 @@ export default function NotifyPage() {
                         aria-label="삭제"
                         onClick={(e) => {
                           e.stopPropagation();
-                          // void 显式丢弃 Promise：removeChannel 自己 catch 并 toast，
-                          // 这里않음필요 await（onClick 않음은 async）。
+                          // void  Promise：removeChannel  catch  toast，
+                          // 않음필요 await（onClick 않음은 async）
                           void removeChannel(ch);
                         }}
                       >
@@ -428,7 +430,7 @@ export default function NotifyPage() {
                 <Select
                   value={form.kind}
                   onValueChange={(v) => {
-                    // 换유형等于换一套凭据字段，할 수 없음把旧구성合并进来。
+                    // 유형，할 수 없음구성
                     setF({ kind: v, config: {} });
                   }}
                   disabled={!!editing}
@@ -453,7 +455,7 @@ export default function NotifyPage() {
 
               <div className="grid gap-2">
                 <Label htmlFor="n-name">채널 이름</Label>
-                  <Input
+                <Input
                   id="n-name"
                   placeholder="긴급 대응 그룹 / 일일 보고 그룹"
                   value={form.name}
@@ -489,12 +491,13 @@ export default function NotifyPage() {
                   </SelectContent>
                 </Select>
                 <p className="text-muted-foreground text-xs">
-                  "높음 등급은 실시간, 나머지는 요약"으로 보내려면 실시간+최소 등급 높음 채널과 요약+등급 제한 없음 채널을 각각 만드세요.
+                  "높음 등급은 실시간, 나머지는 요약"으로 보내려면 실시간+최소 등급 높음 채널과 요약+등급 제한 없음
+                  채널을 각각 만드세요.
                 </p>
               </div>
 
               <div className="grid gap-2">
-                    <Label htmlFor="n-rate">속도 제한 (건/분)</Label>
+                <Label htmlFor="n-rate">속도 제한 (건/분)</Label>
                 <Input
                   id="n-rate"
                   type="number"
@@ -504,7 +507,8 @@ export default function NotifyPage() {
                   onChange={(e) => setF({ ratePerMin: e.target.value })}
                 />
                 <p className="text-muted-foreground text-xs">
-                  비워 두면 채널 기본값을 사용합니다. 0은 속도 제한이 없음을 뜻합니다. 한도를 초과해도 메시지는 유실되지 않고 전송이 지연됩니다.
+                  비워 두면 채널 기본값을 사용합니다. 0은 속도 제한이 없음을 뜻합니다. 한도를 초과해도 메시지는 유실되지
+                  않고 전송이 지연됩니다.
                 </p>
               </div>
 
@@ -568,7 +572,9 @@ export default function NotifyPage() {
                       value={form.assetIDsText}
                       onChange={(e) => setF({ assetIDsText: e.target.value })}
                     />
-                    <p className="text-muted-foreground text-xs">작업 ID와 자산 ID를 비워 두면 모든 작업과 자산의 취약점을 전송합니다.</p>
+                    <p className="text-muted-foreground text-xs">
+                      작업 ID와 자산 ID를 비워 두면 모든 작업과 자산의 취약점을 전송합니다.
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Switch
@@ -582,8 +588,8 @@ export default function NotifyPage() {
               </div>
 
               <div className="flex items-center gap-2 text-sm">
-                <Switch checked={form.enabled} onCheckedChange={(v) => setF({ enabled: v })} aria-label="활성화" />
-                이 채널 활성화
+                <Switch checked={form.enabled} onCheckedChange={(v) => setF({ enabled: v })} aria-label="활성화" />이
+                채널 활성화
               </div>
             </div>
 

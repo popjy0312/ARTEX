@@ -1,26 +1,23 @@
-// 渠道字段表와구성值의解析도구。
+// 와구성의도구
 //
-// 와页面拆开은因을 위해这一份은**데이터**而않음은视图：它설명每种渠道있음哪些字段、
-// 各自该用什么控件，및表单文本到구성值（JSON）의双向转换。
-// 单独放한 개파일后，新增渠道只필요动这里，页面本身않음必改。
-// 渠道유형의展示名와简介。放에서 전端은因을 위해它只影响文案，后端않음필요知道。
+// 와은을 위해은**데이터**않음은：설명있음
+// ，및구성（JSON）의
+// 한 개파일，필요，않음
+// 유형의와에서 전은을 위해，않음필요
 export const KIND_LABEL: Record<string, string> = {
-  dingtalk: "DingTalk",
-  feishu: "Feishu",
-  wecom: "WeCom",
   webhook: "일반 Webhook",
   telegram: "Telegram",
   email: "이메일",
 };
 
-// 各渠道의구성字段定义。
+// 의구성
 //
-// 这里刻意保留一份 전端字段表，而않음은让后端下发 schema：后端只负责
-// Validate（必填/格式），UI 필요의은布局와控件유형，两者关注의않음은同一件事。
-// 唯一의耦合点은 secret_keys —— 哪些字段该渲染成비밀번호框由后端给출력，
-// 因을 위해只있음渠道实现自己清楚哪些值算凭据（企业微信의整개 Webhook 就은凭据，
-// 而钉钉의只은그중한 개 secret）。新增渠道时这里少한 개개目只会让表单变空白，
-// 않음会静默출력错（下面의 hasFields 会提示）。
+//  전，않음은 schema：
+// Validate（/），UI 필요의은와유형，의않음은
+// 의은 secret_keys —— 비밀번호출력，
+// 을 위해있음（의개 Webhook 은，
+// 의은그중한 개 secret）한 개개，
+// 않음출력（의 hasFields ）
 export type FieldKind = "text" | "password" | "number" | "select" | "textarea" | "switch" | "kv" | "list";
 export interface FieldDef {
   key: string;
@@ -31,37 +28,6 @@ export interface FieldDef {
   options?: { value: string; label: string }[];
 }
 export const CHANNEL_FIELDS: Record<string, FieldDef[]> = {
-  dingtalk: [
-    {
-      key: "webhook",
-      label: "Webhook 주소",
-      kind: "text",
-      placeholder: "https://oapi.dingtalk.com/robot/send?access_token=...",
-    },
-    {
-      key: "secret",
-      label: "키",
-      kind: "password",
-      help: "봇 보안 설정에서 서명 검증을 켠 경우 입력하세요. 사용자 지정 보안 설정이 없으면 비워 두세요.",
-    },
-  ],
-  feishu: [
-    {
-      key: "webhook",
-      label: "Webhook 주소",
-      kind: "text",
-      placeholder: "https://open.feishu.cn/open-apis/bot/v2/hook/...",
-    },
-    { key: "secret", label: "서명 검증 키", kind: "password", help: "봇 설정에서 서명 검증을 켠 경우 입력하세요. 그렇지 않으면 비워 두세요." },
-  ],
-  wecom: [
-    {
-      key: "webhook",
-      label: "Webhook 주소",
-      kind: "text",
-      placeholder: "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...",
-    },
-  ],
   webhook: [
     { key: "url", label: "대상 URL", kind: "text", placeholder: "https://your-endpoint.example.com/hook" },
     {
@@ -75,7 +41,12 @@ export const CHANNEL_FIELDS: Record<string, FieldDef[]> = {
         { value: "GET", label: "GET (권장하지 않음)" },
       ],
     },
-    { key: "headers", label: "사용자 지정 요청 헤더", kind: "kv", help: "한 줄에 KEY=VALUE 형식으로 입력합니다. 예: Authorization=Bearer xxx" },
+    {
+      key: "headers",
+      label: "사용자 지정 요청 헤더",
+      kind: "kv",
+      help: "한 줄에 KEY=VALUE 형식으로 입력합니다. 예: Authorization=Bearer xxx",
+    },
     {
       key: "body_template",
       label: "본문 템플릿",
@@ -110,7 +81,12 @@ export const CHANNEL_FIELDS: Record<string, FieldDef[]> = {
     { key: "password", label: "비밀번호 / 인증 코드", kind: "password" },
     { key: "from", label: "발신자", kind: "text", placeholder: "artex@example.com" },
     { key: "to", label: "수신자", kind: "list", help: "여러 주소는 쉼표로 구분합니다." },
-    { key: "tls", label: "암시적 TLS", kind: "switch", help: "465 포트에서 사용합니다. 587에서는 끄면 자동으로 STARTTLS를 사용합니다." },
+    {
+      key: "tls",
+      label: "암시적 TLS",
+      kind: "switch",
+      help: "465 포트에서 사용합니다. 587에서는 끄면 자동으로 STARTTLS를 사용합니다.",
+    },
   ],
 };
 
@@ -152,7 +128,7 @@ export const emptyForm = (kind: string): ChannelForm => ({
   onStatusChange: false,
 });
 
-// parseKV 解析「每줄 KEY=VALUE」의文本域。
+// parseKV 줄 KEY=VALUE의
 export function parseKV(text: string): Record<string, string> {
   const out: Record<string, string> = {};
   for (const line of text.split("\n")) {
@@ -163,7 +139,7 @@ export function parseKV(text: string): Record<string, string> {
   }
   return out;
 }
-// parseIDs 解析逗号/空白分隔의 id 列表。
+// parseIDs /의 id
 export function parseIDs(text: string): number[] {
   return text
     .split(/[\s,，]+/)
@@ -172,7 +148,7 @@ export function parseIDs(text: string): number[] {
     .map((s) => Number(s))
     .filter((n) => Number.isFinite(n) && n > 0);
 }
-// parseKeywords 解析줄/逗号分隔의关键词列表（漏洞유형名可能含空格，所以按줄또는逗号切）。
+// parseKeywords 줄/의（유형，줄또는）
 export function parseKeywords(text: string): string[] {
   return text
     .split(/[\n,，]+/)

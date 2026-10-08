@@ -175,7 +175,7 @@ func queryTokenAllowed(r *http.Request) bool {
 		return false
 	}
 	switch r.URL.Path {
-	case "/api/logs/stream", "/api/update/stream", "/api/exploration/activity/stream":
+	case "/api/logs/stream", "/api/exploration/activity/stream":
 		return true
 	}
 	return strings.HasPrefix(r.URL.Path, "/api/side-questions/") &&

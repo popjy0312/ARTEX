@@ -25,6 +25,7 @@ import (
 
 	"github.com/Autumn-27/artex/agent"
 	"github.com/Autumn-27/artex/db"
+	"github.com/Autumn-27/artex/egress"
 	"github.com/Autumn-27/norma/llm"
 	"github.com/Autumn-27/norma/skill"
 )
@@ -1974,7 +1975,7 @@ func (s *Server) pgLLMPoolReset(w http.ResponseWriter, r *http.Request) {
 
 // pgListModels fetches available models from the provider's API endpoint.
 // Supports OpenAI-format (GET /models) and Anthropic-format (GET /v1/models); for
-// Anthropic-compatible third parties (e.g. DeepSeek) whose model list lives only on
+// Anthropic-compatible third parties whose model list lives only on
 // the OpenAI path, it falls back to the OpenAI endpoint at the stripped root.
 func (s *Server) pgListModels(w http.ResponseWriter, r *http.Request) {
 	var req struct {
@@ -2004,7 +2005,7 @@ func (s *Server) pgListModels(w http.ResponseWriter, r *http.Request) {
 	provider := strings.TrimSpace(req.Provider)
 
 	// Candidate endpoints to try in order. Some Anthropic-compatible providers
-	// (e.g. DeepSeek) implement /v1/messages under an /anthropic path but expose
+	// Some providers implement /v1/messages under an /anthropic path but expose
 	// the model list only on their OpenAI-format path — so for anthropic we fall
 	// back to the OpenAI endpoint at the stripped root.
 	type candidate struct {
@@ -2053,15 +2054,29 @@ func (s *Server) pgListModels(w http.ResponseWriter, r *http.Request) {
 	transport := &http.Transport{}
 	if p := strings.TrimSpace(req.Proxy); p != "" {
 		if pu, err := url.Parse(p); err == nil {
+			if err := egress.CheckHost(pu.Hostname()); err != nil {
+				writeErr(w, http.StatusBadRequest, err.Error())
+				return
+			}
 			transport.Proxy = http.ProxyURL(pu)
 		}
 	}
-	client := &http.Client{Transport: transport, Timeout: 30 * time.Second}
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   30 * time.Second,
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
 
 	// Try each candidate; return the first that yields a non-empty model list.
 	var lastErr string
 	emptyOK := false
 	for _, c := range candidates {
+		if err := egress.CheckURL(c.url); err != nil {
+			lastErr = err.Error()
+			continue
+		}
 		httpReq, err := http.NewRequestWithContext(r.Context(), http.MethodGet, c.url, nil)
 		if err != nil {
 			lastErr = "failed to build request: " + err.Error()

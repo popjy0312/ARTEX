@@ -42,8 +42,8 @@ The evidence column records what was found in the upstream `v0.3.15` snapshot. T
 ## Supply-chain observations
 
 - The checked-out `v0.3.15` tag and commit have no Git signature.
-- Self-update restricts downloads to GitHub domains and verifies SHA-256, which is useful against corruption. The checksum and binary come from the same release trust domain, so this does not protect against a compromised maintainer/release account.
-- `skills/api-recon/scripts/package-lock.json` uses `registry.npmmirror.com` URLs. Integrity hashes help, but an internal build should use an approved registry mirror and provenance policy.
+- Automatic-update code and its API/UI entry points have been removed. Operators must review and apply upgrades manually.
+- China-hosted npm mirror URLs in `skills/api-recon/scripts/package-lock.json` were replaced with the official US npm registry (`registry.npmjs.org`).
 - The repository contained no tracked ELF, PE, or Mach-O executable and no active Git hook. The only large tracked binary found was an image asset.
 - Secret-pattern and bidirectional-Unicode scans found no real embedded credential or source-obfuscation marker; matches were test fixtures.
 

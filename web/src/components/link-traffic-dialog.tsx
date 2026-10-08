@@ -147,7 +147,9 @@ export function LinkTrafficDialog({
           </Button>
         </div>
         <p className="text-sm">
-          {selected ? `선택한 취약점: #${selected.finding_id} ${selected.name || selected.vulnclass}` : "취약점을 선택하세요"}
+          {selected
+            ? `선택한 취약점: #${selected.finding_id} ${selected.name || selected.vulnclass}`
+            : "취약점을 선택하세요"}
         </p>
         <DialogFooter>
           <Button variant="outline" disabled={busy} onClick={onClose}>

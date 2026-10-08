@@ -81,8 +81,8 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
 
   const chain = taskProfileIDs(task);
   const exhausted = task.llm_failover_state === "chain_exhausted";
-  // 任何状态都可以改链,终态也不例外:任务结束后主 Agent 对话仍走这条链,
-  // 链上模型出问题时必须能换掉,否则已完成任务就没法继续交互。
+  // ,: Agent ,
+  // ,
   const terminal = ["done", "failed", "timeout"].includes(task.status);
   // A null active profile on an exhausted, non-empty chain is a persisted end
   // cursor. Keep the status display honest; choosing the first profile is only
@@ -172,7 +172,8 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
             <CircleAlertIcon />
             <AlertTitle>구성 체인 할당량이 소진되었습니다.</AlertTitle>
             <AlertDescription>
-              {task.llm_failover_reason ?? "선택한 모든 구성의 할당량이 부족한 것으로 판단됩니다. 구성 체인을 저장하면 오류 상태가 재설정됩니다."}
+              {task.llm_failover_reason ??
+                "선택한 모든 구성의 할당량이 부족한 것으로 판단됩니다. 구성 체인을 저장하면 오류 상태가 재설정됩니다."}
             </AlertDescription>
           </Alert>
         )}
@@ -190,7 +191,7 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
 
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)}>
-폐쇄
+            폐쇄
           </Button>
           <Button type="button" size="sm" onClick={save} disabled={saving}>
             {saving && <Spinner data-icon="inline-start" />}
@@ -303,11 +304,14 @@ function TaskDetailInner() {
   if (!task) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 p-10 text-center">
-        <p className="text-muted-foreground">{loaded ? `일${id}삭제, 보관되었거나 더 이상 존재하지 않습니다.` : "로드 중…"}</p>
+        <p className="text-muted-foreground">
+          {loaded ? `일${id}삭제, 보관되었거나 더 이상 존재하지 않습니다.` : "로드 중…"}
+        </p>
         {loaded && (
           <Button asChild variant="outline">
             <Link href="/function/tasks">
-              <ArrowLeftIcon />작업 목록으로 돌아가기
+              <ArrowLeftIcon />
+              작업 목록으로 돌아가기
             </Link>
           </Button>
         )}
@@ -319,7 +323,9 @@ function TaskDetailInner() {
   const terminal = ["done", "failed", "timeout"].includes(task.status);
   const archiveLifecycleEligible = terminal || paused || task.status === "paused";
   const canArchive = archiveLifecycleEligible && !task.archive_blocked_by_task_id;
-  let archiveDisabledReason = task.queued ? "대기 중인 작업을 먼저 일시중지해야 합니다." : "실행 중인 작업을 먼저 일시중지해야 합니다.";
+  let archiveDisabledReason = task.queued
+    ? "대기 중인 작업을 먼저 일시중지해야 합니다."
+    : "실행 중인 작업을 먼저 일시중지해야 합니다.";
   if (archiveLifecycleEligible && task.archive_blocked_by_task_id) {
     archiveDisabledReason = `작업이 보관되지 않은 작업입니다 #${task.archive_blocked_by_task_id}직접 상속, 종속 작업을 먼저 보관하세요.`;
   }
@@ -374,8 +380,8 @@ function TaskDetailInner() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>작업 #{task.id}을(를) 보관하시겠습니까?</AlertDialogTitle>
                   <AlertDialogDescription>
-작업 맵, 관련 기록, 독점 자산 및 흐름, 작업 파일 및 LLM
-기록은 콜드 스토리지로 압축됩니다. 아카이빙이 완료된 후 작업 목록의 '아카이빙' 페이지에서 복원할 수 있습니다.
+                    작업 맵, 관련 기록, 독점 자산 및 흐름, 작업 파일 및 LLM 기록은 콜드 스토리지로 압축됩니다.
+                    아카이빙이 완료된 후 작업 목록의 '아카이빙' 페이지에서 복원할 수 있습니다.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

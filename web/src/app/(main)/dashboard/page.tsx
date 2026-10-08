@@ -328,14 +328,14 @@ export default function DashboardPage() {
   // tasks whose llm_profile_id is null/undefined used the active default profile
   const defaultProfileId = activeProfile ? Number(activeProfile.id) : null;
 
-  // 데이터源开关：이전 버전 = activity（task.tokens + 会话），새 버전 = llm_usage 计量账本。
+  // 데이터：이전 버전 = activity（task.tokens + ），새 버전 = llm_usage
   const [tokenVersion, setTokenVersion] = React.useState<"old" | "new">("old");
   // selected profile tab: "all" = 전체; number = specific profile id
   const [tokenTab, setTokenTab] = React.useState<number | null | "all">("all");
   // day range for the daily bar chart
   const [tokenDays, setTokenDays] = React.useState<7 | 30 | 90 | 180 | 365>(30);
 
-  // profile 名 → id，용도把 llm_usage 의 profile_name 映射到现있음 profile 分栏。
+  // profile  → id，용도 llm_usage 의 profile_name 있음 profile
   const profileIdByName = React.useMemo(() => {
     const m = new Map<string, number>();
     for (const p of llmProfiles) m.set(p.name, Number(p.id));
@@ -344,7 +344,7 @@ export default function DashboardPage() {
 
   type Bucket = { input: number; output: number; cacheRead: number; cacheWrite: number; taskCount: number };
 
-  // 이전 버전：按 profile 归桶（来自 activity 의 task.tokens + 会话用量）。
+  // 이전 버전： profile （ activity 의 task.tokens + ）
   const tokenByProfileOld = React.useMemo<Map<number | null, Bucket>>(() => {
     const m = new Map<number | null, Bucket>();
     const fold = (key: number | null, inp: number, out: number, cr: number, cw: number, addTask: boolean) => {
@@ -380,11 +380,11 @@ export default function DashboardPage() {
     return m;
   }, [tasks, convTokens, defaultProfileId]);
 
-  // 새 버전：按 profile 归桶（来自 llm_usage 전체聚合，逐회调用精确）。
+  // 새 버전： profile （ llm_usage 전체，회）
   const tokenByProfileNew = React.useMemo<Map<number | null, Bucket>>(() => {
     const m = new Map<number | null, Bucket>();
     for (const p of usageStats?.by_profile ?? []) {
-      // 未일치到现있음 profile（改名/삭제/空名）→ 落到기본값桶，仍计입력「전체」。
+      // 일치있음 profile（/삭제/）→ 기본값，입력전체
       const key = profileIdByName.get(p.profile_name) ?? defaultProfileId;
       const prev = m.get(key) ?? { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, taskCount: 0 };
       m.set(key, {
@@ -422,7 +422,7 @@ export default function DashboardPage() {
       : { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, taskCount: 0 };
   }, [tokenTab, tokenByProfile]);
 
-  // 이전 버전每日：把작업/会话의总量按其생성日期归桶（近似，非真实每日消耗）。
+  // 이전 버전：작업/의생성（，）
   const dailyTokenDataOld = React.useMemo(() => {
     const now = new Date();
     now.setDate(now.getDate() - tokenDays);
@@ -449,7 +449,7 @@ export default function DashboardPage() {
     return [...m.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, v]) => ({ date: date.slice(5), ...v }));
   }, [tasks, convTokens, tokenDays, tokenTab, defaultProfileId]);
 
-  // 새 버전每日：来自 llm_usage 의真实每日消耗（ts 은实际调用时刻）。
+  // 새 버전： llm_usage 의（ts 은）
   const dailyTokenDataNew = React.useMemo(() => {
     const now = new Date();
     now.setDate(now.getDate() - tokenDays);
@@ -691,7 +691,7 @@ export default function DashboardPage() {
             {/* Per-type bars */}
             <div className="space-y-3">
               {(() => {
-                // input 已캐시 포함；拆成않음重叠三段：미적중입력 + 캐시 적중 + 출력 = 总量。
+                // input 캐시 포함；않음：미적중입력 + 캐시 적중 + 출력 =
                 const total = displayedTokens.input + displayedTokens.output;
                 return [
                   {
@@ -734,7 +734,7 @@ export default function DashboardPage() {
 
             {/* Cache hit rate */}
             {(() => {
-              // input 已캐시 포함 → 命中率 = 캐시 적중 / 总입력。
+              // input 캐시 포함 →  = 캐시 적중 / 입력
               const denominator = displayedTokens.input;
               const hitPct = denominator > 0 ? Math.round((displayedTokens.cacheRead / denominator) * 100) : 0;
               return (

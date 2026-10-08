@@ -36,7 +36,7 @@ function ProfileRoleBadge({ index, currentIndex }: { index: number; currentIndex
   if (index < currentIndex) {
     return (
       <Badge variant="outline" title="현재 커서 이전의 구성은 자동 장애 조치를 위해 선택되지 않습니다.">
-건너뛰었습니다
+        건너뛰었습니다
       </Badge>
     );
   }
@@ -136,7 +136,9 @@ export function TaskLLMProfileChain({
       </Combobox>
 
       {value.length === 0 ? (
-        <p className="text-muted-foreground text-xs">구성이 지정되지 않으면 작업은 에이전트 또는 전역 활성화 구성을 따릅니다.</p>
+        <p className="text-muted-foreground text-xs">
+          구성이 지정되지 않으면 작업은 에이전트 또는 전역 활성화 구성을 따릅니다.
+        </p>
       ) : (
         <div className="flex flex-col divide-y rounded-lg border">
           {value.map((id, index) => {
@@ -150,7 +152,9 @@ export function TaskLLMProfileChain({
                 <div className="min-w-0 sm:flex-1">
                   <p className="truncate font-medium text-sm">{profile?.name ?? `구성 #${id}`}</p>
                   <div className="flex min-w-0 items-center gap-2">
-                    <p className="truncate text-muted-foreground text-xs">{profile?.model ?? "구성을 더 이상 사용할 수 없습니다."}</p>
+                    <p className="truncate text-muted-foreground text-xs">
+                      {profile?.model ?? "구성을 더 이상 사용할 수 없습니다."}
+                    </p>
                   </div>
                 </div>
                 <ProfileRoleBadge index={index} currentIndex={currentIndex} />

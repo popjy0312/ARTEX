@@ -277,9 +277,6 @@ const (
 	settingNoaCompaction = "noa_compaction"
 	// defaultWebSearchBackend is used when web search is on but no backend was picked.
 	defaultWebSearchBackend = "ddgs"
-	// deepSeekWebSearchBackend borrows the active LLM profile instead of its own
-	// key, so it only works on an anthropic-format profile pointed at DeepSeek.
-	deepSeekWebSearchBackend = "deepseek"
 	// defaultWorkers is the concurrent work-agent count when the setting is unset.
 	defaultWorkers = 3
 	// defaultConcurrencyLimit is the simultaneous-running-task cap when the feature
@@ -412,8 +409,13 @@ func NewManager(dir, proxyAddr string) (*Manager, error) {
 	m.trafficOn = pg.GetBool(settingTrafficCapture, false)
 	// LLM 录制开关（默认关）。录制器每次调用时读取此标志。
 	m.llmRecOn = pg.GetBool(settingLLMRecord, false)
-	// Load persisted web-search config (default: off, ddgs).
-	m.webSearchOn = pg.GetBool(settingWebSearchOn, false)
+	// External web search is disabled by the egress policy. Persist the disabled
+	// state so older installations cannot silently re-enable it after upgrade.
+	if err := pg.SetBool(settingWebSearchOn, false); err != nil {
+		pg.Close()
+		return nil, fmt.Errorf("disable external web search: %w", err)
+	}
+	m.webSearchOn = false
 	if v, ok, _ := pg.GetSetting(settingWebSearchBackend); ok && v != "" {
 		m.webSearchBackend = v
 	} else {
@@ -542,7 +544,7 @@ func (m *Manager) WebSearch() (on bool, backend, braveKey, tavilyKey, proxy stri
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	backend = m.webSearchBackend
-	if backend == "" {
+	if backend == "" || backend == "deepseek" {
 		backend = defaultWebSearchBackend
 	}
 	return m.webSearchOn, backend, m.braveKey, m.tavilyKey, m.webSearchProxy
@@ -552,33 +554,7 @@ func (m *Manager) WebSearch() (on bool, backend, braveKey, tavilyKey, proxy stri
 // into each agent. Disabled when off, or when a keyed backend is selected without
 // its key (so a half-configured backend never silently drops the tool at session build).
 func (m *Manager) WebSearchOpts() agent.WebSearchOpts {
-	on, backend, braveKey, tavilyKey, proxy := m.WebSearch()
-	if on && backend == "brave-free" && strings.TrimSpace(braveKey) == "" {
-		on = false
-	}
-	if on && backend == "tavily" && strings.TrimSpace(tavilyKey) == "" {
-		on = false
-	}
-	o := agent.WebSearchOpts{Enabled: on, Backend: backend, BraveKey: braveKey, TavilyKey: tavilyKey, Proxy: proxy}
-	if backend == deepSeekWebSearchBackend {
-		o.DeepSeekBaseURL, o.DeepSeekAPIKey, o.DeepSeekModel = m.deepSeekSearchCreds()
-	}
-	return o
-}
-
-// deepSeekSearchCreds resolves the credentials the "deepseek" search backend
-// borrows from the active LLM profile (it has no key of its own). Whether that
-// profile can actually drive server-side search — DeepSeek exposes it only on
-// the Anthropic-format endpoint — is deliberately NOT validated here: the UI
-// states the requirement and the user decides. A profile that can't serve it
-// simply fails at search time (or at the settings page's 测试 button), which is
-// the same feedback every other backend gives for a bad key.
-func (m *Manager) deepSeekSearchCreds() (baseURL, apiKey, model string) {
-	p, err := m.pg.ActiveProfile()
-	if err != nil || p == nil {
-		return "", "", ""
-	}
-	return p.BaseURL, p.APIKey, p.Model
+	return agent.WebSearchOpts{Enabled: false}
 }
 
 // SetWebSearch persists and applies the web-search settings. braveKey, tavilyKey, and
@@ -586,8 +562,11 @@ func (m *Manager) deepSeekSearchCreds() (baseURL, apiKey, model string) {
 // key/proxy; pass a pointer to "" to clear). Callers must rebuild agents (applyLLM)
 // afterwards so the settings take effect.
 func (m *Manager) SetWebSearch(on bool, backend string, braveKey, tavilyKey, proxy *string) error {
+	if on {
+		return fmt.Errorf("web search is disabled by the egress security policy")
+	}
 	backend = strings.TrimSpace(backend)
-	if backend == "" {
+	if backend == "" || backend == "deepseek" {
 		backend = defaultWebSearchBackend
 	}
 	if err := m.pg.SetBool(settingWebSearchOn, on); err != nil {

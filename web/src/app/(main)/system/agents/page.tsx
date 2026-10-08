@@ -9,13 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -43,15 +37,7 @@ import type { Agent } from "@/lib/types";
 
 // AgentGridCard is one clickable tile opening the agent's editor drawer. Custom
 // (non-builtin) agents get a delete button.
-function AgentGridCard({
-  agent,
-  onOpen,
-  onDeleted,
-}: {
-  agent: Agent;
-  onOpen: () => void;
-  onDeleted: () => void;
-}) {
+function AgentGridCard({ agent, onOpen, onDeleted }: { agent: Agent; onOpen: () => void; onDeleted: () => void }) {
   async function del() {
     try {
       await api.deleteAgent(agent.key);
@@ -70,7 +56,7 @@ function AgentGridCard({
           <span className="text-muted-foreground font-mono text-xs">{agent.key}</span>
           {agent.builtin ? (
             <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
-               내
+              내
             </Badge>
           ) : (
             <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
@@ -83,9 +69,7 @@ function AgentGridCard({
             </Badge>
           )}
         </div>
-        <p className="text-muted-foreground line-clamp-2 min-h-8 text-xs">
-          {agent.description || "(설명 없음)"}
-        </p>
+        <p className="text-muted-foreground line-clamp-2 min-h-8 text-xs">{agent.description || "(설명 없음)"}</p>
         <div className="text-muted-foreground flex flex-wrap gap-1.5 text-[10px]">
           <span className="rounded border px-1.5 py-0.5">MCP {agent.mcp_count ?? 0}</span>
           <span className="rounded border px-1.5 py-0.5">Skill {agent.skill_count ?? 0}</span>
@@ -159,7 +143,8 @@ function CreateAgentDialog({ onCreated }: { onCreated: (key: string) => void }) 
         <DialogHeader>
           <DialogTitle>사용자 지정 Agent 만들기</DialogTitle>
           <DialogDescription>
-            새 Agent를 생성하면 세션에서 사용할 수 있습니다. key는 생성 후 변경할 수 없으며 이름과 설명은 수정할 수 있습니다.
+            새 Agent를 생성하면 세션에서 사용할 수 있습니다. key는 생성 후 변경할 수 없으며 이름과 설명은 수정할 수
+            있습니다.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-2">
@@ -211,7 +196,10 @@ export default function AgentsPage() {
   const [editKey, setEditKey] = React.useState<string | null>(null);
 
   const reload = React.useCallback(() => {
-    api.agents().then(setAgents).catch(() => setAgents([]));
+    api
+      .agents()
+      .then(setAgents)
+      .catch(() => setAgents([]));
   }, []);
   React.useEffect(() => {
     reload();
@@ -224,9 +212,7 @@ export default function AgentsPage() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Agent</h1>
-          <p className="text-muted-foreground text-sm">
-            Agent를 구성하고 사용자 지정 세션 Agent를 생성합니다.
-          </p>
+          <p className="text-muted-foreground text-sm">Agent를 구성하고 사용자 지정 세션 Agent를 생성합니다.</p>
         </div>
         <CreateAgentDialog
           onCreated={(key) => {
@@ -271,7 +257,9 @@ export default function AgentsPage() {
                     </Badge>
                   )}
                 </SheetTitle>
-                <SheetDescription>{editing.description || "모델 구성, 표시 권한 및 도구 연결을 관리합니다"}</SheetDescription>
+                <SheetDescription>
+                  {editing.description || "모델 구성, 표시 권한 및 도구 연결을 관리합니다"}
+                </SheetDescription>
               </SheetHeader>
               <AgentEditor agentKey={editing.key} onSaved={reload} />
             </>

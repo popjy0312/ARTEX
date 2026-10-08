@@ -249,7 +249,7 @@ export default function TrafficPage() {
     [hosts, hostCountSortDirection],
   );
 
-  // "清空" for the unfiltered purge, "删除" for the host-scoped ones — the dialog's
+  // "" for the unfiltered purge, "" for the host-scoped ones — the dialog's
   // title and its confirm button both follow from which is in play.
   const deleteVerb = deleteMode === "all" ? "분명한" : "삭제";
   const deleteTitle = deleteMode
@@ -358,7 +358,7 @@ export default function TrafficPage() {
           </span>
           {traffic?.proxy && <span className="font-mono text-xs text-muted-foreground">{traffic.proxy}</span>}
           <span className="text-xs text-muted-foreground">
-총 <span className="tabular-nums">{traffic?.count ?? 0}</span>개
+            총 <span className="tabular-nums">{traffic?.count ?? 0}</span>개
           </span>
         </div>
       </div>
@@ -396,7 +396,9 @@ export default function TrafficPage() {
                         {hostCountSortDirection === "desc" ? <ArrowDownWideNarrowIcon /> : <ArrowUpNarrowWideIcon />}
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>패킷 수 기준 {hostCountSortDirection === "desc" ? "내림차순" : "오름차순"}</TooltipContent>
+                    <TooltipContent>
+                      패킷 수 기준 {hostCountSortDirection === "desc" ? "내림차순" : "오름차순"}
+                    </TooltipContent>
                   </Tooltip>
                 )}
                 {hosts.length > 0 && (
@@ -447,7 +449,7 @@ export default function TrafficPage() {
                   setPickerOpen(false);
                 }}
               >
-선택 항목 제거({selectedHosts.length})
+                선택 항목 제거({selectedHosts.length})
               </Button>
             </div>
           </PopoverContent>
@@ -463,8 +465,7 @@ export default function TrafficPage() {
           title={hostQ ? undefined : "먼저 왼쪽의 대상을 선택하거나 호스트를 입력하세요."}
           onClick={() => setDeleteMode("filter")}
         >
-          <Trash2Icon className="size-3.5" />
-이 대상 삭제
+          <Trash2Icon className="size-3.5" />이 대상 삭제
         </Button>
         {/* Outline rather than a second destructive button: this one ignores every
             filter, so it must not look one mis-click away from "이 대상 삭제". */}
@@ -477,7 +478,7 @@ export default function TrafficPage() {
           onClick={() => setDeleteMode("all")}
         >
           <EraserIcon className="size-3.5" />
-모두 지우기
+          모두 지우기
         </Button>
         <div className="relative max-w-sm flex-1">
           <SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -508,7 +509,7 @@ export default function TrafficPage() {
           <SelectContent>
             {PAGE_SIZES.map((n) => (
               <SelectItem key={n} value={String(n)}>
-{n}/페이지
+                {n}/페이지
               </SelectItem>
             ))}
           </SelectContent>
@@ -597,7 +598,7 @@ export default function TrafficPage() {
         {hasAdvancedFilter ? (
           <Button variant="ghost" size="sm" className="h-8" onClick={resetAdvancedFilters}>
             <FilterXIcon className="size-3.5" />
-필터 지우기
+            필터 지우기
           </Button>
         ) : null}
       </div>
@@ -605,11 +606,11 @@ export default function TrafficPage() {
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm text-muted-foreground">{selectedFlows.size} 흐름이 선택되었습니다.</span>
         <Button variant="outline" size="sm" disabled={selectedFlows.size === 0} onClick={() => setLinking(true)}>
-취약점과 관련된
+          취약점과 관련된
         </Button>
         {selectedFlows.size > 0 ? (
           <Button variant="ghost" size="sm" onClick={() => setSelectedFlows(new Set())}>
-선택 취소
+            선택 취소
           </Button>
         ) : null}
       </div>
@@ -750,7 +751,7 @@ export default function TrafficPage() {
                   {detailLoading ? (
                     <div className="flex items-center gap-2 p-5 text-xs text-muted-foreground">
                       <Loader2Icon className="size-3.5 animate-spin" />
-메시지 로드 중…
+                      메시지 로드 중…
                     </div>
                   ) : (
                     <HttpCodeBlock raw={requestWithHost(detail?.req ?? "", selected)} />
@@ -760,7 +761,7 @@ export default function TrafficPage() {
                   {detailLoading ? (
                     <div className="flex items-center gap-2 p-5 text-xs text-muted-foreground">
                       <Loader2Icon className="size-3.5 animate-spin" />
-메시지 로드 중…
+                      메시지 로드 중…
                     </div>
                   ) : (
                     <HttpCodeBlock raw={detail?.resp ?? ""} />
@@ -784,28 +785,30 @@ export default function TrafficPage() {
             <AlertDialogDescription>
               {deleteMode === "all" && (
                 <>
-모두 영구적으로 삭제됩니다.<span className="font-semibold tabular-nums">{traffic?.count ?? 0}</span>{" "}
-트래픽 기록(요청/응답 원본 텍스트 포함)은 현재 필터링 조건을 무시합니다. 이 작업은 취소할 수 없습니다. 취약점과 관련된 트래픽 증거는 별도의 증거 라이브러리에 저장되며 영향을 받지 않습니다.
+                  모두 영구적으로 삭제됩니다.<span className="font-semibold tabular-nums">{traffic?.count ?? 0}</span>{" "}
+                  트래픽 기록(요청/응답 원본 텍스트 포함)은 현재 필터링 조건을 무시합니다. 이 작업은 취소할 수 없습니다.
+                  취약점과 관련된 트래픽 증거는 별도의 증거 라이브러리에 저장되며 영향을 받지 않습니다.
                   <br />
                   <span className="text-muted-foreground">
-삭제 후에는 저장소가 압축되고 인덱스가 차지한 디스크 공간이 시스템에 반환됩니다. 이 기간 동안 교통 기록은 일시적으로 중지됩니다.
+                    삭제 후에는 저장소가 압축되고 인덱스가 차지한 디스크 공간이 시스템에 반환됩니다. 이 기간 동안 교통
+                    기록은 일시적으로 중지됩니다.
                   </span>
                 </>
               )}
               {deleteMode === "selected" && (
                 <>
-영구적으로 삭제됩니다<span className="font-semibold tabular-nums">{selectedHosts.length}</span>목표 (
+                  영구적으로 삭제됩니다<span className="font-semibold tabular-nums">{selectedHosts.length}</span>목표 (
                   <span className="font-mono">
                     {selectedHosts.slice(0, 3).join(", ")}
                     {selectedHosts.length > 3 ? "…" : ""}
                   </span>
-) 모든 트래픽 기록(요청/응답 원본 텍스트 포함)을 삭제한 경우 이 작업은 취소할 수 없습니다.
+                  ) 모든 트래픽 기록(요청/응답 원본 텍스트 포함)을 삭제한 경우 이 작업은 취소할 수 없습니다.
                 </>
               )}
               {deleteMode === "filter" && (
                 <>
-호스트가 영구적으로 제거됩니다.<span className="font-mono font-semibold">{hostQ}</span>{" "}
-모든 트래픽 기록(요청/응답 원본 텍스트 포함)에 대한 작업은 취소할 수 없습니다.
+                  호스트가 영구적으로 제거됩니다.<span className="font-mono font-semibold">{hostQ}</span> 모든 트래픽
+                  기록(요청/응답 원본 텍스트 포함)에 대한 작업은 취소할 수 없습니다.
                 </>
               )}
             </AlertDialogDescription>

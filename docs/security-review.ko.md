@@ -42,8 +42,8 @@
 ## 공급망 관찰 결과
 
 - 체크아웃된 `v0.3.15` tag와 commit에는 Git 서명이 없습니다.
-- Self-update는 GitHub domain으로 다운로드 대상을 제한하고 SHA-256을 검증하므로 전송 오류 방어에는 유용합니다. 하지만 checksum과 binary가 같은 release trust domain에서 오므로 maintainer/release 계정 침해는 방어하지 못합니다.
-- `skills/api-recon/scripts/package-lock.json`은 `registry.npmmirror.com` URL을 사용합니다. Integrity hash가 위험을 줄이지만 내부 build에서는 승인된 registry mirror와 provenance policy가 필요합니다.
+- 자동 업데이트 코드와 API/UI 진입점은 제거되었습니다. 업그레이드는 운영자가 검토 후 수동으로 수행해야 합니다.
+- `skills/api-recon/scripts/package-lock.json`의 중국 npm mirror URL은 공식 미국 npm registry(`registry.npmjs.org`)로 교체되었습니다.
 - 저장소에 추적된 ELF, PE, Mach-O 실행 파일과 활성 Git hook은 없었습니다. 확인된 큰 binary는 image asset뿐입니다.
 - Secret pattern과 bidirectional-Unicode scan에서 실제 내장 credential이나 소스 난독화 marker는 발견되지 않았으며 일치 항목은 test fixture였습니다.
 

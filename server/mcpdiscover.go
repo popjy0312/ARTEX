@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/Autumn-27/artex/db"
+	"github.com/Autumn-27/artex/egress"
 	"github.com/Autumn-27/artex/mcphttp"
 	"github.com/Autumn-27/norma/mcp"
 	actool "github.com/Autumn-27/norma/tool"
@@ -32,11 +32,17 @@ func connectMCP(ctx context.Context, m *db.MCPServer) (mcpClient, error) {
 		if m.URL == "" {
 			return nil, fmt.Errorf("http transport is missing a URL")
 		}
+		if err := egress.CheckURL(m.URL); err != nil {
+			return nil, err
+		}
 		// env map doubles as HTTP headers (e.g. Authorization).
 		return mcphttp.New(ctx, m.Name, m.URL, jsonStrMap(m.Env), m.Insecure)
 	case "sse":
 		if m.URL == "" {
 			return nil, fmt.Errorf("sse transport is missing a URL")
+		}
+		if err := egress.CheckURL(m.URL); err != nil {
+			return nil, err
 		}
 		return mcphttp.NewSSE(ctx, m.Name, m.URL, jsonStrMap(m.Env), m.Insecure)
 	default:
@@ -65,26 +71,4 @@ func (s *Server) discoverAndCacheMCP(ctx context.Context, m *db.MCPServer) error
 	}
 	log.Printf("[mcp] discovered and cached %d tools for %s", len(tools), m.Name)
 	return nil
-}
-
-// discoverEmptyMCPsOnStartup fills the tool cache for any enabled MCP that has none
-// yet (notably the seeded browser MCP on first run). Runs sequentially in one
-// goroutine so we never spawn many stdio servers (npx) at once, and never blocks
-// startup. Best-effort: a failure leaves the cache empty to retry next start.
-func (s *Server) discoverEmptyMCPsOnStartup() {
-	servers, err := s.m.pg.ListMCP()
-	if err != nil {
-		log.Printf("[mcp] automatic discovery startup: failed to read list: %v", err)
-		return
-	}
-	for _, m := range servers {
-		if !m.Enabled || len(m.Tools) > 0 {
-			continue
-		}
-		ctx, cancel := context.WithTimeout(s.ctx, 90*time.Second)
-		if err := s.discoverAndCacheMCP(ctx, m); err != nil {
-			log.Printf("[mcp] automatic discovery startup failed for %s: %v", m.Name, err)
-		}
-		cancel()
-	}
 }

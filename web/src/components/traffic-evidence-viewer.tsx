@@ -90,7 +90,8 @@ export function TrafficEvidenceViewer({
               <TabsContent key={side} value={side}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs text-muted-foreground">
-텍스트 {detail[side].total.toLocaleString()} 바이트 {detail[side].truncated ? "· 현재 미리보기 중" : ""}
+                    텍스트 {detail[side].total.toLocaleString()} 바이트{" "}
+                    {detail[side].truncated ? "· 현재 미리보기 중" : ""}
                   </span>
                   <Button
                     variant="outline"
@@ -109,7 +110,7 @@ export function TrafficEvidenceViewer({
                 />
                 {detail[side].truncated && !detail[side].binary ? (
                   <Button variant="outline" size="sm" disabled={busy} onClick={() => void more(side)}>
-더 많은 텍스트 로드
+                    더 많은 텍스트 로드
                   </Button>
                 ) : null}
               </TabsContent>

@@ -86,12 +86,10 @@ func TestExtractTokenLimitsQueryCredentialsToSSE(t *testing.T) {
 		want               string
 	}{
 		{"logs stream", http.MethodGet, "/api/logs/stream?token=" + token, token},
-		{"update stream", http.MethodGet, "/api/update/stream?token=" + token, token},
 		{"activity stream", http.MethodGet, "/api/exploration/activity/stream?task=1&token=" + token, token},
 		{"side-question stream", http.MethodGet, "/api/side-questions/run-1/events?token=" + token, token},
 		{"ordinary GET rejects query token", http.MethodGet, "/api/settings?token=" + token, ""},
 		{"ordinary write rejects query token", http.MethodPost, "/api/settings?token=" + token, ""},
-		{"SSE path rejects non-GET query token", http.MethodPost, "/api/update/stream?token=" + token, ""},
 		{"side-question prefix alone is insufficient", http.MethodGet, "/api/side-questions/run-1?token=" + token, ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

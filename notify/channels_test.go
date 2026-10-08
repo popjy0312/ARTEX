@@ -408,9 +408,7 @@ func TestChannelValidateReportsMissingFields(t *testing.T) {
 		cfg    map[string]any
 		substr string
 	}{
-		{KindDingTalk, map[string]any{}, "Webhook"},
-		{KindFeishu, map[string]any{}, "Webhook"},
-		{KindWeCom, map[string]any{}, "Webhook"},
+		{KindWebhook, map[string]any{}, "target URL"},
 		{KindTelegram, map[string]any{}, "Bot Token"},
 		{KindTelegram, map[string]any{"bot_token": "t"}, "Chat ID"},
 		{KindEmail, map[string]any{}, "SMTP"},
@@ -465,8 +463,8 @@ func TestEmailSMTPErrorClassification(t *testing.T) {
 }
 
 func TestRegistryCoversAllKinds(t *testing.T) {
-	// 六个渠道缺一不可——少一个会在 UI 下拉里静默消失。
-	want := []string{KindDingTalk, KindEmail, KindFeishu, KindTelegram, KindWebhook, KindWeCom}
+	// China-operated IM adapters are intentionally absent from the active registry.
+	want := []string{KindEmail, KindTelegram, KindWebhook}
 	got := Kinds()
 	if len(got) != len(want) {
 		t.Fatalf("渠道数量应为 %d，得到 %d: %v", len(want), len(got), got)

@@ -12,6 +12,8 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/Autumn-27/artex/egress"
 )
 
 // dingTalkChannel 实现钉钉自定义机器人。
@@ -152,6 +154,9 @@ func validateHTTPURL(raw string) error {
 	}
 	if u.Host == "" {
 		return errors.New("hostname is required")
+	}
+	if err := egress.CheckURL(raw); err != nil {
+		return err
 	}
 	if ip := net.ParseIP(u.Hostname()); ip != nil && isBlockedDialIP(ip) && !allowLocalTargets() {
 		return fmt.Errorf("delivery to loopback/link-local address %s is blocked (set %s=1 only when intentional)", ip, AllowLocalTargetsEnv)

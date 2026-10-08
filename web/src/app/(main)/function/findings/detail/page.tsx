@@ -118,7 +118,8 @@ function FindingDetailInner() {
         {loaded && (
           <Button asChild variant="outline">
             <Link href="/function/findings">
-              <ArrowLeftIcon />검색 목록으로 돌아가기
+              <ArrowLeftIcon />
+              검색 목록으로 돌아가기
             </Link>
           </Button>
         )}
@@ -159,10 +160,10 @@ function FindingDetailInner() {
 
       {/* Tab content */}
       <div className="flex-1 p-4 lg:p-6">
-{/* 개요: 왼쪽(요약 + 증거) / 오른쪽(상태 영역) */}
+        {/* 개요: 왼쪽(요약 + 증거) / 오른쪽(상태 영역) */}
         <TabsContent value="overview" className="mt-0">
           <div className="grid gap-4 lg:grid-cols-3">
-{/* 왼쪽 열 */}
+            {/* 왼쪽 열 */}
             <div className="flex flex-col gap-4 lg:col-span-2">
               <Card>
                 <CardHeader>
@@ -194,11 +195,13 @@ function FindingDetailInner() {
                 readOnly={finding.inherited}
                 onChanged={load}
               />
-{/* 증거 아래: 세부 보고서(마크다운 렌더링) */}
+              {/* 증거 아래: 세부 보고서(마크다운 렌더링) */}
               <Card>
                 <CardHeader className="flex-row items-center justify-between">
                   <CardTitle className="text-sm">상세 보고서</CardTitle>
-                  {finding.report && <CopyButton text={finding.report} successMessage="세부 보고서가 복사되었습니다." />}
+                  {finding.report && (
+                    <CopyButton text={finding.report} successMessage="세부 보고서가 복사되었습니다." />
+                  )}
                 </CardHeader>
                 <CardContent>
                   {finding.report_stale ? (
@@ -215,20 +218,20 @@ function FindingDetailInner() {
               </Card>
             </div>
 
-{/* 오른쪽 열: 상태 영역 */}
+            {/* 오른쪽 열: 상태 영역 */}
             <Card className="h-fit lg:sticky lg:top-24">
               <CardHeader>
                 <CardTitle className="text-sm">상태</CardTitle>
               </CardHeader>
               <CardContent className="divide-y">
-{/* 취약점 ID */}
+                {/* 취약점 ID */}
                 <FieldRow label="취약점 ID">
                   <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
                     #{finding.id}
                   </code>
                 </FieldRow>
 
-{/* 심각도 수준 */}
+                {/* 심각도 수준 */}
                 <FieldRow label="심각도 수준">
                   {finding.inherited ? (
                     <StatusBadge domain="severity" value={finding.severity} dot />
@@ -250,7 +253,7 @@ function FindingDetailInner() {
                   )}
                 </FieldRow>
 
-{/* 처리 상태 */}
+                {/* 처리 상태 */}
                 <FieldRow label="처리상태">
                   {finding.inherited ? (
                     <StatusBadge domain="finding" value={finding.status} dot />
@@ -272,7 +275,7 @@ function FindingDetailInner() {
                   )}
                 </FieldRow>
 
-{/* 취약점 유형 */}
+                {/* 취약점 유형 */}
                 <FieldRow label="취약점 유형">
                   {finding.vulnclass ? (
                     <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{finding.vulnclass}</code>
@@ -281,7 +284,7 @@ function FindingDetailInner() {
                   )}
                 </FieldRow>
 
-{/* 관련 자산 */}
+                {/* 관련 자산 */}
                 <FieldRow label="관련된 자산">
                   {finding.assets && finding.assets.length > 0 ? (
                     <div className="flex flex-wrap justify-end gap-1">
@@ -300,7 +303,7 @@ function FindingDetailInner() {
                   )}
                 </FieldRow>
 
-{/* 관련 작업 */}
+                {/* 관련 작업 */}
                 <FieldRow label="일">
                   {finding.task_id ? (
                     <Link
@@ -316,7 +319,7 @@ function FindingDetailInner() {
                   )}
                 </FieldRow>
 
-{/* 검색 시간 */}
+                {/* 검색 시간 */}
                 <FieldRow label="발견 시간">
                   <span className="tabular-nums">{fmtTime(finding.ts)}</span>
                 </FieldRow>
@@ -325,7 +328,7 @@ function FindingDetailInner() {
           </div>
         </TabsContent>
 
-{/* 링크 다이어그램: 작업의 초기 노드에서 취약점 노드까지의 공격 링크 */}
+        {/* 링크 다이어그램: 작업의 초기 노드에서 취약점 노드까지의 공격 링크 */}
         <TabsContent value="lineage" className="mt-0">
           <FindingLineageView findingId={finding.id} />
         </TabsContent>

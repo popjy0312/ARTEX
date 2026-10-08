@@ -79,7 +79,7 @@ function ScopeSentryPanel() {
       ) : (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground text-sm">
-데이터 소스가 준비되면 동기화할 프로젝트/작업을 선택할 수 있습니다.
+            데이터 소스가 준비되면 동기화할 프로젝트/작업을 선택할 수 있습니다.
           </CardContent>
         </Card>
       )}
@@ -87,7 +87,7 @@ function ScopeSentryPanel() {
   );
 }
 
-// ── 数据源状态卡 ─────────────────────────────────────────────────────────────
+// ──  ─────────────────────────────────────────────────────────────
 
 function DataSourceCard({
   status,
@@ -124,7 +124,9 @@ function DataSourceCard({
     setBusy(true);
     try {
       const r = await api.ssDatasource({ url: url.trim(), api_key: apiKey.trim() });
-      toast.success(r.enabled ? "데이터 소스가 저장되고 활성화되었습니다." : "저장됨(활성화 조건이 아직 충족되지 않음)");
+      toast.success(
+        r.enabled ? "데이터 소스가 저장되고 활성화되었습니다." : "저장됨(활성화 조건이 아직 충족되지 않음)",
+      );
       setApiKey("");
       onChanged();
     } catch (e) {
@@ -138,32 +140,37 @@ function DataSourceCard({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 text-base">
-          <PlugZapIcon className="size-4" />데이터 소스 상태
+          <PlugZapIcon className="size-4" />
+          데이터 소스 상태
           <StatusBadge status={status} loading={loading} />
         </CardTitle>
         <Button variant="ghost" size="sm" onClick={onChanged} disabled={loading}>
-          <RefreshCwIcon className={loading ? "size-4 animate-spin" : "size-4"} />새로 고치다
+          <RefreshCwIcon className={loading ? "size-4 animate-spin" : "size-4"} />
+          새로 고치다
         </Button>
       </CardHeader>
       <CardContent className="space-y-3">
         {!status?.exists ? (
           <div className="flex items-center justify-between gap-4">
             <p className="text-muted-foreground text-sm">
-ScopeSentry 데이터 소스가 아직 생성되지 않았습니다. 생성 후 자리 표시자 MCP가 추가됩니다(주소/키가 비어 있고 활성화되지 않음).
+              ScopeSentry 데이터 소스가 아직 생성되지 않았습니다. 생성 후 자리 표시자 MCP가 추가됩니다(주소/키가 비어
+              있고 활성화되지 않음).
             </p>
             <Button onClick={create} disabled={busy}>
-데이터 소스 만들기
+              데이터 소스 만들기
             </Button>
           </div>
         ) : (
           <>
             {!status.configured && (
               <p className="text-amber-600 text-sm dark:text-amber-500">
-데이터 소스가 생성되었지만 구성되지 않았습니다. 활성화하기 전에 MCP 주소와 API 키를 입력하세요.
+                데이터 소스가 생성되었지만 구성되지 않았습니다. 활성화하기 전에 MCP 주소와 API 키를 입력하세요.
               </p>
             )}
             {status.configured && !status.enabled && (
-              <p className="text-amber-600 text-sm dark:text-amber-500">데이터 소스가 구성되었지만 활성화되지 않았습니다. 저장 후 자동으로 활성화됩니다.</p>
+              <p className="text-amber-600 text-sm dark:text-amber-500">
+                데이터 소스가 구성되었지만 활성화되지 않았습니다. 저장 후 자동으로 활성화됩니다.
+              </p>
             )}
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1.5">
@@ -182,7 +189,7 @@ ScopeSentry 데이터 소스가 아직 생성되지 않았습니다. 생성 후 
             </div>
             <div className="flex items-center gap-2">
               <Button onClick={save} disabled={busy}>
-저장 및 활성화
+                저장 및 활성화
               </Button>
               {status.enabled && status.tools.length > 0 && (
                 <span className="text-muted-foreground text-xs">{status.tools.length} 도구를 찾았습니다.</span>
@@ -203,17 +210,19 @@ function StatusBadge({ status, loading }: { status: SSStatus | null; loading: bo
   if (status.reachable)
     return (
       <Badge className="bg-emerald-600 hover:bg-emerald-600">
-        <CheckCircle2Icon className="mr-1 size-3" />연결됨
+        <CheckCircle2Icon className="mr-1 size-3" />
+        연결됨
       </Badge>
     );
   return (
     <Badge variant="destructive">
-      <AlertCircleIcon className="mr-1 size-3" />연결할 수 없음
+      <AlertCircleIcon className="mr-1 size-3" />
+      연결할 수 없음
     </Badge>
   );
 }
 
-// ── 同步工作区（项目 / 任务维度）────────────────────────────────────────────────
+// ── （ / ）────────────────────────────────────────────────
 
 function SyncWorkbench() {
   const [dimension, setDimension] = React.useState<Dimension>("project");
@@ -266,7 +275,8 @@ function SyncWorkbench() {
   const chosenTypes = ASSET_TYPES.filter((t) => assetTypes[t.key]).map((t) => t.key);
 
   const runSync = async () => {
-    if (selected.size === 0) return toast.error(`하나 이상 선택하세요.${dimension === "project" ? "프로젝트": "작업"}`);
+    if (selected.size === 0)
+      return toast.error(`하나 이상 선택하세요.${dimension === "project" ? "프로젝트" : "작업"}`);
     if (chosenTypes.length === 0) return toast.error("자산 유형을 하나 이상 선택하세요.");
     setSyncing(true);
     setResult(null);
@@ -292,7 +302,7 @@ function SyncWorkbench() {
       return (
         <TableRow>
           <TableCell colSpan={4} className="py-8 text-center text-muted-foreground text-sm">
-로드 중…
+            로드 중…
           </TableCell>
         </TableRow>
       );
@@ -301,7 +311,7 @@ function SyncWorkbench() {
       return (
         <TableRow>
           <TableCell colSpan={4} className="py-8 text-center text-muted-foreground text-sm">
-데이터 없음
+            데이터 없음
           </TableCell>
         </TableRow>
       );
@@ -340,7 +350,7 @@ function SyncWorkbench() {
         <CardTitle className="text-base">데이터 동기화 선택</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-{/* 측정기준 전환 */}
+        {/* 측정기준 전환 */}
         <Tabs
           value={dimension}
           onValueChange={(v) => {
@@ -354,7 +364,7 @@ function SyncWorkbench() {
           </TabsList>
         </Tabs>
 
-{/* 자산 유형 + 옵션 */}
+        {/* 자산 유형 + 옵션 */}
         <div className="flex flex-wrap items-center gap-4">
           <span className="font-medium text-sm">자산 동기화:</span>
           {ASSET_TYPES.map((t) => (
@@ -370,12 +380,12 @@ function SyncWorkbench() {
           {dimension === "project" && (
             <label htmlFor="create-company" className="flex items-center gap-1.5 text-sm">
               <Checkbox id="create-company" checked={createCompany} onCheckedChange={(c) => setCreateCompany(!!c)} />
-프로젝트별 기업 설정 및 자산 범위 작성
+              프로젝트별 기업 설정 및 자산 범위 작성
             </label>
           )}
         </div>
 
-{/* 검색 + 작업 */}
+        {/* 검색 + 작업 */}
         <div className="flex items-center gap-2">
           <div className="relative max-w-xs flex-1">
             <SearchIcon className="absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -398,11 +408,12 @@ function SyncWorkbench() {
           <div className="flex-1" />
           <span className="text-muted-foreground text-xs">선택됨 {selected.size}</span>
           <Button onClick={runSync} disabled={syncing || selected.size === 0}>
-            <DownloadIcon className={syncing ? "size-4 animate-pulse" : "size-4"} />동기화가 선택됨
+            <DownloadIcon className={syncing ? "size-4 animate-pulse" : "size-4"} />
+            동기화가 선택됨
           </Button>
         </div>
 
-{/* 목록 */}
+        {/* 목록 */}
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -428,10 +439,10 @@ function SyncWorkbench() {
           </Table>
         </div>
 
-{/* 페이징 */}
+        {/* 페이징 */}
         <div className="flex items-center justify-end gap-2">
           <Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => setPage((p) => p - 1)}>
-이전 페이지
+            이전 페이지
           </Button>
           <span className="text-muted-foreground text-xs">페이지 {page}</span>
           <Button
@@ -440,11 +451,11 @@ function SyncWorkbench() {
             disabled={rows.length < 50 || loading}
             onClick={() => setPage((p) => p + 1)}
           >
-다음 페이지
+            다음 페이지
           </Button>
         </div>
 
-{/* 결과 */}
+        {/* 결과 */}
         {result && <SyncResult result={result} />}
       </CardContent>
     </Card>

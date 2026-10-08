@@ -70,7 +70,9 @@ export function ScopeTextEditor({
               {item.line}번째 줄: {item.error}
             </span>
           ))}
-          {parsed.errors.length > 5 && <span className="block">그 외 {parsed.errors.length - 5}개 줄에 오류가 있습니다</span>}
+          {parsed.errors.length > 5 && (
+            <span className="block">그 외 {parsed.errors.length - 5}개 줄에 오류가 있습니다</span>
+          )}
         </FieldError>
       )}
     </Field>

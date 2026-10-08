@@ -230,7 +230,7 @@ export function MentionTextarea({ value, onValueChange, onKeyDown, className, in
           onInteractOutside={(event) => {
             if (event.target === textarea.current) event.preventDefault();
           }}
-              aria-label="인용할 기록 선택"
+          aria-label="인용할 기록 선택"
         >
           <div className="flex items-center justify-between px-2 py-1 text-muted-foreground text-xs">
             <span>
@@ -243,7 +243,7 @@ export function MentionTextarea({ value, onValueChange, onKeyDown, className, in
           <div
             id={listId}
             role="listbox"
-              aria-label="인용 후보"
+            aria-label="인용 후보"
             className="max-h-60 overflow-y-auto"
             onScroll={(event) => {
               const list = event.currentTarget;
@@ -313,7 +313,9 @@ export function MentionTextarea({ value, onValueChange, onKeyDown, className, in
               {loadingMore && <span role="status">더 불러오는 중…</span>}
               {!loadingMore && nextCursor && (
                 <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={loadMore}>
-                  {pageError ? "불러오지 못했습니다. 클릭하여 다시 시도" : `${items.length}개 표시됨. 아래로 스크롤해 더 불러오기`}
+                  {pageError
+                    ? "불러오지 못했습니다. 클릭하여 다시 시도"
+                    : `${items.length}개 표시됨. 아래로 스크롤해 더 불러오기`}
                 </button>
               )}
               {!loadingMore && !nextCursor && !loading && !error && items.length > 0 && `전체 ${items.length}개 표시됨`}

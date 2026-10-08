@@ -10,7 +10,7 @@ AI 자율 침투 테스트 시스템 (Go 백엔드 + Next.js 프런트엔드)
 
 </div>
 
-> 내부 배포 검토 자료: [문서 목록](docs/README.ko.md) · [아키텍처](docs/architecture.ko.md) · [보안 및 백도어 검토](docs/security-review.ko.md)
+> 내부 배포 검토 자료: [문서 목록](docs/README.ko.md) · [아키텍처](docs/architecture.ko.md) · [보안 및 백도어 검토](docs/security-review.ko.md) · [외부 통신 보안 설정](docs/egress-security.ko.md)
 
 ---
 
@@ -104,7 +104,7 @@ cp config.example.json config.json   # database 연결 정보 입력
 ./start.sh                           # → http://localhost:8787
 ```
 
-> `./artex`를 직접 실행하지 말고 `start.sh` / `start.bat`로 시작하세요. 이 감시 스크립트는 프로그램 종료 후 종료 코드에 따라 재실행 여부를 결정하며 **[페이지 원클릭 업데이트](#방법-1-페이지-원클릭-업데이트-권장)는 이 스크립트로 교체를 완료합니다**. `./artex`를 직접 실행하면 업데이트 후 다시 시작되지 않습니다.
+> `./artex`를 직접 실행하지 말고 `start.sh` / `start.bat`로 시작하세요. 이 감시 스크립트는 예기치 않은 프로그램 종료 후 백오프로 재실행합니다.
 > 백그라운드 상주: `nohup ./start.sh >artex.log 2>&1 &`.
 
 ### 방법 4: 소스에서 단일 바이너리 빌드
@@ -141,21 +141,7 @@ ARTEX_TARGETS=linux/amd64,windows/amd64 ./build.sh --release
 
 > 업그레이드는 프로그램만 교체하며 데이터를 변경하지 않습니다. Postgres 데이터 볼륨 `pgdata`, `./data`(workspace / SQLite 등), `./state`(JWT key), `./skills`는 유지됩니다. **데이터베이스 마이그레이션을 수동으로 실행할 필요가 없습니다**—`artex`는 시작할 때마다 `schema.sql`을 멱등적으로 다시 실행하므로(`ADD COLUMN` / `CREATE INDEX IF NOT EXISTS` 포함) 재시작이 곧 마이그레이션입니다. 업그레이드 전에는 `./data`, `./state`, 데이터베이스를 백업하는 것이 좋습니다.
 
-<a id="방법-1-페이지-원클릭-업데이트-권장"></a>
-### 방법 1: 페이지 원클릭 업데이트 (권장)
-
-**시스템 설정** 페이지(사이드바 **시스템 설정** → `/system/settings`)의 **버전 및 업데이트** 카드에서 서버에 로그인하지 않고 새 버전을 확인·설치할 수 있습니다.
-
-**업데이트**를 누르면 현재 플랫폼 Release 패키지 다운로드 → Release의 `SHA256SUMS`와 비교 → `-h`로 새 바이너리 스모크 테스트 → `artex.new`로 임시 저장 → 프로그램 종료 → `start.sh` / `start.bat`가 재실행되어 교체를 완료합니다. 새 버전이 올라오면 페이지가 자동 새로고침됩니다.
-
-- **실패해도 망가진 프로그램이 남지 않습니다**: 검증 또는 스모크 테스트 실패 시 임시 파일을 삭제하고 현재 버전을 계속 실행합니다. 새 버전이 3회 연속 시작에 실패하면 `artex.old`로 자동 롤백하며 실패 버전은 `artex.failed`로 남깁니다.
-- **언제든 롤백할 수 있습니다**: 이전 버전은 `artex.old`로 보관되고 카드에 **이전 버전으로 롤백** 버튼이 있습니다. 데이터베이스 구조는 롤백되지 않습니다.
-- **업데이트는 실행 중인 작업을 중단합니다**—재시작되므로 유휴 상태에서 업데이트하세요.
-- **개발 빌드는 업데이트하지 않습니다**: 버전이 `dev`이거나 `git describe`에 접미사가 있으면 업데이트가 비활성화됩니다.
-- **Docker에서는 프로그램만 교체하고 이미지는 교체하지 않습니다**: 이미지의 Playwright / nmap 등은 업데이트되지 않으며 `docker compose up -d`로 컨테이너를 다시 만들면 이미지 버전으로 돌아갑니다. 이미지까지 업그레이드하려면 `docker compose pull artex && docker compose up -d artex`를 사용하세요.
-- GitHub에 프록시가 필요하면 같은 페이지에서 **전역 프록시**를 설정하세요. 업데이트는 GitHub 도메인에서만 다운로드하며 HTTPS를 강제합니다.
-
-### 방법 2: 원클릭 업데이트 스크립트
+### 방법 1: 수동 업데이트 스크립트
 
 ```bash
 cd ARTEX
@@ -167,7 +153,7 @@ cd ARTEX
 - **① Docker**: 이미지 tag 지정(Enter는 `.env`의 `ARTEX_TAG`, 현재 template 기본값 `v0.3.15`) → `docker compose pull` → `docker compose up -d`(새 이미지 재시작 및 schema 자동 마이그레이션).
 - **② 로컬**: 프런트엔드 정적 결과물 재빌드 → `./artex` 재컴파일(재시작 후 적용).
 
-### 방법 3: Docker Compose (수동)
+### 방법 2: Docker Compose (수동)
 
 ```bash
 cd ARTEX

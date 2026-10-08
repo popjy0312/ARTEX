@@ -52,7 +52,7 @@ export function ReportTab({ taskId }: { taskId: string }) {
     content = (
       <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-16 text-muted-foreground text-sm">
         <FileTextIcon className="size-8 opacity-40" />
-로드 중…
+        로드 중…
       </div>
     );
   } else if (report) {
@@ -65,7 +65,7 @@ export function ReportTab({ taskId }: { taskId: string }) {
     content = (
       <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-16 text-muted-foreground text-sm">
         <FileTextIcon className="size-8 opacity-40" />
-아직 보고서가 없습니다.
+        아직 보고서가 없습니다.
       </div>
     );
   }
@@ -74,7 +74,8 @@ export function ReportTab({ taskId }: { taskId: string }) {
     <Card>
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 text-sm">
-          <FileTextIcon className="size-4" />침투 테스트 보고서(마크다운)
+          <FileTextIcon className="size-4" />
+          침투 테스트 보고서(마크다운)
         </CardTitle>
         <div className="flex gap-2">
           {report && (

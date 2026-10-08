@@ -25,23 +25,21 @@ flowchart LR
     Proxy --> PG
     Scheduler[Triggers / scheduler / notifier] --> Agents
     Scheduler --> PG
-    Updater[Self-update subsystem] -->|GitHub Releases| API
 ```
 
 ## Startup and shutdown
 
-1. [`start.sh`](../start.sh) supervises the binary and restarts it after the reserved update exit code.
+1. [`start.sh`](../start.sh) supervises the binary and restarts it after an unexpected crash.
 2. [`cmd/artex/main.go`](../cmd/artex/main.go) parses the HTTP, data-directory, JWT-key-directory, and proxy flags.
-3. The self-update bootstrap installs or rolls back a staged binary before network listeners and stores are opened.
-4. [`server.NewManager`](../server/manager.go) opens PostgreSQL, initializes the traffic store and optional MITM proxy, and loads persistent settings.
-5. [`server.New`](../server/server.go) loads the JWT key, wires agents and tools, restores task runtimes, and starts background schedulers, notifications, MCP discovery, evidence garbage collection, and archive processing.
-6. The HTTP server listens until a signal or update request triggers graceful shutdown.
+3. [`server.NewManager`](../server/manager.go) opens PostgreSQL, initializes the traffic store and optional MITM proxy, and loads persistent settings.
+4. [`server.New`](../server/server.go) loads the JWT key, wires agents and tools, restores task runtimes, and starts background schedulers, notifications, MCP discovery, evidence garbage collection, and archive processing.
+5. The HTTP server listens until a signal triggers graceful shutdown.
 
 ## Major components
 
 | Component | Responsibility | Main paths |
 | --- | --- | --- |
-| Process entrypoint | Flags, lifecycle, update bootstrap, HTTP listener | `cmd/artex`, `start.sh`, `selfupdate` |
+| Process entrypoint | Flags, lifecycle, HTTP listener | `cmd/artex`, `start.sh` |
 | API and orchestration | Routes, authentication, task admission, agent lifecycle, settings | `server` |
 | Agent runtime | Planner/worker/main-agent prompts, tool catalog, goals, context compaction | `agent` |
 | Safety boundary | Tool-call audit, intercept rules, model or human approval | `guard`, `intercept` |

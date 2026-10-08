@@ -262,7 +262,7 @@ func TestNotifyChannelAPIMasksSecretsAndPreservesOnUpdate(t *testing.T) {
 	chID := f.createChannel(t, map[string]any{
 		"name":   "掩码用例",
 		"kind":   notify.KindDingTalk,
-		"config": map[string]any{"webhook": "https://oapi.dingtalk.com/robot/send?access_token=abc123456", "secret": "SECabcdef123456"},
+		"config": map[string]any{"webhook": "https://hooks.example.com/notify", "secret": "SECabcdef123456"},
 	})
 
 	r := f.request("GET", "/api/notify/channels", "")
@@ -311,7 +311,7 @@ func TestNotifyChannelAPIMasksSecretsAndPreservesOnUpdate(t *testing.T) {
 		t.Fatalf("更新失败 %d: %s", r.Code, r.Body)
 	}
 	cfg := f.channelConfig(t, chID)
-	if cfg["webhook"] != "https://oapi.dingtalk.com/robot/send?access_token=abc123456" {
+	if cfg["webhook"] != "https://hooks.example.com/notify" {
 		t.Fatalf("掩码回传把真凭据覆盖了: %v", cfg["webhook"])
 	}
 	if cfg["secret"] != "SECabcdef123456" {
