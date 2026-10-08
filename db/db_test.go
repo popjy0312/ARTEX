@@ -51,6 +51,31 @@ func TestApplySchemaRetriesOnlyDeadlocks(t *testing.T) {
 	}
 }
 
+func TestLegacyBuiltinAgentTextMatchesHEADSeedValues(t *testing.T) {
+	legacy := legacyBuiltinAgentText("planner")
+	if len(legacy) != 1 || legacy[0].name != "规划" || legacy[0].desc != "读取态势、判定目标，只在确有未覆盖的新方向时补充探索意图（每任务一个规划循环）。" {
+		t.Fatalf("planner legacy text = %#v", legacy)
+	}
+	legacy = legacyBuiltinAgentText("mainagent")
+	if len(legacy) != 1 || legacy[0].name != "主" || legacy[0].desc != "人机接口：观察进展，把人的意图落成 hint 或高优先级意图。" {
+		t.Fatalf("mainagent legacy text = %#v", legacy)
+	}
+	if got := legacyBuiltinAgentText("unknown"); got != nil {
+		t.Fatalf("unknown agent legacy text = %#v, want nil", got)
+	}
+}
+
+func TestLegacyPromptVarTextMatchesHEADSeedValues(t *testing.T) {
+	legacy := legacyPromptVarText("goals", "EngagementDescription")
+	if len(legacy) != 1 || legacy[0].desc != "任务描述（测试对象/背景）" || legacy[0].example != "测试 example.com 站点" {
+		t.Fatalf("goals prompt var legacy text = %#v", legacy)
+	}
+	legacy = legacyPromptVarText("worker", "ProxyAddr")
+	if len(legacy) != 1 || legacy[0].desc != "记录代理地址(驱动 if 双文案)" || legacy[0].example != "127.0.0.1:8080" {
+		t.Fatalf("worker prompt var legacy text = %#v", legacy)
+	}
+}
+
 // testDSN returns the configured DSN, skipping the test when neither the env var
 // nor a config file supplies one (DSN no longer has a built-in default).
 func testDSN(t *testing.T) string {

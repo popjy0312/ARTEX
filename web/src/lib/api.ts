@@ -111,6 +111,24 @@ function getToken(): string | null {
   return localStorage.getItem("artex_token");
 }
 
+/** Convert backend/provider failures into a Korean-first message for the web UI. */
+export function userFacingError(error: unknown, fallback = "요청을 처리하지 못했습니다."): string {
+  const raw = error instanceof Error ? error.message.trim() : String(error ?? "").trim();
+  if (!raw) return fallback;
+  if (/[\uac00-\ud7a3]/.test(raw)) return raw;
+  const lower = raw.toLowerCase();
+  const known: [string, string][] = [
+    ["unauthorized", "인증이 필요합니다."],
+    ["forbidden", "이 작업을 수행할 권한이 없습니다."],
+    ["not found", "요청한 리소스를 찾을 수 없습니다."],
+    ["timeout", "요청 시간이 초과되었습니다."],
+    ["network", "네트워크 오류가 발생했습니다."],
+    ["failed to fetch", "서버에 연결하지 못했습니다."],
+  ];
+  const translated = known.find(([needle]) => lower.includes(needle))?.[1];
+  return translated ?? fallback;
+}
+
 export async function http<T>(path: string, init?: RequestInit): Promise<T> {
   if (MOCK) return mockHandle<T>(init?.method ?? "GET", path, init?.body ?? null);
   const token = getToken();
@@ -128,15 +146,15 @@ export async function http<T>(path: string, init?: RequestInit): Promise<T> {
       document.cookie = "artex_token=; path=/; max-age=0";
       window.location.href = "/login";
     }
-    throw new Error("未授权");
+    throw new Error("인증되지 않았습니다.");
   }
   if (!r.ok) {
-    const fallback = `${init?.method ?? "GET"} ${path}: ${r.status}`;
+    const fallback = `요청 처리 실패 (HTTP ${r.status})`;
     let message = fallback;
     try {
       const payload = (await r.json()) as { error?: unknown };
       if (typeof payload.error === "string" && payload.error.trim()) {
-        message = payload.error.trim();
+        message = userFacingError(payload.error, fallback);
       }
     } catch {
       // Keep the status-based fallback for empty or non-JSON error responses.
@@ -165,25 +183,25 @@ export async function http<T>(path: string, init?: RequestInit): Promise<T> {
 // Token is appended as ?token= because SSE can't carry cookies cross-origin.
 // mockReport returns a canned Markdown report for the demo.
 function mockReport(_task?: string): string {
-  return `# ARTEX 渗透测试报告 — Acme Corp
+  return `# ARTEX 침투 테스트 보고서 — Acme Corp
 
-## 概览
-- 范围：acme.com（含 www / admin / api / shop / vpn 子域）
-- 已确认发现：6 项（高危 3 · 中危 3 · 低危 2）
-- 引擎模式：exploring
+## 개요
+- 범위: acme.com(www / admin / api / shop / vpn 하위 도메인 포함)
+- 확인된 결과: 6건(높음 3 · 중간 3 · 낮음 2)
+- 엔진 모드: 탐색
 
-## 关键发现
-1. **[高] 后台默认口令** admin.acme.com admin/admin123 → 可完全接管后台。
-2. **[高] SQL 注入** www.acme.com/search?q= → 可读取 acme_prod 库。
-3. **[高] IDOR** api.acme.com/v1/orders?id= → 可越权读取他人订单（含手机号/地址）。
-4. **[中] 反射型 XSS**、**暴露 .git 源码**、**登录无速率限制**。
+## 주요 결과
+1. **[높음] 관리자 기본 비밀번호** admin.acme.com admin/admin123 → 관리자 화면을 완전히 장악할 수 있습니다.
+2. **[높음] SQL 주입** www.acme.com/search?q= → acme_prod 데이터베이스를 읽을 수 있습니다.
+3. **[높음] IDOR** api.acme.com/v1/orders?id= → 다른 사용자의 주문(휴대전화·주소 포함)을 권한 없이 읽을 수 있습니다.
+4. **[중간] 반사형 XSS**, **.git 소스 노출**, **로그인 속도 제한 없음**.
 
-## 建议
-- 后台强制改密 + 启用 MFA、封禁默认口令。
-- search 接口参数化查询、输出编码。
-- API 增加对象级授权校验（IDOR）、更换强 JWT 密钥。
+## 권장 사항
+- 관리자 비밀번호를 강제로 변경하고 MFA를 활성화하며 기본 비밀번호를 차단하세요.
+- search 인터페이스에 매개변수화된 쿼리와 출력 인코딩을 적용하세요.
+- API에 객체 수준 권한 검사를 추가하고 강력한 JWT 키로 교체하세요.
 
-> （demo）本报告由 mock 数据生成，仅用于界面演示。`;
+> (데모) 이 보고서는 mock 데이터로 생성되며 화면 시연에만 사용됩니다.`;
 }
 
 export function sseUrl(path: string): string {
@@ -448,19 +466,19 @@ export const api = {
       headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: fd,
     });
-    if (!r.ok) throw new Error(`上传失败: ${r.status}`);
+    if (!r.ok) throw new Error(`업로드 실패: ${r.status}`);
     return r.json() as Promise<{ uploaded: number }>;
   },
   workspaceDownload: async (path: string) => {
     let blob: Blob;
     if (MOCK) {
-      blob = new Blob([`（demo）${path} 的下载内容示例。`], { type: "text/plain" });
+      blob = new Blob([`(데모) ${path}의 다운로드 콘텐츠 예시입니다.`], { type: "text/plain" });
     } else {
       const token = getToken();
       const r = await fetch(`/api/workspace/download?path=${encodeURIComponent(path)}`, {
         headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       });
-      if (!r.ok) throw new Error(`下载失败: ${r.status}`);
+      if (!r.ok) throw new Error(`다운로드 실패: ${r.status}`);
       blob = await r.blob();
     }
     const objUrl = URL.createObjectURL(blob);
@@ -649,8 +667,8 @@ export const api = {
       { headers: token ? { Authorization: `Bearer ${token}` } : {} },
     );
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: "下载失败" }));
-      throw new Error(error.error ?? "下载失败");
+      const error = await response.json().catch(() => ({ error: "다운로드 실패" }));
+      throw new Error(userFacingError(error.error, "다운로드 실패"));
     }
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
@@ -899,7 +917,7 @@ export const api = {
       headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: fd,
     });
-    if (!r.ok) throw new Error(`上传失败: ${r.status} ${await r.text()}`);
+    if (!r.ok) throw new Error(`업로드 실패: ${r.status} ${await r.text()}`);
     return r.json() as Promise<{ attachments: ChatAttachment[] }>;
   },
   stopChat: (taskId: string) => post<{ status: string }>(`/tasks/${taskId}/chat/stop`, {}),
@@ -1160,7 +1178,7 @@ export const api = {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     const body = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(body?.error || `上传失败(${r.status})`);
+    if (!r.ok) throw new Error(userFacingError(body?.error, `업로드 실패(${r.status})`));
     return body;
   },
   deleteSkill: (name: string) => del<{ deleted: string }>(`/skills/${name}`),

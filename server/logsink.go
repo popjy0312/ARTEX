@@ -212,11 +212,13 @@ func parseLog(line string) LogLine {
 
 func levelOf(msg string) string {
 	low := strings.ToLower(msg)
+	// Keep legacy Chinese markers as compatibility inputs for existing logs; new runtime output is English.
 	for _, k := range []string{"fatal", "panic", "error", "err:", "失败", "丢弃", "拒绝", "✕", "不可达"} {
 		if strings.Contains(low, k) {
 			return "error"
 		}
 	}
+	// Keep legacy Chinese markers as compatibility inputs for existing logs; new runtime output is English.
 	for _, k := range []string{"warn", "disabled", "禁用", "skip", "stopped", "⚠", "重试"} {
 		if strings.Contains(low, k) {
 			return "warn"

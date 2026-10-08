@@ -137,7 +137,7 @@ func SkillDir() string {
 // DSN came from (for startup logging).
 func PostgresDSN() (dsn, source string, err error) {
 	if v := strings.TrimSpace(os.Getenv("ARTEX_PG_DSN")); v != "" {
-		return v, "环境变量 ARTEX_PG_DSN", nil
+		return v, "environment variable ARTEX_PG_DSN", nil
 	}
 	componentEnvSet := false
 	for _, name := range []string{
@@ -151,13 +151,13 @@ func PostgresDSN() (dsn, source string, err error) {
 	}
 	if componentEnvSet {
 		if os.Getenv("ARTEX_PG_HOST") == "" && os.Getenv("ARTEX_PG_USER") == "" && os.Getenv("ARTEX_PG_DBNAME") == "" {
-			return "", "", fmt.Errorf("ARTEX_PG_* 配置至少需要 ARTEX_PG_HOST、ARTEX_PG_USER 或 ARTEX_PG_DBNAME 之一")
+			return "", "", fmt.Errorf("ARTEX_PG_* configuration requires at least one of ARTEX_PG_HOST, ARTEX_PG_USER, or ARTEX_PG_DBNAME")
 		}
 		port := 5432
 		if raw := strings.TrimSpace(os.Getenv("ARTEX_PG_PORT")); raw != "" {
 			parsed, parseErr := strconv.Atoi(raw)
 			if parseErr != nil || parsed < 1 || parsed > 65535 {
-				return "", "", fmt.Errorf("ARTEX_PG_PORT 必须是 1-65535 的整数")
+				return "", "", fmt.Errorf("ARTEX_PG_PORT must be an integer from 1 to 65535")
 			}
 			port = parsed
 		}
@@ -169,16 +169,16 @@ func PostgresDSN() (dsn, source string, err error) {
 			DBName:   os.Getenv("ARTEX_PG_DBNAME"),
 			SSLMode:  os.Getenv("ARTEX_PG_SSLMODE"),
 		}
-		return db.buildDSN(), "环境变量 ARTEX_PG_*", nil
+		return db.buildDSN(), "environment variables ARTEX_PG_*", nil
 	}
 	db := Load().Database
 	if d := strings.TrimSpace(db.DSN); d != "" {
-		return d, "配置文件 " + Path() + " (database.dsn)", nil
+		return d, "config file " + Path() + " (database.dsn)", nil
 	}
 	if db.Host != "" || db.DBName != "" || db.User != "" {
-		return db.buildDSN(), "配置文件 " + Path() + " (database 字段)", nil
+		return db.buildDSN(), "config file " + Path() + " (database fields)", nil
 	}
-	return "", "", fmt.Errorf("未找到数据库配置：环境变量 ARTEX_PG_DSN 未设置，且配置文件 %s 未提供 database（dsn 或 host/user/dbname）。请创建该配置文件或设置环境变量后重试", Path())
+	return "", "", fmt.Errorf("database configuration not found: ARTEX_PG_DSN is unset and config file %s has no database (dsn or host/user/dbname); create the config file or set the environment variable and retry", Path())
 }
 
 func (d Database) buildDSN() string {

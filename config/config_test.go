@@ -52,7 +52,7 @@ func TestPostgresDSNComponentEnvironmentEscapesCredentials(t *testing.T) {
 	t.Setenv("ARTEX_PG_SSLMODE", "disable")
 	got, source, err := PostgresDSN()
 	want := "postgres://user%40example:p%40ss%3A%2F%25%23word@postgres:5433/artex?sslmode=disable"
-	if err != nil || got != want || source != "环境变量 ARTEX_PG_*" {
+	if err != nil || got != want || source != "environment variables ARTEX_PG_*" {
 		t.Fatalf("component env: got %q source %q err %v want %q", got, source, err, want)
 	}
 

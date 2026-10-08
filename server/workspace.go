@@ -125,20 +125,20 @@ type wsEntry struct {
 func (s *Server) wsList(w http.ResponseWriter, r *http.Request) {
 	root, name, abs, ok := s.wsRootPath(r.URL.Query().Get("path"))
 	if !ok {
-		writeErr(w, 400, "非法路径")
+		writeErr(w, 400, "invalid path")
 		return
 	}
 	if wsHasSymlink(root, name) {
-		writeErr(w, 400, "非法路径")
+		writeErr(w, 400, "invalid path")
 		return
 	}
 	fi, err := root.Stat(name)
 	if err != nil {
-		writeErr(w, 404, "路径不存在")
+		writeErr(w, 404, "path not found")
 		return
 	}
 	if !fi.IsDir() {
-		writeErr(w, 400, "不是目录")
+		writeErr(w, 400, "not a directory")
 		return
 	}
 	dir, err := root.Open(name)
@@ -181,26 +181,26 @@ func (s *Server) wsList(w http.ResponseWriter, r *http.Request) {
 func (s *Server) wsRead(w http.ResponseWriter, r *http.Request) {
 	root, name, abs, ok := s.wsRootPath(r.URL.Query().Get("path"))
 	if !ok {
-		writeErr(w, 400, "非法路径")
+		writeErr(w, 400, "invalid path")
 		return
 	}
 	if wsHasSymlink(root, name) {
-		writeErr(w, 400, "非法路径")
+		writeErr(w, 400, "invalid path")
 		return
 	}
 	f, err := root.Open(name)
 	if err != nil {
-		writeErr(w, 404, "文件不存在")
+		writeErr(w, 404, "file not found")
 		return
 	}
 	defer f.Close()
 	fi, err := f.Stat()
 	if err != nil {
-		writeErr(w, 404, "文件不存在")
+		writeErr(w, 404, "file not found")
 		return
 	}
 	if fi.IsDir() {
-		writeErr(w, 400, "是目录，不能作为文件读取")
+		writeErr(w, 400, "is a directory, not a file")
 		return
 	}
 	if fi.Size() > maxWorkspaceRead {
@@ -231,15 +231,15 @@ func (s *Server) wsWrite(w http.ResponseWriter, r *http.Request) {
 	}
 	root, name, abs, ok := s.wsRootPath(req.Path)
 	if !ok || name == "." {
-		writeErr(w, 400, "非法路径")
+		writeErr(w, 400, "invalid path")
 		return
 	}
 	if wsHasSymlink(root, name) {
-		writeErr(w, 400, "非法路径")
+		writeErr(w, 400, "invalid path")
 		return
 	}
 	if fi, err := root.Stat(name); err == nil && fi.IsDir() {
-		writeErr(w, 400, "目标是目录")
+		writeErr(w, 400, "target is a directory")
 		return
 	}
 	if err := root.MkdirAll(filepath.Dir(name), 0o755); err != nil {
@@ -264,11 +264,11 @@ func (s *Server) wsMkdir(w http.ResponseWriter, r *http.Request) {
 	}
 	root, name, abs, ok := s.wsRootPath(req.Path)
 	if !ok || name == "." {
-		writeErr(w, 400, "非法路径")
+		writeErr(w, 400, "invalid path")
 		return
 	}
 	if wsHasSymlink(root, name) {
-		writeErr(w, 400, "非法路径")
+		writeErr(w, 400, "invalid path")
 		return
 	}
 	if err := root.MkdirAll(name, 0o755); err != nil {
@@ -283,19 +283,19 @@ func (s *Server) wsMkdir(w http.ResponseWriter, r *http.Request) {
 func (s *Server) wsDelete(w http.ResponseWriter, r *http.Request) {
 	root, name, _, ok := s.wsRootPath(r.URL.Query().Get("path"))
 	if !ok {
-		writeErr(w, 400, "非法路径")
+		writeErr(w, 400, "invalid path")
 		return
 	}
 	if name == "." {
-		writeErr(w, 400, "不能删除工作区根目录")
+		writeErr(w, 400, "cannot delete the workspace root")
 		return
 	}
 	if wsHasSymlink(root, name) {
-		writeErr(w, 400, "非法路径")
+		writeErr(w, 400, "invalid path")
 		return
 	}
 	if _, err := root.Stat(name); err != nil {
-		writeErr(w, 404, "路径不存在")
+		writeErr(w, 404, "path not found")
 		return
 	}
 	if err := root.RemoveAll(name); err != nil {
@@ -309,22 +309,22 @@ func (s *Server) wsDelete(w http.ResponseWriter, r *http.Request) {
 func (s *Server) wsDownload(w http.ResponseWriter, r *http.Request) {
 	root, name, abs, ok := s.wsRootPath(r.URL.Query().Get("path"))
 	if !ok {
-		writeErr(w, 400, "非法路径")
+		writeErr(w, 400, "invalid path")
 		return
 	}
 	if wsHasSymlink(root, name) {
-		writeErr(w, 400, "非法路径")
+		writeErr(w, 400, "invalid path")
 		return
 	}
 	f, err := root.Open(name)
 	if err != nil {
-		writeErr(w, 404, "文件不存在")
+		writeErr(w, 404, "file not found")
 		return
 	}
 	defer f.Close()
 	fi, err := f.Stat()
 	if err != nil || fi.IsDir() {
-		writeErr(w, 404, "文件不存在")
+		writeErr(w, 404, "file not found")
 		return
 	}
 	fileName := filepath.Base(abs)
@@ -337,25 +337,25 @@ func (s *Server) wsDownload(w http.ResponseWriter, r *http.Request) {
 func (s *Server) wsUpload(w http.ResponseWriter, r *http.Request) {
 	root, dirName, _, ok := s.wsRootPath(r.URL.Query().Get("path"))
 	if !ok {
-		writeErr(w, 400, "非法路径")
+		writeErr(w, 400, "invalid path")
 		return
 	}
 	if wsHasSymlink(root, dirName) {
-		writeErr(w, 400, "非法路径")
+		writeErr(w, 400, "invalid path")
 		return
 	}
 	if fi, err := root.Stat(dirName); err != nil || !fi.IsDir() {
-		writeErr(w, 400, "目标目录不存在")
+		writeErr(w, 400, "target directory not found")
 		return
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, maxWorkspaceUpload)
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
-		writeErr(w, 400, "解析上传失败或超出大小限制："+err.Error())
+		writeErr(w, 400, "failed to parse upload or upload exceeds size limit: "+err.Error())
 		return
 	}
 	files := r.MultipartForm.File["file"]
 	if len(files) == 0 {
-		writeErr(w, 400, "缺少上传文件(表单字段 file)")
+		writeErr(w, 400, "missing upload file (form field: file)")
 		return
 	}
 	saved := 0

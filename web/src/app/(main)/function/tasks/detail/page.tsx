@@ -51,16 +51,16 @@ import { RetestsTab } from "./_tabs/retests-tab";
 import { SessionsTab } from "./_tabs/sessions-tab";
 
 const TABS = [
-  { value: "sessions", label: "会话" },
-  { value: "overview", label: "总览" },
-  { value: "graph", label: "探索链路" },
-  { value: "broadcast", label: "播报板" },
-  { value: "findings", label: "发现" },
-  { value: "retests", label: "复测" },
-  { value: "assets", label: "测试资产" },
-  { value: "coverage", label: "资产覆盖图" },
-  { value: "intercept", label: "拦截审批" },
-  { value: "report", label: "报告" },
+  { value: "sessions", label: "세션" },
+  { value: "overview", label: "개요" },
+  { value: "graph", label: "링크 탐색" },
+  { value: "broadcast", label: "게시판" },
+  { value: "findings", label: "발견하다" },
+  { value: "retests", label: "재테스트" },
+  { value: "assets", label: "테스트 자산" },
+  { value: "coverage", label: "자산 오버레이" },
+  { value: "intercept", label: "차단 승인" },
+  { value: "report", label: "보고서" },
 ];
 
 function taskProfileIDs(task: Task): string[] {
@@ -92,18 +92,18 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
   if (task.active_llm_profile_id) activeID = String(task.active_llm_profile_id);
   const activeProfile = profiles.find((profile) => profile.id === activeID);
   const currentLabel = exhausted
-    ? "配置链已耗尽"
-    : (activeProfile?.name ?? (activeID ? `配置 #${activeID}` : "跟随默认配置"));
+    ? "구성 체인이 소진되었습니다."
+    : (activeProfile?.name ?? (activeID ? `구성 #${activeID}` : "기본 구성을 따릅니다."));
   const activeIndex = chain.indexOf(activeID);
   const backupCount = activeIndex >= 0 ? Math.max(0, chain.length - activeIndex - 1) : 0;
-  const currentTitle = [currentLabel, activeProfile?.model, backupCount > 0 ? `${backupCount} 个备用` : ""]
+  const currentTitle = [currentLabel, activeProfile?.model, backupCount > 0 ? `${backupCount}여분의` : ""]
     .filter(Boolean)
     .join(" · ");
-  let editorDescription = "调整顺序或当前配置后，将从下一次 LLM 调用开始生效。";
-  if (terminal) editorDescription = "任务已结束，改动只影响后续的主 Agent 对话。";
-  let saveLabel = "保存";
-  if (exhausted) saveLabel = "保存并重置";
-  if (saving) saveLabel = "保存中";
+  let editorDescription = "시퀀스 또는 현재 구성에 대한 모든 조정은 다음 LLM 호출부터 적용됩니다.";
+  if (terminal) editorDescription = "임무는 종료되었으며 변경 사항은 이후의 주요 에이전트 대화에만 영향을 미칩니다.";
+  let saveLabel = "저장";
+  if (exhausted) saveLabel = "저장하고 재설정";
+  if (saving) saveLabel = "저장 중";
 
   const syncDraft = React.useCallback(() => {
     const next = taskProfileIDs(task);
@@ -134,14 +134,14 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
       } else {
         toast.success(
           result.reopened_intents > 0
-            ? `LLM 配置已更新，并恢复 ${result.reopened_intents} 条额度阻塞意图`
-            : "LLM 配置已更新",
+            ? `LLM 구성이 업데이트 및 복원되었습니다.${result.reopened_intents}할당량 차단 의도`
+            : "LLM 구성이 업데이트되었습니다.",
         );
       }
       setOpen(false);
       onUpdated();
     } catch (error) {
-      toast.error("更新失败：" + (error as Error).message);
+      toast.error("업데이트 실패:" + (error as Error).message);
     } finally {
       setSaving(false);
     }
@@ -153,7 +153,7 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
         <Button
           size="sm"
           variant={exhausted ? "destructive" : "outline"}
-          aria-label="查看或切换任务 LLM 配置"
+          aria-label="작업 LLM 구성 보기 또는 전환"
           title={currentTitle}
         >
           <BrainIcon data-icon="inline-start" />
@@ -163,16 +163,16 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
       </PopoverTrigger>
       <PopoverContent ref={popoverContentRef} align="start" className="w-[min(28rem,calc(100vw-2rem))] gap-4 p-4">
         <PopoverHeader>
-          <PopoverTitle>任务 LLM 配置链</PopoverTitle>
+          <PopoverTitle>작업 LLM 구성 체인</PopoverTitle>
           <PopoverDescription>{editorDescription}</PopoverDescription>
         </PopoverHeader>
 
         {exhausted && (
           <Alert variant="destructive">
             <CircleAlertIcon />
-            <AlertTitle>配置链额度已耗尽</AlertTitle>
+            <AlertTitle>구성 체인 할당량이 소진되었습니다.</AlertTitle>
             <AlertDescription>
-              {task.llm_failover_reason ?? "所有已选配置均被判定为额度不足。保存配置链可重置故障状态。"}
+              {task.llm_failover_reason ?? "선택한 모든 구성의 할당량이 부족한 것으로 판단됩니다. 구성 체인을 저장하면 오류 상태가 재설정됩니다."}
             </AlertDescription>
           </Alert>
         )}
@@ -190,7 +190,7 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
 
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)}>
-            关闭
+폐쇄
           </Button>
           <Button type="button" size="sm" onClick={save} disabled={saving}>
             {saving && <Spinner data-icon="inline-start" />}
@@ -281,9 +281,9 @@ function TaskDetailInner() {
     try {
       await api.controlTask(id, next ? "pause" : "resume");
       setPaused(next);
-      toast.success(next ? "已暂停探索" : "已恢复探索");
+      toast.success(next ? "탐색이 일시중지되었습니다." : "탐사 재개");
     } catch (e) {
-      toast.error("操作失败：" + (e as Error).message);
+      toast.error("작업 실패:" + (e as Error).message);
     }
   }
 
@@ -292,10 +292,10 @@ function TaskDetailInner() {
     setArchiving(true);
     try {
       await api.archiveTask(task.id);
-      toast.success("任务已加入归档队列");
+      toast.success("작업이 보관 대기열에 추가되었습니다.");
       router.push("/function/tasks");
     } catch (error) {
-      toast.error(`归档失败：${(error as Error).message}`);
+      toast.error(`보관 실패:${(error as Error).message}`);
       setArchiving(false);
     }
   }
@@ -303,11 +303,11 @@ function TaskDetailInner() {
   if (!task) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 p-10 text-center">
-        <p className="text-muted-foreground">{loaded ? `任务 ${id} 已被删除、归档或不存在` : "加载中…"}</p>
+        <p className="text-muted-foreground">{loaded ? `일${id}삭제, 보관되었거나 더 이상 존재하지 않습니다.` : "로드 중…"}</p>
         {loaded && (
           <Button asChild variant="outline">
             <Link href="/function/tasks">
-              <ArrowLeftIcon /> 返回任务列表
+              <ArrowLeftIcon />작업 목록으로 돌아가기
             </Link>
           </Button>
         )}
@@ -319,29 +319,29 @@ function TaskDetailInner() {
   const terminal = ["done", "failed", "timeout"].includes(task.status);
   const archiveLifecycleEligible = terminal || paused || task.status === "paused";
   const canArchive = archiveLifecycleEligible && !task.archive_blocked_by_task_id;
-  let archiveDisabledReason = task.queued ? "排队中的任务必须先暂停" : "运行中的任务必须先暂停";
+  let archiveDisabledReason = task.queued ? "대기 중인 작업을 먼저 일시중지해야 합니다." : "실행 중인 작업을 먼저 일시중지해야 합니다.";
   if (archiveLifecycleEligible && task.archive_blocked_by_task_id) {
-    archiveDisabledReason = `任务被未归档任务 #${task.archive_blocked_by_task_id} 直接继承，请先归档依赖任务`;
+    archiveDisabledReason = `작업이 보관되지 않은 작업입니다 #${task.archive_blocked_by_task_id}직접 상속, 종속 작업을 먼저 보관하세요.`;
   }
   const engineMode = paused ? "paused" : (task.engine_mode ?? "idle");
   let controlVariant: "default" | "secondary" | "outline" = "outline";
   let controlIcon = <PauseIcon data-icon="inline-start" />;
-  let controlLabel = "暂停";
+  let controlLabel = "정지시키다";
   if (terminal) {
     controlVariant = "secondary";
     controlIcon = <CheckIcon data-icon="inline-start" />;
-    controlLabel = completed ? "已完成" : "已结束";
+    controlLabel = completed ? "완전한" : "끝났다";
   } else if (paused) {
     controlVariant = "default";
     controlIcon = <PlayIcon data-icon="inline-start" />;
-    controlLabel = "恢复";
+    controlLabel = "다시 덮다";
   }
   const archiveTrigger = (
     <Button
       size="icon-sm"
       variant="ghost"
       disabled={!canArchive || archiving}
-      aria-label={canArchive ? "归档任务" : archiveDisabledReason}
+      aria-label={canArchive ? "작업 보관" : archiveDisabledReason}
     >
       {archiving ? <Spinner /> : <ArchiveIcon />}
     </Button>
@@ -372,15 +372,15 @@ function TaskDetailInner() {
               <AlertDialogTrigger asChild>{archiveTrigger}</AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>归档任务 #{task.id}？</AlertDialogTitle>
+                  <AlertDialogTitle>작업 #{task.id}을(를) 보관하시겠습니까?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    任务图谱、关联记录、独占资产与流量、工作文件和 LLM
-                    历史将压缩到冷存储。归档完成后可在任务列表的“已归档”页还原。
+작업 맵, 관련 기록, 독점 자산 및 흐름, 작업 파일 및 LLM
+기록은 콜드 스토리지로 압축됩니다. 아카이빙이 완료된 후 작업 목록의 '아카이빙' 페이지에서 복원할 수 있습니다.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>取消</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => void archiveTask()}>确认归档</AlertDialogAction>
+                  <AlertDialogCancel>취소</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => void archiveTask()}>보관 확인</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

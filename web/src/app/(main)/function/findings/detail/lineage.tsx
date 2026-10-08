@@ -35,7 +35,7 @@ export function FindingLineageView({ findingId }: { findingId: string }) {
   if (loaded && nodes.length === 0) {
     return (
       <p className="text-muted-foreground p-6 text-sm">
-        无链路可展示（该漏洞未关联探索节点，或所属任务已删除）。
+표시할 링크가 없습니다(취약점이 탐색 노드와 연결되어 있지 않거나 해당 취약점이 속한 작업이 삭제되었습니다).
       </p>
     );
   }
@@ -45,7 +45,7 @@ export function FindingLineageView({ findingId }: { findingId: string }) {
       nodes={nodes}
       edges={edges}
       className="h-[68vh]"
-      emptyHint={loaded ? "无链路" : "加载中…"}
+      emptyHint={loaded ? "링크 없음" : "로드 중…"}
     />
   );
 }
